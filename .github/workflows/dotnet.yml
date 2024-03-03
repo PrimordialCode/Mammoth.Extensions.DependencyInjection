@@ -25,7 +25,7 @@ jobs:
       with:
         fetch-depth: 0
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
     - name: Install GitVersion
@@ -35,6 +35,14 @@ jobs:
     - name: Determine version
       run: dotnet tool run dotnet-gitversion /updateassemblyinfo
     - name: Build
-      run: dotnet build ./src/Mammoth.Extensions.DependencyInjection.sln --no-restore
+      run: dotnet build ./src/Mammoth.Extensions.DependencyInjection.sln --configuration Release --no-restore
     - name: Test
-      run: dotnet test ./src/Mammoth.Extensions.DependencyInjection.sln --no-build --verbosity normal
+      run: dotnet test ./src/Mammoth.Extensions.DependencyInjection.sln --configuration Release --no-build --verbosity normal
+    - name: Pack
+      # only pack if the branch is main, release, or hotfix
+      if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')
+      run: dotnet pack ./src/Mammoth.Extensions.DependencyInjection.sln --configuration Release --no-build --output ./artifacts --include-symbols
+#    - name: Publish
+#      # only publish if the branch is main, release or hotfix
+#      if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')
+#      run: dotnet nuget push ./artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
