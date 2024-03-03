@@ -33,7 +33,7 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore ./src/Mammoth.Extensions.DependencyInjection.sln
     - name: Determine version
-      run: dotnet tool run dotnet-gitversion /updateassemblyinfo
+      run: dotnet tool run dotnet-gitversion /updateprojectfiles
     - name: Build
       run: dotnet build ./src/Mammoth.Extensions.DependencyInjection.sln --configuration Release --no-restore
     - name: Test
