@@ -22,9 +22,6 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <summary>
 		/// Determines whether the specified service type is registered in the service provider (keyed or non-keyed).
 		/// </summary>
-		/// <remarks>
-		/// WARNING: it uses reflection to access internal properties of the service provider, so it may break in future versions of the framework.
-		/// </remarks>
 		public static bool IsServiceRegistered(this IServiceProvider serviceProvider, Type serviceType)
 		{
 			if (serviceType is null)
@@ -42,20 +39,14 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <summary>
 		/// Determines whether the specified service type is registered in the service provider (keyed or non-keyed).
 		/// </summary>
-		/// <remarks>
-		/// WARNING: it uses reflection to access internal properties of the service provider, so it may break in future versions of the framework.
-		/// </remarks>
-		public static bool IsServiceRegistered<TService>(this IServiceProvider serviceProvider)
+		public static bool IsServiceRegistered<TServiceType>(this IServiceProvider serviceProvider)
 		{
-			return IsServiceRegistered(serviceProvider, typeof(TService));
+			return IsServiceRegistered(serviceProvider, typeof(TServiceType));
 		}
 
 		/// <summary>
 		/// Determines whether the specified service type is registered in the service provider (keyed or non-keyed).
 		/// </summary>
-		/// <remarks>
-		/// WARNING: it uses reflection to access internal properties of the service provider, so it may break in future versions of the framework.
-		/// </remarks>
 		public static bool IsServiceRegistered(this IServiceProvider serviceProvider, object serviceKey)
 		{
 			if (serviceKey is null)
@@ -112,17 +103,17 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <remarks>
 		/// <para>WARNING: To use these extensions, you need to build the ServiceProvider using <see cref="ServiceProviderFactory"/>.</para>
 		/// </remarks>
-		public static IEnumerable<TService> GetAllServices<TService>(this IServiceProvider serviceProvider)
+		public static IEnumerable<TServiceType> GetAllServices<TServiceType>(this IServiceProvider serviceProvider)
 		{
-			var keys = serviceProvider.GetService<Keys<TService>>();
-			var servicelist = new List<TService>();
+			var keys = serviceProvider.GetService<Keys<TServiceType>>();
+			var servicelist = new List<TServiceType>();
 			// add null key to get all non-keyed services
-			servicelist.AddRange(serviceProvider.GetServices<TService>());
+			servicelist.AddRange(serviceProvider.GetServices<TServiceType>());
 			if (keys != null)
 			{
 				foreach (var serviceKey in keys)
 				{
-					var services = serviceProvider.GetKeyedServices<TService>(serviceKey);
+					var services = serviceProvider.GetKeyedServices<TServiceType>(serviceKey);
 					if (services?.Any() == true)
 					{
 						servicelist.AddRange(services!);

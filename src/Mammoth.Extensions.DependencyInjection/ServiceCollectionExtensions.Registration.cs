@@ -10,96 +10,135 @@ namespace Mammoth.Cqrs.Infrastructure.Tests.Infrastructure.ServiceProvider
 	public static partial class ServiceCollectionExtensions
 	{
 		/// <summary>
-		/// Checks if a service of type <typeparamref name="TService"/> is registered in the <paramref name="services"/> collection.
+		/// Checks if a service of type <typeparamref name="TServiceType"/> is registered in the <paramref name="services"/> collection.
 		/// </summary>
-		/// <typeparam name="TService">The type of the service.</typeparam>
+		/// <typeparam name="TServiceType">The type of the service.</typeparam>
 		/// <param name="services">The service collection.</param>
-		/// <returns><c>true</c> if the service is registered; otherwise, <c>false</c>.</returns>
-		public static bool IsServiceRegistered<TService>(this IServiceCollection services)
+		/// <returns><c>true</c> if the service type is registered; otherwise, <c>false</c>.</returns>
+		public static bool IsServiceRegistered<TServiceType>(this IServiceCollection services)
 		{
-			return IsServiceRegistered(services, typeof(TService));
+			return IsServiceRegistered(services, typeof(TServiceType));
 		}
 
 		/// <summary>
-		/// Checks if a service of the specified <paramref name="targetType"/> is registered in the <paramref name="services"/> collection.
+		/// Checks if a service of the specified <paramref name="serviceType"/> is registered in the <paramref name="services"/> collection.
 		/// </summary>
 		/// <param name="services">The service collection.</param>
-		/// <param name="targetType">The type of the service.</param>
-		/// <returns><c>true</c> if the service is registered; otherwise, <c>false</c>.</returns>
-		public static bool IsServiceRegistered(this IServiceCollection services, Type targetType)
+		/// <param name="serviceType">The type of the service.</param>
+		/// <returns><c>true</c> if the service type is registered; otherwise, <c>false</c>.</returns>
+		public static bool IsServiceRegistered(this IServiceCollection services, Type serviceType)
 		{
-			var descriptors = services.GetServiceDescriptors(targetType);
+			var descriptors = services.GetServiceDescriptors(serviceType);
 			return descriptors.Length > 0;
 		}
 
 		/// <summary>
-		/// Gets an array of <see cref="ServiceDescriptor"/> objects for services that are assignable to or from the specified <paramref name="targetType"/>.
+		/// Checks if a service with the specified service key is registered in the <paramref name="services"/> collection.
 		/// </summary>
 		/// <param name="services">The service collection.</param>
-		/// <param name="targetType">The type of the service.</param>
+		/// <param name="serviceKey">The service key.</param>
+		/// <returns><c>true</c> if the service is registered; otherwise, <c>false</c>.</returns>
+		public static bool IsServiceRegistered(this IServiceCollection services, object? serviceKey)
+		{
+			return services.Any(s => s.IsKeyedService && s.ServiceKey == serviceKey);
+		}
+
+		/// <summary>
+		/// Gets an array of <see cref="ServiceDescriptor"/> objects for services that are assignable to or from the specified <paramref name="serviceType"/>.
+		/// </summary>
+		/// <param name="services">The service collection.</param>
+		/// <param name="serviceType">The type of the service.</param>
 		/// <returns>An array of <see cref="ServiceDescriptor"/> objects.</returns>
-		public static ServiceDescriptor[] GetServiceDescriptors(this IServiceCollection services, Type targetType)
+		public static ServiceDescriptor[] GetServiceDescriptors(this IServiceCollection services, Type serviceType)
 		{
 			return services.Where(serviceDescriptor =>
-				targetType.IsAssignableFrom(serviceDescriptor.ServiceType)
-				|| serviceDescriptor.ServiceType.IsAssignableFrom(targetType))
+				serviceType.IsAssignableFrom(serviceDescriptor.ServiceType)
+				|| serviceDescriptor.ServiceType.IsAssignableFrom(serviceType))
 				.ToArray();
 		}
 
 		/// <summary>
-		/// Checks if the last registration of a service of the specified <paramref name="type"/> is transient.
+		/// Checks if the last registration of a service of the specified <paramref name="serviceType"/> is transient.
 		/// </summary>
 		/// <param name="services">The service collection.</param>
-		/// <param name="type">The type of the service.</param>
+		/// <param name="serviceType">The type of the service.</param>
 		/// <returns><c>true</c> if the last registration of the service is transient; otherwise, <c>false</c>.</returns>
 		/// <exception cref="Exception">Thrown when the service is not registered.</exception>
-		public static bool IsTransientServiceRegistered(this IServiceCollection services, Type type)
+		public static bool IsTransientServiceRegistered(this IServiceCollection services, Type serviceType)
 		{
-			var descriptors = GetServiceDescriptors(services, type);
+			var descriptors = GetServiceDescriptors(services, serviceType);
 			if (descriptors.Length == 0)
 			{
-				throw new Exception($"Service {type.FullName} is not registered.");
+				throw new Exception($"Service {serviceType.FullName} is not registered.");
 			}
 			return descriptors.Last().Lifetime == ServiceLifetime.Transient;
 		}
 
 		/// <summary>
-		/// Checks if the last registration of a service of type <typeparamref name="TService"/> is transient.
+		/// Checks if the last registration of a service of type <typeparamref name="TServiceType"/> is transient.
 		/// </summary>
-		/// <typeparam name="TService">The type of the service.</typeparam>
+		/// <typeparam name="TServiceType">The type of the service.</typeparam>
 		/// <param name="services">The service collection.</param>
 		/// <returns><c>true</c> if the last registration of the service is transient; otherwise, <c>false</c>.</returns>
-		public static bool IsTransientServiceRegistered<TService>(this IServiceCollection services)
+		public static bool IsTransientServiceRegistered<TServiceType>(this IServiceCollection services)
 		{
-			return IsTransientServiceRegistered(services, typeof(TService));
+			return IsTransientServiceRegistered(services, typeof(TServiceType));
 		}
 
 		/// <summary>
-		/// Checks if the last registration of a service of the specified <paramref name="type"/> is singleton.
+		/// Checks if the last registration of a service of the specified <paramref name="serviceType"/> is scoped.
 		/// </summary>
 		/// <param name="services">The service collection.</param>
-		/// <param name="type">The type of the service.</param>
-		/// <returns><c>true</c> if the last registration of the service is singleton; otherwise, <c>false</c>.</returns>
+		/// <param name="serviceType">The type of the service.</param>
+		/// <returns><c>true</c> if the last registration of the service is scoped; otherwise, <c>false</c>.</returns>
 		/// <exception cref="Exception">Thrown when the service is not registered.</exception>
-		public static bool IsSingletonServiceRegistered(this IServiceCollection services, Type type)
+		public static bool IsScopedServiceRegistered(this IServiceCollection services, Type serviceType)
 		{
-			var descriptors = GetServiceDescriptors(services, type);
+			var descriptors = GetServiceDescriptors(services, serviceType);
 			if (descriptors.Length == 0)
 			{
-				throw new Exception($"Service {type.FullName} is not registered.");
+				throw new Exception($"Service {serviceType.FullName} is not registered.");
+			}
+			return descriptors.Last().Lifetime == ServiceLifetime.Scoped;
+		}
+
+		/// <summary>
+		/// Checks if the last registration of a service of type <typeparamref name="TServiceType"/> is scoped.
+		/// </summary>
+		/// <typeparam name="TServiceType">The type of the service.</typeparam>
+		/// <param name="services">The service collection.</param>
+		/// <returns><c>true</c> if the last registration of the service is scoped; otherwise, <c>false</c>.</returns>
+		public static bool IsScopedServiceRegistered<TServiceType>(this IServiceCollection services)
+		{
+			return IsScopedServiceRegistered(services, typeof(TServiceType));
+		}
+
+		/// <summary>
+		/// Checks if the last registration of a service of the specified <paramref name="serviceType"/> is singleton.
+		/// </summary>
+		/// <param name="services">The service collection.</param>
+		/// <param name="serviceType">The type of the service.</param>
+		/// <returns><c>true</c> if the last registration of the service is singleton; otherwise, <c>false</c>.</returns>
+		/// <exception cref="Exception">Thrown when the service is not registered.</exception>
+		public static bool IsSingletonServiceRegistered(this IServiceCollection services, Type serviceType)
+		{
+			var descriptors = GetServiceDescriptors(services, serviceType);
+			if (descriptors.Length == 0)
+			{
+				throw new Exception($"Service {serviceType.FullName} is not registered.");
 			}
 			return descriptors.Last().Lifetime == ServiceLifetime.Singleton;
 		}
 
 		/// <summary>
-		/// Checks if the last registration of a service of type <typeparamref name="TService"/> is singleton.
+		/// Checks if the last registration of a service of type <typeparamref name="TServiceType"/> is singleton.
 		/// </summary>
-		/// <typeparam name="TService">The type of the service.</typeparam>
+		/// <typeparam name="TServiceType">The type of the service.</typeparam>
 		/// <param name="services">The service collection.</param>
 		/// <returns><c>true</c> if the last registration of the service is singleton; otherwise, <c>false</c>.</returns>
-		public static bool IsSingletonServiceRegistered<TService>(this IServiceCollection services)
+		public static bool IsSingletonServiceRegistered<TServiceType>(this IServiceCollection services)
 		{
-			return IsSingletonServiceRegistered(services, typeof(TService));
+			return IsSingletonServiceRegistered(services, typeof(TServiceType));
 		}
 	}
 }

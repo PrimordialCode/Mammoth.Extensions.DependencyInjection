@@ -8,7 +8,7 @@ namespace Mammoth.Extensions.DependencyInjection
 	/// <summary>
 	/// Extension methods for <see cref="ServiceDescriptor"/>.
 	/// </summary>
-	public static class ServiceDescriptorExtensions
+	internal static class ServiceDescriptorExtensions
 	{
 		/// <summary>
 		/// Changes the service type of the <paramref name="original"/> <see cref="ServiceDescriptor"/> to the specified <paramref name="newServiceType"/>.
@@ -16,7 +16,7 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <param name="original">The original <see cref="ServiceDescriptor"/>.</param>
 		/// <param name="newServiceType">The new service type.</param>
 		/// <returns>A new <see cref="ServiceDescriptor"/> with the updated service type.</returns>
-		public static ServiceDescriptor ChangeServiceType(this ServiceDescriptor original, Type newServiceType)
+		internal static ServiceDescriptor ChangeServiceType(this ServiceDescriptor original, Type newServiceType)
 		{
 			if (!original.IsKeyedService)
 			{
