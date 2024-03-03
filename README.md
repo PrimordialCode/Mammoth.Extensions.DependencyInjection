@@ -1,5 +1,11 @@
 # Mammoth.Extensions.DependencyInjection
 
+## Build Status
+
+[![.NET](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/actions/workflows/dotnet.yml/badge.svg)](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/actions/workflows/dotnet.yml)
+
+## Introduction
+
 This package provides a set of extensions for the `Microsoft.Extensions.DependencyInjection` package.
 
 It is intended to use with `Microsoft.Extensions.DependencyInjection 8.0.0` and greater, because it relies heavily on

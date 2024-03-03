@@ -1,0 +1,38 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: .NET
+
+on:
+  push:
+    branches: [ "main", "develop", "feature/*", "release/*", "hotfix/*", "support/*" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+
+#    strategy:
+#      matrix:
+#        runner: [ ubuntu-latest, self-hosted ]
+#    runs-on: ${{ matrix.runner }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 8.0.x
+    - name: Install GitVersion
+      run: dotnet tool restore
+    - name: Restore dependencies
+      run: dotnet restore ./src/Mammoth.Extensions.DependencyInjection.sln
+    - name: Determine version
+      run: dotnet tool run dotnet-gitversion /updateassemblyinfo
+    - name: Build
+      run: dotnet build ./src/Mammoth.Extensions.DependencyInjection.sln --no-restore
+    - name: Test
+      run: dotnet test ./src/Mammoth.Extensions.DependencyInjection.sln --no-build --verbosity normal
