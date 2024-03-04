@@ -4,6 +4,14 @@
 		<TargetFrameworks>netstandard2.0</TargetFrameworks>
 		<OutputPath>bin\$(Configuration)\</OutputPath>
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageIcon>Mammoth.png</PackageIcon>
+		<PackageDescription>Microsoft.Extensions.DependencyInjection extensions</PackageDescription>
+		<PackageProjectUrl>https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection</PackageProjectUrl>
+		<PackageTags>dependency-injection, service-collection, service-provider</PackageTags>
+		<RepositoryUrl>https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection</RepositoryUrl>
+		<Copyright>Copyright Giorgetti Alessandro 2024</Copyright>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<LangVersion>latest</LangVersion>
 		<Nullable>enable</Nullable>
@@ -16,6 +24,8 @@
 
 	<ItemGroup>
 	  <None Include="ServiceProviderExtensions.Reflection.cs" />
+		<None Include="..\..\README.md" Pack="true" PackagePath="\"/>
+		<None Include="..\..\Mammoth.png" Pack="true" PackagePath="\"/>
 	</ItemGroup>
 
 	<ItemGroup>
