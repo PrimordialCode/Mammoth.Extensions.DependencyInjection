@@ -2,7 +2,7 @@
 using System;
 using System.Linq;
 
-namespace Mammoth.Cqrs.Infrastructure.Tests.Infrastructure.ServiceProvider
+namespace Mammoth.Extensions.DependencyInjection
 {
 	/// <summary>
 	/// Extension methods for IServiceCollection to check if a service is registered.
@@ -17,7 +17,7 @@ namespace Mammoth.Cqrs.Infrastructure.Tests.Infrastructure.ServiceProvider
 		/// <returns><c>true</c> if the service type is registered; otherwise, <c>false</c>.</returns>
 		public static bool IsServiceRegistered<TServiceType>(this IServiceCollection services)
 		{
-			return IsServiceRegistered(services, typeof(TServiceType));
+			return services.IsServiceRegistered(typeof(TServiceType));
 		}
 
 		/// <summary>
@@ -66,7 +66,7 @@ namespace Mammoth.Cqrs.Infrastructure.Tests.Infrastructure.ServiceProvider
 		/// <exception cref="Exception">Thrown when the service is not registered.</exception>
 		public static bool IsTransientServiceRegistered(this IServiceCollection services, Type serviceType)
 		{
-			var descriptors = GetServiceDescriptors(services, serviceType);
+			var descriptors = services.GetServiceDescriptors(serviceType);
 			if (descriptors.Length == 0)
 			{
 				throw new Exception($"Service {serviceType.FullName} is not registered.");
@@ -82,7 +82,7 @@ namespace Mammoth.Cqrs.Infrastructure.Tests.Infrastructure.ServiceProvider
 		/// <returns><c>true</c> if the last registration of the service is transient; otherwise, <c>false</c>.</returns>
 		public static bool IsTransientServiceRegistered<TServiceType>(this IServiceCollection services)
 		{
-			return IsTransientServiceRegistered(services, typeof(TServiceType));
+			return services.IsTransientServiceRegistered(typeof(TServiceType));
 		}
 
 		/// <summary>
@@ -94,7 +94,7 @@ namespace Mammoth.Cqrs.Infrastructure.Tests.Infrastructure.ServiceProvider
 		/// <exception cref="Exception">Thrown when the service is not registered.</exception>
 		public static bool IsScopedServiceRegistered(this IServiceCollection services, Type serviceType)
 		{
-			var descriptors = GetServiceDescriptors(services, serviceType);
+			var descriptors = services.GetServiceDescriptors(serviceType);
 			if (descriptors.Length == 0)
 			{
 				throw new Exception($"Service {serviceType.FullName} is not registered.");
@@ -110,7 +110,7 @@ namespace Mammoth.Cqrs.Infrastructure.Tests.Infrastructure.ServiceProvider
 		/// <returns><c>true</c> if the last registration of the service is scoped; otherwise, <c>false</c>.</returns>
 		public static bool IsScopedServiceRegistered<TServiceType>(this IServiceCollection services)
 		{
-			return IsScopedServiceRegistered(services, typeof(TServiceType));
+			return services.IsScopedServiceRegistered(typeof(TServiceType));
 		}
 
 		/// <summary>
@@ -122,7 +122,7 @@ namespace Mammoth.Cqrs.Infrastructure.Tests.Infrastructure.ServiceProvider
 		/// <exception cref="Exception">Thrown when the service is not registered.</exception>
 		public static bool IsSingletonServiceRegistered(this IServiceCollection services, Type serviceType)
 		{
-			var descriptors = GetServiceDescriptors(services, serviceType);
+			var descriptors = services.GetServiceDescriptors(serviceType);
 			if (descriptors.Length == 0)
 			{
 				throw new Exception($"Service {serviceType.FullName} is not registered.");
@@ -138,7 +138,7 @@ namespace Mammoth.Cqrs.Infrastructure.Tests.Infrastructure.ServiceProvider
 		/// <returns><c>true</c> if the last registration of the service is singleton; otherwise, <c>false</c>.</returns>
 		public static bool IsSingletonServiceRegistered<TServiceType>(this IServiceCollection services)
 		{
-			return IsSingletonServiceRegistered(services, typeof(TServiceType));
+			return services.IsSingletonServiceRegistered(typeof(TServiceType));
 		}
 	}
 }

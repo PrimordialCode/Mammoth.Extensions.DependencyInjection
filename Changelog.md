@@ -1,5 +1,9 @@
 # Mammoth.Extensions.DependencyInjection
 
+## 0.1.2
+
+- Fixed namespaces.
+
 ## 0.1.1
 
 - NuGet Package and Github Actions (build, test, publish)
