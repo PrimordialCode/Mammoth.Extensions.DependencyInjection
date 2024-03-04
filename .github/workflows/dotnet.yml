@@ -33,7 +33,7 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore ./src/Mammoth.Extensions.DependencyInjection.sln
     - name: Determine version
-      run: dotnet tool run dotnet-gitversion /updateassemblyinfo
+      run: dotnet tool run dotnet-gitversion /updateprojectfiles
     - name: Build
       run: dotnet build ./src/Mammoth.Extensions.DependencyInjection.sln --configuration Release --no-restore
     - name: Test
@@ -42,7 +42,7 @@ jobs:
       # only pack if the branch is main, release, or hotfix
       if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')
       run: dotnet pack ./src/Mammoth.Extensions.DependencyInjection.sln --configuration Release --no-build --output ./artifacts --include-symbols
-#    - name: Publish
-#      # only publish if the branch is main, release or hotfix
-#      if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')
-#      run: dotnet nuget push ./artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+    - name: Publish
+      # only publish if the branch is main, release or hotfix
+      if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')
+      run: dotnet nuget push ./artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
