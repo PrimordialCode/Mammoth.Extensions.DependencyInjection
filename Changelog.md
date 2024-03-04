@@ -1,5 +1,9 @@
 # Mammoth.Extensions.DependencyInjection
 
+## 0.1.1
+
+- NuGet Package and Github Actions (build, test, publish)
+
 ## 0.1.0
 
 Initial Release
