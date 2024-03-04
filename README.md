@@ -125,11 +125,11 @@ Helper methods to check if a service was registered or a ServiceDescript exists.
 
 ##### ServiceCollection
 
-- GetServiceDescriptors
-- IsServiceRegistered
-- IsTransientServiceRegistered
-- IsScopedServiceRegistered
-- IsSingletonServiceRegistered
+- `GetServiceDescriptors`
+- `IsServiceRegistered`
+- `IsTransientServiceRegistered`
+- `IsScopedServiceRegistered`
+- `IsSingletonServiceRegistered`
 
 ##### ServiceProvider
 
@@ -147,8 +147,8 @@ var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollec
 
 You can then use the following extensions:
 
-- IsServiceRegistered
-- GetAllServices: resolves all keyed and non-keyed services of a given service type
+- `IsServiceRegistered`
+- `GetAllServices`: resolves all keyed and non-keyed services of a given service type
 
 #### Inspectors
 
