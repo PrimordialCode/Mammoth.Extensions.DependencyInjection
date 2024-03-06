@@ -175,9 +175,11 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 				.FromAssemblyContaining<TestService>()
 				.BasedOn(typeof(TestService))
 				.WithServiceBase()
-				.Configure(cfg =>
+				.Configure((configurer, implementationType) =>
 				{
-					cfg.DependsOn = new Dependency[]
+					Assert.AreEqual(typeof(TestService), implementationType);
+
+					configurer.DependsOn = new Dependency[]
 					{
 						Parameter.ForKey("param").Eq("nonexisting")
 					};
@@ -204,9 +206,11 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 				.FromAssemblyContaining<TestService>()
 				.BasedOn(typeof(TestService))
 				.WithServiceBase()
-				.Configure(cfg =>
+				.Configure((configurer, implementationType) =>
 				{
-					cfg.ServiceKey = "one";
+					Assert.AreEqual(typeof(TestService), implementationType);
+
+					configurer.ServiceKey = "one";
 				})
 				.LifestyleTransient();
 
@@ -231,10 +235,12 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 				.FromAssemblyContaining<TestService>()
 				.BasedOn(typeof(TestService))
 				.WithServiceBase()
-				.Configure(cfg =>
+				.Configure((configurer, implementationType) =>
 				{
-					cfg.ServiceKey = "one";
-					cfg.DependsOn = new Dependency[]
+					Assert.AreEqual(typeof(TestService), implementationType);
+
+					configurer.ServiceKey = "one";
+					configurer.DependsOn = new Dependency[]
 					{
 						Parameter.ForKey("param").Eq("nonexisting")
 					};

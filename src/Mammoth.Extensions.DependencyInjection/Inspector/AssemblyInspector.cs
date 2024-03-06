@@ -18,7 +18,7 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 		private bool _includeSubnamespaces;
 		private Predicate<Type>? _ifFilter;
 		private ServiceSelection _serviceSelection;
-		private Action<ServiceRegistration>? _serviceRegistrationConfigurer;
+		private Action<ServiceRegistration, Type>? _serviceRegistrationConfigurer;
 
 		private enum ServiceSelection
 		{
@@ -118,7 +118,7 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 		}
 
 		/// <inheritdoc/>
-		public ILifestyleSelector Configure(Action<ServiceRegistration> configurer)
+		public ILifestyleSelector Configure(Action<ServiceRegistration, Type> configurer)
 		{
 			_serviceRegistrationConfigurer = configurer;
 			return this;
@@ -183,7 +183,7 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 			if (_serviceRegistrationConfigurer != null)
 			{
 				var serviceRegistration = new ServiceRegistration();
-				_serviceRegistrationConfigurer(serviceRegistration);
+				_serviceRegistrationConfigurer(serviceRegistration, implementationType);
 				serviceKey = serviceRegistration.ServiceKey;
 				dependsOn = serviceRegistration.DependsOn;
 			}
