@@ -1,6 +1,7 @@
 ﻿using Mammoth.Cqrs.Infrastructure.Tests.Infrastructure;
 using Mammoth.Cqrs.Infrastructure.Tests.Infrastructure.Nested;
 using Mammoth.Cqrs.Infrastructure.Tests.Infrastructure.Nested.Subnamespace;
+using Mammoth.Extensions.DependencyInjection.Configuration;
 using Mammoth.Extensions.DependencyInjection.Inspector;
 
 namespace Mammoth.Extensions.DependencyInjection.Tests
@@ -164,7 +165,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		}
 
 		/// <summary>
-		/// AssebmlyInspector using dependsOn will create ServiceDescriptrs with ImplementationFactory
+		/// AssebmlyInspector using Configure() will create ServiceDescriptrs with ImplementationFactory
 		/// that will be used to resolve all the configured parameters.
 		/// </summary>
 		[TestMethod]
@@ -174,10 +175,16 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 				.FromAssemblyContaining<TestService>()
 				.BasedOn(typeof(TestService))
 				.WithServiceBase()
-				.LifestyleTransient(dependsOn: new Dependency[]
+				.Configure((configurer, implementationType) =>
 				{
-					Parameter.ForKey("param").Eq("nonexisting")
-				});
+					Assert.AreEqual(typeof(TestService), implementationType);
+
+					configurer.DependsOn = new Dependency[]
+					{
+						Parameter.ForKey("param").Eq("nonexisting")
+					};
+				})
+				.LifestyleTransient();
 
 			Assert.IsNotNull(descriptors);
 			Assert.AreEqual(1, descriptors.Count());
@@ -186,6 +193,68 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			Assert.AreEqual(Microsoft.Extensions.DependencyInjection.ServiceLifetime.Transient, descriptor.Lifetime);
 			Assert.IsNull(descriptor.ImplementationType);
 			Assert.IsNotNull(descriptor.ImplementationFactory);
+		}
+
+		/// <summary>
+		/// AssebmlyInspector using Configure() will create ServiceDescriptrs with ImplementationFactory
+		/// that will be used to resolve all the configured parameters.
+		/// </summary>
+		[TestMethod]
+		public void ServiceDescriptors_ServiceKey()
+		{
+			var descriptors = new AssemblyInspector()
+				.FromAssemblyContaining<TestService>()
+				.BasedOn(typeof(TestService))
+				.WithServiceBase()
+				.Configure((configurer, implementationType) =>
+				{
+					Assert.AreEqual(typeof(TestService), implementationType);
+
+					configurer.ServiceKey = "one";
+				})
+				.LifestyleTransient();
+
+			Assert.IsNotNull(descriptors);
+			Assert.AreEqual(1, descriptors.Count());
+			var descriptor = descriptors.Single();
+			Assert.IsTrue(descriptor.ServiceType == typeof(TestService));
+			Assert.AreEqual("one", descriptor.ServiceKey);
+			Assert.AreEqual(Microsoft.Extensions.DependencyInjection.ServiceLifetime.Transient, descriptor.Lifetime);
+			Assert.IsNotNull(descriptor.KeyedImplementationType);
+			Assert.IsNull(descriptor.KeyedImplementationFactory);
+		}
+
+		/// <summary>
+		/// AssebmlyInspector using Configure() will create ServiceDescriptrs with ImplementationFactory
+		/// that will be used to resolve all the configured parameters.
+		/// </summary>
+		[TestMethod]
+		public void ServiceDescriptors_ServiceKey_DependsOn()
+		{
+			var descriptors = new AssemblyInspector()
+				.FromAssemblyContaining<TestService>()
+				.BasedOn(typeof(TestService))
+				.WithServiceBase()
+				.Configure((configurer, implementationType) =>
+				{
+					Assert.AreEqual(typeof(TestService), implementationType);
+
+					configurer.ServiceKey = "one";
+					configurer.DependsOn = new Dependency[]
+					{
+						Parameter.ForKey("param").Eq("nonexisting")
+					};
+				})
+				.LifestyleTransient();
+
+			Assert.IsNotNull(descriptors);
+			Assert.AreEqual(1, descriptors.Count());
+			var descriptor = descriptors.Single();
+			Assert.IsTrue(descriptor.ServiceType == typeof(TestService));
+			Assert.AreEqual("one", descriptor.ServiceKey);
+			Assert.AreEqual(Microsoft.Extensions.DependencyInjection.ServiceLifetime.Transient, descriptor.Lifetime);
+			Assert.IsNull(descriptor.KeyedImplementationType);
+			Assert.IsNotNull(descriptor.KeyedImplementationFactory);
 		}
 	}
 }

@@ -26,8 +26,8 @@
 
 	<ItemGroup>
 	  <None Include="ServiceProviderExtensions.Reflection.cs" />
-		<None Include="..\..\README.md" Pack="true" PackagePath="\"/>
-		<None Include="..\..\Mammoth.png" Pack="true" PackagePath="\"/>
+		<None Include="..\..\README.md" Pack="true" PackagePath="\" />
+		<None Include="..\..\Mammoth.png" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
 	<ItemGroup>

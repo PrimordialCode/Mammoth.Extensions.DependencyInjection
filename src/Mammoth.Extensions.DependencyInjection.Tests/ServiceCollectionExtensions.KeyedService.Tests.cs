@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Mammoth.Cqrs.Infrastructure.Tests.Infrastructure;
 using Mammoth.Extensions.DependencyInjection.Inspector;
+using Mammoth.Extensions.DependencyInjection.Configuration;
 
 namespace Mammoth.Extensions.DependencyInjection.Tests
 {
@@ -138,14 +139,44 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 					.FromAssemblyContaining<ServiceWithKeyedDep>()
 					.BasedOn<ServiceWithKeyedDep>()
 					.WithServiceSelf()
-					.LifestyleSingleton(dependsOn: new Dependency[]
+					.Configure((configurer, implementationType) => configurer.DependsOn = new Dependency[]
 					{
 						Parameter.ForKey("keyedService").Eq("one")
 					})
+					.LifestyleSingleton()
 				);
 			using var serviceProvider = serviceCollection.BuildServiceProvider();
 
 			var service = serviceProvider.GetRequiredService<ServiceWithKeyedDep>();
+			Assert.IsNotNull(service);
+			Assert.IsNotNull(service.KeyedService);
+			Assert.IsInstanceOfType(service.KeyedService, typeof(KeyedService1));
+		}
+
+		[TestMethod]
+		public void AssemblyInspector_Resolve_KeyedService_ServiceKey_DependsOn_Parameter()
+		{
+			var serviceCollection = new ServiceCollection();
+			serviceCollection.TryAddKeyedTransient<IKeyedService, KeyedService1>("one");
+			serviceCollection.TryAddKeyedTransient<IKeyedService, KeyedService2>("two");
+			serviceCollection.Add(
+				new AssemblyInspector()
+					.FromAssemblyContaining<ServiceWithKeyedDep>()
+					.BasedOn<ServiceWithKeyedDep>()
+					.WithServiceSelf()
+					.Configure((configurer, implementationType) =>
+					{
+						configurer.ServiceKey = "three";
+						configurer.DependsOn = new Dependency[]
+						{
+							Parameter.ForKey("keyedService").Eq("one")
+						};
+					})
+					.LifestyleSingleton()
+				);
+			using var serviceProvider = serviceCollection.BuildServiceProvider();
+
+			var service = serviceProvider.GetRequiredKeyedService<ServiceWithKeyedDep>("three");
 			Assert.IsNotNull(service);
 			Assert.IsNotNull(service.KeyedService);
 			Assert.IsInstanceOfType(service.KeyedService, typeof(KeyedService1));
