@@ -13,9 +13,13 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 		/// <summary>
 		/// Configures the service registration.
 		/// </summary>
-		/// <param name="configurer">action used to configure each service that will be registered</param>
+		/// <param name="configurer">Action used to configure each service that will be registered,
+		/// it will accept two parameters:
+		/// - The ServiceRegistration used to configure the service.
+		/// - The Implementation Type that was discovered.
+		/// </param>
 		/// <returns>The lifestyle selector.</returns>
-		ILifestyleSelector Configure(Action<ServiceRegistration> configurer);
+		ILifestyleSelector Configure(Action<ServiceRegistration, Type> configurer);
 
 		/// <summary>
 		/// Specifies that the service descriptors should have a transient lifestyle.
