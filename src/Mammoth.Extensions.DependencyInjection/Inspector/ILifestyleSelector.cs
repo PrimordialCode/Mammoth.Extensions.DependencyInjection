@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using Mammoth.Extensions.DependencyInjection.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Mammoth.Extensions.DependencyInjection.Inspector
@@ -9,21 +11,28 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 	public interface ILifestyleSelector
 	{
 		/// <summary>
+		/// Configures the service registration.
+		/// </summary>
+		/// <param name="configurer">action used to configure each service that will be registered</param>
+		/// <returns>The lifestyle selector.</returns>
+		ILifestyleSelector Configure(Action<ServiceRegistration> configurer);
+
+		/// <summary>
 		/// Specifies that the service descriptors should have a transient lifestyle.
 		/// </summary>
 		/// <returns>The collection of service descriptors.</returns>
-		IEnumerable<ServiceDescriptor> LifestyleTransient(Dependency[]? dependsOn = null);
+		IEnumerable<ServiceDescriptor> LifestyleTransient();
 
 		/// <summary>
 		/// Specifies that the service descriptors should have a scoped lifestyle.
 		/// </summary>
 		/// <returns>The collection of service descriptors.</returns>
-		IEnumerable<ServiceDescriptor> LifestyleScoped(Dependency[]? dependsOn = null);
+		IEnumerable<ServiceDescriptor> LifestyleScoped();
 
 		/// <summary>
 		/// Specifies that the service descriptors should have a singleton lifestyle.
 		/// </summary>
 		/// <returns>The collection of service descriptors.</returns>
-		IEnumerable<ServiceDescriptor> LifestyleSingleton(Dependency[]? dependsOn = null);
+		IEnumerable<ServiceDescriptor> LifestyleSingleton();
 	}
 }

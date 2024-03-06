@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Mammoth.Extensions.DependencyInjection.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 using System.Linq;
@@ -622,99 +623,6 @@ namespace Mammoth.Extensions.DependencyInjection
 				.OrderByDescending(c => c.GetParameters().Length)
 				.First();
 			parameteter = ctor.GetParameters();
-		}
-	}
-
-	// DependsOn is an array of dependecies that will be used to select the implementation to use
-	// syntax will be like:
-	// Parameter.ForKey("eventStore").Eq("${PmEventStore}"),
-	// Dependency.OnValue("undispatchedMessageHeader", "UndispatchedMessage_")
-
-	/// <summary>
-	/// A dependency that will be assigned to a constructor parameter
-	/// </summary>
-	public class Dependency
-	{
-		/// <summary>
-		/// Dependency Type
-		/// </summary>
-		public enum DependencyType
-		{
-			/// <summary>
-			/// Value will contain the service key to resolve
-			/// </summary>
-			KeyedServices,
-			/// <summary>
-			/// Value will contain the actual value to be assigned to the dependency
-			/// </summary>
-			Value
-		}
-
-		/// <summary>
-		/// Dependency Type
-		/// </summary>
-		public DependencyType T { get; set; }
-
-		/// <summary>
-		/// Constructor parameter name
-		/// </summary>
-		public string ParameterName { get; set; }
-
-		/// <summary>
-		/// Dependency value, it can be a service key or a value
-		/// depending on the DependencyType.
-		/// </summary>
-		public object Value { get; set; }
-
-		internal Dependency(DependencyType t, string parameterName, object value)
-		{
-			T = t;
-			ParameterName = parameterName;
-			Value = value;
-		}
-
-		/// <summary>
-		/// Create a dependency that will assign a value to a constructor parameter
-		/// </summary>
-		public static Dependency OnValue(string parameterName, object value)
-		{
-			return new Dependency(DependencyType.Value, parameterName, value);
-		}
-	}
-
-	/// <summary>
-	/// A fluent interface to build the dependency array:
-	/// Parameter.ForKey("eventStore").Eq("${PmEventStore}")
-	/// </summary>
-	public static class Parameter
-	{
-		/// <summary>
-		/// Create a dependency that will assign a service key to a constructor parameter
-		/// </summary>
-		public static ParameterKey ForKey(string parameterName)
-		{
-			return new ParameterKey(parameterName);
-		}
-	}
-
-	/// <summary>
-	/// A fluent interface to build the dependency array
-	/// </summary>
-	public class ParameterKey
-	{
-		private readonly string _parameterName;
-
-		internal ParameterKey(string parameterName)
-		{
-			_parameterName = parameterName;
-		}
-
-		/// <summary>
-		/// Create a dependency that will assign a service key to a constructor parameter
-		/// </summary>
-		public Dependency Eq(string value)
-		{
-			return new Dependency(Dependency.DependencyType.KeyedServices, _parameterName, value);
 		}
 	}
 }

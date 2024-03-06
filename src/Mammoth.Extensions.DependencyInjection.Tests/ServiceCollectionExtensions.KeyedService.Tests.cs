@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Mammoth.Cqrs.Infrastructure.Tests.Infrastructure;
 using Mammoth.Extensions.DependencyInjection.Inspector;
+using Mammoth.Extensions.DependencyInjection.Configuration;
 
 namespace Mammoth.Extensions.DependencyInjection.Tests
 {
@@ -138,10 +139,11 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 					.FromAssemblyContaining<ServiceWithKeyedDep>()
 					.BasedOn<ServiceWithKeyedDep>()
 					.WithServiceSelf()
-					.LifestyleSingleton(dependsOn: new Dependency[]
+					.Configure(cfg => cfg.DependsOn = new Dependency[]
 					{
 						Parameter.ForKey("keyedService").Eq("one")
 					})
+					.LifestyleSingleton()
 				);
 			using var serviceProvider = serviceCollection.BuildServiceProvider();
 

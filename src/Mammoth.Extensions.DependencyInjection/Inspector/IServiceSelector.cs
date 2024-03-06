@@ -27,13 +27,13 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 		/// <summary>
 		/// Specifies that the base type should be used as service interface.
 		/// </summary>
-		/// <returns></returns>
+		/// <returns>The lifestyle selector.</returns>
 		ILifestyleSelector WithServiceBase();
 
 		/// <summary>
 		/// Specifies that the selected types should be used as service interfaces.
 		/// </summary>
-		/// <returns></returns>
+		/// <returns>The lifestyle selector.</returns>
 		ILifestyleSelector WithServiceSelf();
 	}
 }

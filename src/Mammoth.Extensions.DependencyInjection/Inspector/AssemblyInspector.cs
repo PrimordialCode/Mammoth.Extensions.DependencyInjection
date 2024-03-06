@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Mammoth.Extensions.DependencyInjection.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Mammoth.Extensions.DependencyInjection.Inspector
@@ -17,6 +18,7 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 		private bool _includeSubnamespaces;
 		private Predicate<Type>? _ifFilter;
 		private ServiceSelection _serviceSelection;
+		private Action<ServiceRegistration>? _serviceRegistrationConfigurer;
 
 		private enum ServiceSelection
 		{
@@ -116,24 +118,31 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 		}
 
 		/// <inheritdoc/>
-		public IEnumerable<ServiceDescriptor> LifestyleTransient(Dependency[]? dependsOn = null)
+		public ILifestyleSelector Configure(Action<ServiceRegistration> configurer)
 		{
-			return CreateServiceDescriptors(ServiceLifetime.Transient, dependsOn);
+			_serviceRegistrationConfigurer = configurer;
+			return this;
 		}
 
 		/// <inheritdoc/>
-		public IEnumerable<ServiceDescriptor> LifestyleScoped(Dependency[]? dependsOn = null)
+		public IEnumerable<ServiceDescriptor> LifestyleTransient()
 		{
-			return CreateServiceDescriptors(ServiceLifetime.Scoped, dependsOn);
+			return CreateServiceDescriptors(ServiceLifetime.Transient);
 		}
 
 		/// <inheritdoc/>
-		public IEnumerable<ServiceDescriptor> LifestyleSingleton(Dependency[]? dependsOn = null)
+		public IEnumerable<ServiceDescriptor> LifestyleScoped()
 		{
-			return CreateServiceDescriptors(ServiceLifetime.Singleton, dependsOn);
+			return CreateServiceDescriptors(ServiceLifetime.Scoped);
 		}
 
-		private IEnumerable<ServiceDescriptor> CreateServiceDescriptors(ServiceLifetime lifetime, Dependency[]? dependsOn = null)
+		/// <inheritdoc/>
+		public IEnumerable<ServiceDescriptor> LifestyleSingleton()
+		{
+			return CreateServiceDescriptors(ServiceLifetime.Singleton);
+		}
+
+		private IEnumerable<ServiceDescriptor> CreateServiceDescriptors(ServiceLifetime lifetime)
 		{
 			var descriptors = new List<ServiceDescriptor>();
 			var types = FilterTypes(_assembly!.GetTypes());
@@ -148,15 +157,7 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 						{
 							if (!interfaceType.IsFrameworkType())
 							{
-								if (dependsOn == null || dependsOn.Length == 0)
-								{
-									descriptors.Add(new ServiceDescriptor(interfaceType, type, lifetime));
-								}
-								else
-								{
-									ServiceCollectionExtensions.GetConstructorAndParameters(type, out ConstructorInfo ctor, out ParameterInfo[] parameteter);
-									descriptors.Add(new ServiceDescriptor(interfaceType, ServiceCollectionExtensions.DependsOnResolutionFunc<object>(dependsOn, ctor, parameteter), lifetime));
-								}
+								AddServiceDescriptorToDescriptors(lifetime, descriptors, type, interfaceType);
 							}
 						}
 						break;
@@ -165,30 +166,43 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 						{
 							throw new InvalidOperationException("The base type is not specified, you need to call BasedOn().");
 						}
-						if (dependsOn == null || dependsOn.Length == 0)
-						{
-							descriptors.Add(new ServiceDescriptor(_baseType, type, lifetime));
-						}
-						else
-						{
-							ServiceCollectionExtensions.GetConstructorAndParameters(type, out ConstructorInfo ctor, out ParameterInfo[] parameteter);
-							descriptors.Add(new ServiceDescriptor(_baseType, ServiceCollectionExtensions.DependsOnResolutionFunc<object>(dependsOn, ctor, parameteter), lifetime));
-						}
+						AddServiceDescriptorToDescriptors(lifetime, descriptors, type, _baseType);
 						break;
 					case ServiceSelection.Self:
-						if (dependsOn == null || dependsOn.Length == 0)
-						{
-							descriptors.Add(new ServiceDescriptor(type, type, lifetime));
-						}
-						else
-						{
-							ServiceCollectionExtensions.GetConstructorAndParameters(type, out ConstructorInfo ctor, out ParameterInfo[] parameteter);
-							descriptors.Add(new ServiceDescriptor(type, ServiceCollectionExtensions.DependsOnResolutionFunc<object>(dependsOn, ctor, parameteter), lifetime));
-						}
+						AddServiceDescriptorToDescriptors(lifetime, descriptors, type, type);
 						break;
 				}
 			}
 			return descriptors;
+		}
+
+		private void AddServiceDescriptorToDescriptors(ServiceLifetime lifetime, List<ServiceDescriptor> descriptors, Type implementationType, Type serviceType)
+		{
+			object? serviceKey = null;
+			Dependency[]? dependsOn = null;
+			if (_serviceRegistrationConfigurer != null)
+			{
+				var serviceRegistration = new ServiceRegistration();
+				_serviceRegistrationConfigurer(serviceRegistration);
+				serviceKey = serviceRegistration.ServiceKey;
+				dependsOn = serviceRegistration.DependsOn;
+			}
+			if (dependsOn == null || dependsOn.Length == 0)
+			{
+				descriptors.Add(new ServiceDescriptor(serviceType, serviceKey, implementationType, lifetime));
+			}
+			else
+			{
+				ServiceCollectionExtensions.GetConstructorAndParameters(implementationType, out ConstructorInfo ctor, out ParameterInfo[] parameteter);
+				if (serviceKey == null)
+				{
+					descriptors.Add(new ServiceDescriptor(serviceType, ServiceCollectionExtensions.DependsOnResolutionFunc<object>(dependsOn, ctor, parameteter), lifetime));
+				}
+				else
+				{
+					descriptors.Add(new ServiceDescriptor(serviceType, serviceKey, ServiceCollectionExtensions.KeyedDependsOnResolutionFunc<object>(dependsOn, ctor, parameteter), lifetime));
+				}
+			}
 		}
 
 		private IEnumerable<Type> FilterTypes(Type[] types)

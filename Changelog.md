@@ -1,5 +1,38 @@
 # Mammoth.Extensions.DependencyInjection
 
+## vNext
+
+- AssemblyInspector: added Configure() method [#2](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/2).
+
+## Breaking Changes
+
+AssemblyInspector lifestyle selectors signature does not accepts "dependsOn" anymore, use the new Configure method instead:
+
+```csharp
+var descriptors = new AssemblyInspector()
+	.FromAssemblyContaining<TestService>()
+	.BasedOn(typeof(TestService))
+	.WithServiceBase()
+	.LifestyleTransient(dependsOn: new Dependency[]
+	{
+		Parameter.ForKey("param").Eq("nonexisting")
+	});
+```
+
+becomes:
+
+```csharp
+var descriptors = new AssemblyInspector()
+	.FromAssemblyContaining<TestService>()
+	.BasedOn(typeof(TestService))
+	.WithServiceBase()
+	.Configure(cfg => cfg.DependsOn = new Dependency[]
+	{
+		Parameter.ForKey("param").Eq("nonexisting")
+	})
+	.LifestyleTransient();
+```
+
 ## 0.1.2
 
 - Fixed namespaces.
