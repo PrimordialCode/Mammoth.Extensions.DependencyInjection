@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using System;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -128,7 +127,7 @@ namespace Mammoth.Extensions.DependencyInjection
 				$"{serviceType.Name}_Proxy_{Guid.NewGuid()}",
 				TypeAttributes.Interface | TypeAttributes.Abstract | TypeAttributes.Public,
 				null,
-				new Type[] { serviceType }
+				[serviceType]
 			);
 
 			return typeBuilder.CreateTypeInfo()!.AsType();

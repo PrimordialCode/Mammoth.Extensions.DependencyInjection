@@ -1,7 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Mammoth.Extensions.DependencyInjection
 {
@@ -28,11 +25,9 @@ namespace Mammoth.Extensions.DependencyInjection
 			{
 				throw new ArgumentNullException(nameof(serviceType));
 			}
-			var serviceTypes = serviceProvider.GetService<ServiceTypes>();
-			if (serviceTypes == null)
-			{
-				throw BuildExceptionBecauseProviderWasNotBuiltUsingTheFactory();
-			}
+			var serviceTypes = serviceProvider.GetService<ServiceTypes>()
+				?? throw BuildExceptionBecauseProviderWasNotBuiltUsingTheFactory();
+
 			return serviceTypes.Any(type => type == serviceType);
 		}
 
@@ -54,11 +49,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				throw new ArgumentNullException(nameof(serviceKey));
 			}
 
-			var serviceKeys = serviceProvider.GetService<Keys>();
-			if (serviceKeys == null)
-			{
-				throw BuildExceptionBecauseProviderWasNotBuiltUsingTheFactory();
-			}
+			var serviceKeys = serviceProvider.GetService<Keys>()
+				?? throw BuildExceptionBecauseProviderWasNotBuiltUsingTheFactory();
+
 			return serviceKeys.Any(key => key.Equals(serviceKey));
 		}
 
@@ -66,7 +59,7 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// Resolves all the services of the specified ServiceTye (both keyed and non-keyed) from the service provider.
 		/// Order of services is not guaranteed to be the same as the order of registration:
 		/// - first will be resolved non-keyed services (in the order of registration)
-		/// - then all keyed services (keys will be sorted in ascending order, each key will be reoslved, services inside the key will
+		/// - then all keyed services (keys will be sorted in ascending order, each key will be resolved, services inside the key will
 		///   be resolved in the order of registration)
 		/// </summary>
 		/// <remarks>
@@ -75,29 +68,28 @@ namespace Mammoth.Extensions.DependencyInjection
 		public static IEnumerable<object?> GetAllServices(this IServiceProvider serviceProvider, Type serviceType)
 		{
 			var KeysType = typeof(Keys<>).MakeGenericType(serviceType);
-			var keys = serviceProvider.GetService(KeysType) as IEnumerable<object>;
-			var servicelist = new List<object?>();
+			var serviceList = new List<object?>();
 			// add null key to get all non-keyed services
-			servicelist.AddRange(serviceProvider.GetServices(serviceType));
-			if (keys != null)
+			serviceList.AddRange(serviceProvider.GetServices(serviceType));
+			if (serviceProvider.GetService(KeysType) is IEnumerable<object> keys)
 			{
 				foreach (var serviceKey in keys!)
 				{
 					var services = serviceProvider.GetKeyedServices(serviceType, serviceKey);
 					if (services?.Any() == true)
 					{
-						servicelist.AddRange(services!);
+						serviceList.AddRange(services!);
 					}
 				}
 			}
-			return servicelist;
+			return serviceList;
 		}
 
 		/// <summary>
 		/// Resolves all the services of the specified ServiceTye (both keyed and non-keyed) from the service provider.
 		/// Order of services is not guaranteed to be the same as the order of registration:
 		/// - first will be resolved non-keyed services (in the order of registration)
-		/// - then all keyed services (keys will be sorted in ascending order, each key will be reoslved, services inside the key will
+		/// - then all keyed services (keys will be sorted in ascending order, each key will be resolved, services inside the key will
 		///   be resolved in the order of registration)
 		/// </summary>
 		/// <remarks>
@@ -106,9 +98,9 @@ namespace Mammoth.Extensions.DependencyInjection
 		public static IEnumerable<TServiceType> GetAllServices<TServiceType>(this IServiceProvider serviceProvider)
 		{
 			var keys = serviceProvider.GetService<Keys<TServiceType>>();
-			var servicelist = new List<TServiceType>();
+			var serviceList = new List<TServiceType>();
 			// add null key to get all non-keyed services
-			servicelist.AddRange(serviceProvider.GetServices<TServiceType>());
+			serviceList.AddRange(serviceProvider.GetServices<TServiceType>());
 			if (keys != null)
 			{
 				foreach (var serviceKey in keys)
@@ -116,11 +108,11 @@ namespace Mammoth.Extensions.DependencyInjection
 					var services = serviceProvider.GetKeyedServices<TServiceType>(serviceKey);
 					if (services?.Any() == true)
 					{
-						servicelist.AddRange(services!);
+						serviceList.AddRange(services!);
 					}
 				}
 			}
-			return servicelist;
+			return serviceList;
 		}
 
 		private static InvalidOperationException BuildExceptionBecauseProviderWasNotBuiltUsingTheFactory(Exception? ex = null)

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Mammoth.Extensions.DependencyInjection.Inspector
+﻿namespace Mammoth.Extensions.DependencyInjection.Inspector
 {
 	/// <summary>
 	/// Represents a service selector that allows specifying the service interfaces.
@@ -10,9 +8,11 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 		/// <summary>
 		/// Specifies that the selected types should match a condition to be included.
 		/// </summary>
-		/// <param name="ifFilter">Condition to match</param>
+		/// <param name="condition">Condition to match</param>
 		/// <returns>A Service selector</returns>
-		IServiceSelector If(Predicate<Type> ifFilter);
+#pragma warning disable CA1716 // Identifiers should not match keywords
+		IServiceSelector If(Predicate<Type> condition);
+#pragma warning restore CA1716 // Identifiers should not match keywords
 
 		/// <summary>
 		/// Specifies that all interfaces implemented by the selected types should be used as service interfaces.

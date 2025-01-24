@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mammoth.Extensions.Dependen
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1FF1BCCB-8C96-4D05-9D00-5F4CA7378090}"
 	ProjectSection(SolutionItems) = preProject
+		..\build.ps1 = ..\build.ps1
 		..\Changelog.md = ..\Changelog.md
+		Directory.Build.props = Directory.Build.props
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject

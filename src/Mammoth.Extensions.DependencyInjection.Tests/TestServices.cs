@@ -7,7 +7,7 @@
 		T? GetById<T>(string id) where T : class;
 	}
 
-	public interface IAnotherInterface { }
+	public interface IAnotherInterface;
 
 	public class TestService : IDisposable, ITestService, IAnotherInterface
 	{
@@ -97,28 +97,25 @@
 		}
 	}
 
-	public interface IKeyedService { }
+	public interface IKeyedService;
 
-	public class KeyedService1 : IKeyedService { }
+	public class KeyedService1 : IKeyedService;
 
-	public class KeyedService2 : IKeyedService { }
+	public class KeyedService2 : IKeyedService;
 
-	public class ExternalService { }
+	public class ExternalService;
 
 	namespace Nested
 	{
-		public interface INestedAnotherInterface { }
+		public interface INestedAnotherInterface ;
 
-		public class NestedTransientService1 : IAnotherInterface
-		{ }
+		public class NestedTransientService1 : IAnotherInterface;
 
-		public class NestedTransientService2 : INestedAnotherInterface
-		{ }
+		public class NestedTransientService2 : INestedAnotherInterface;
 
-		namespace Subnamespace
+		namespace SubNamespace
 		{
-			public class SubnamespaceTransientService1 : INestedAnotherInterface
-			{ }
+			public class SubNamespaceTransientService1 : INestedAnotherInterface;
 		}
 	}
 }

@@ -1,6 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
 
 namespace Mammoth.Extensions.DependencyInjection
 {
@@ -40,7 +38,7 @@ namespace Mammoth.Extensions.DependencyInjection
 
 					if (!dict.TryGetValue(service.ServiceType, out var list))
 					{
-						list = new HashSet<object>();
+						list = [];
 						dict[service.ServiceType] = list;
 					}
 					list.Add(service.ServiceKey);
@@ -81,12 +79,10 @@ namespace Mammoth.Extensions.DependencyInjection
 	/// <summary>
 	/// The list of all keys.
 	/// </summary>
-	public class Keys : SortedSet<object>
-	{ }
+	public class Keys : SortedSet<object>;
 
 	/// <summary>
 	/// The list of all registered ServiceType.
 	/// </summary>
-	public class ServiceTypes : HashSet<Type>
-	{ }
+	public class ServiceTypes : HashSet<Type>;
 }

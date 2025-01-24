@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
+﻿using System.Reflection;
 using Mammoth.Extensions.DependencyInjection.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,10 +12,10 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 		private Assembly? _assembly;
 		private Type? _baseType;
 		private Type? _inSameNamespaceAsType;
-		private bool _includeSubnamespaces;
+		private bool _includeSubNamespaces;
 		private Predicate<Type>? _ifFilter;
 		private ServiceSelection _serviceSelection;
-		private Action<ServiceRegistration, Type>? _serviceRegistrationConfigurer;
+		private Action<ServiceRegistration, Type>? _serviceRegistrationConfigureAction;
 
 		private enum ServiceSelection
 		{
@@ -63,36 +60,36 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 		}
 
 		/// <inheritdoc/>
-		public IServiceSelector BasedOn<Type>()
+		public IServiceSelector BasedOn<T>()
 		{
-			_baseType = typeof(Type);
+			_baseType = typeof(T);
 			return this;
 		}
 
 		/// <inheritdoc/>
-		public IServiceSelector InSameNamespaceAs<Type>()
+		public IServiceSelector InSameNamespaceAs<T>()
 		{
-			_inSameNamespaceAsType = typeof(Type);
+			_inSameNamespaceAsType = typeof(T);
 			return this;
 		}
 
 		/// <inheritdoc/>
-		public IServiceSelector InSameNamespaceAs<Type>(bool includeSubnamespaces)
+		public IServiceSelector InSameNamespaceAs<T>(bool includeSubNamespaces)
 		{
-			_inSameNamespaceAsType = typeof(Type);
-			_includeSubnamespaces = includeSubnamespaces;
+			_inSameNamespaceAsType = typeof(T);
+			_includeSubNamespaces = includeSubNamespaces;
 			return this;
 		}
 
 		/// <inheritdoc/>
-		public IServiceSelector If(Predicate<Type> ifFilter)
+		public IServiceSelector If(Predicate<Type> condition)
 		{
 			if (_ifFilter != null)
 			{
 				throw new NotSupportedException("Cannot set if filter more than once.");
 			}
 
-			_ifFilter = ifFilter ?? throw new ArgumentNullException(nameof(ifFilter));
+			_ifFilter = condition ?? throw new ArgumentNullException(nameof(condition));
 			return this;
 		}
 
@@ -118,9 +115,9 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 		}
 
 		/// <inheritdoc/>
-		public ILifestyleSelector Configure(Action<ServiceRegistration, Type> configurer)
+		public ILifestyleSelector Configure(Action<ServiceRegistration, Type> configureAction)
 		{
-			_serviceRegistrationConfigurer = configurer;
+			_serviceRegistrationConfigureAction = configureAction;
 			return this;
 		}
 
@@ -142,7 +139,7 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 			return CreateServiceDescriptors(ServiceLifetime.Singleton);
 		}
 
-		private IEnumerable<ServiceDescriptor> CreateServiceDescriptors(ServiceLifetime lifetime)
+		private List<ServiceDescriptor> CreateServiceDescriptors(ServiceLifetime lifetime)
 		{
 			var descriptors = new List<ServiceDescriptor>();
 			var types = FilterTypes(_assembly!.GetTypes());
@@ -152,7 +149,7 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 				switch (_serviceSelection)
 				{
 					case ServiceSelection.AllInterfaces:
-						// inpect interfaces (even of the base types) and exclude some (like IDisposable)
+						// inspect interfaces (even of the base types) and exclude some (like IDisposable)
 						foreach (var interfaceType in type.GetAllInterfaces())
 						{
 							if (!interfaceType.IsFrameworkType())
@@ -180,10 +177,10 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 		{
 			object? serviceKey = null;
 			Dependency[]? dependsOn = null;
-			if (_serviceRegistrationConfigurer != null)
+			if (_serviceRegistrationConfigureAction != null)
 			{
 				var serviceRegistration = new ServiceRegistration();
-				_serviceRegistrationConfigurer(serviceRegistration, implementationType);
+				_serviceRegistrationConfigureAction(serviceRegistration, implementationType);
 				serviceKey = serviceRegistration.ServiceKey;
 				dependsOn = serviceRegistration.DependsOn;
 			}
@@ -193,19 +190,19 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 			}
 			else
 			{
-				ServiceCollectionExtensions.GetConstructorAndParameters(implementationType, out ConstructorInfo ctor, out ParameterInfo[] parameteter);
+				ServiceCollectionExtensions.GetConstructorAndParameters(implementationType, out ConstructorInfo ctor, out ParameterInfo[] parameter);
 				if (serviceKey == null)
 				{
-					descriptors.Add(new ServiceDescriptor(serviceType, ServiceCollectionExtensions.DependsOnResolutionFunc<object>(dependsOn, ctor, parameteter), lifetime));
+					descriptors.Add(new ServiceDescriptor(serviceType, ServiceCollectionExtensions.DependsOnResolutionFunc<object>(dependsOn, ctor, parameter), lifetime));
 				}
 				else
 				{
-					descriptors.Add(new ServiceDescriptor(serviceType, serviceKey, ServiceCollectionExtensions.KeyedDependsOnResolutionFunc<object>(dependsOn, ctor, parameteter), lifetime));
+					descriptors.Add(new ServiceDescriptor(serviceType, serviceKey, ServiceCollectionExtensions.KeyedDependsOnResolutionFunc<object>(dependsOn, ctor, parameter), lifetime));
 				}
 			}
 		}
 
-		private IEnumerable<Type> FilterTypes(Type[] types)
+		private Type[] FilterTypes(Type[] types)
 		{
 			var filteredTypes = types.Where(type => type.IsClass && !type.IsAbstract);
 			if (_baseType != null)
@@ -214,9 +211,9 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 			}
 			if (_inSameNamespaceAsType != null)
 			{
-				if (_includeSubnamespaces)
+				if (_includeSubNamespaces)
 				{
-					return filteredTypes.Where(t => t.Namespace?.StartsWith(_inSameNamespaceAsType.Namespace) == true).ToArray();
+					return filteredTypes.Where(t => t.Namespace?.StartsWith(_inSameNamespaceAsType.Namespace, StringComparison.InvariantCulture) == true).ToArray();
 				}
 				return filteredTypes.Where(t => t.Namespace == _inSameNamespaceAsType.Namespace).ToArray();
 			}

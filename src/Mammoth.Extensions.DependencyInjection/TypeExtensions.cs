@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Mammoth.Extensions.DependencyInjection
+﻿namespace Mammoth.Extensions.DependencyInjection
 {
 	/// <summary>
 	/// Provides extension methods for <see cref="Type"/>.
@@ -16,7 +13,7 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <returns><c>true</c> if the specified type is a framework type; otherwise, <c>false</c>.</returns>
 		public static bool IsFrameworkType(this Type type)
 		{
-			return type.Assembly.FullName.StartsWith("System")
+			return type.Assembly.FullName.StartsWith("System", StringComparison.InvariantCulture)
 				|| type.Assembly.FullName.Contains("mscorlib");
 		}
 
