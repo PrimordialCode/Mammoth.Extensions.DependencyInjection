@@ -15,15 +15,15 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			var serviceCollection = new ServiceCollection();
 			serviceCollection.TryAddKeyedTransient<IKeyedService, KeyedService1>("one");
 			serviceCollection.TryAddKeyedTransient<IKeyedService, KeyedService2>("two");
-			serviceCollection.AddSingleton<ServiceWithKeyedDep>(new Dependency[] {
+			serviceCollection.AddSingleton<ServiceWithKeyedDep>([
 				Parameter.ForKey("keyedService").Eq("one")
-			});
+			]);
 			using var serviceProvider = serviceCollection.BuildServiceProvider();
 
 			var service = serviceProvider.GetRequiredService<ServiceWithKeyedDep>();
 			Assert.IsNotNull(service);
 			Assert.IsNotNull(service.KeyedService);
-			Assert.IsInstanceOfType(service.KeyedService, typeof(KeyedService1));
+			Assert.IsInstanceOfType<KeyedService1>(service.KeyedService);
 		}
 
 		[TestMethod]
@@ -32,24 +32,24 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			var serviceCollection = new ServiceCollection();
 			serviceCollection.TryAddKeyedTransient<IKeyedService, KeyedService1>("one");
 			serviceCollection.TryAddKeyedTransient<IKeyedService, KeyedService2>("two");
-			serviceCollection.AddSingleton(typeof(ServiceWithKeyedDep), new Dependency[] {
+			serviceCollection.AddSingleton<ServiceWithKeyedDep>([
 				Parameter.ForKey("keyedService").Eq("one")
-				});
+				]);
 			using var serviceProvider = serviceCollection.BuildServiceProvider();
 
 			var service = serviceProvider.GetRequiredService<ServiceWithKeyedDep>();
 			Assert.IsNotNull(service);
 			Assert.IsNotNull(service.KeyedService);
-			Assert.IsInstanceOfType(service.KeyedService, typeof(KeyedService1));
+			Assert.IsInstanceOfType<KeyedService1>(service.KeyedService);
 		}
 
 		[TestMethod]
 		public void Singleton_Generic_Resolve_DependsOn_Value()
 		{
 			var serviceCollection = new ServiceCollection();
-			serviceCollection.AddSingleton<ServiceWithValueDep>(new Dependency[] {
+			serviceCollection.AddSingleton<ServiceWithValueDep>([
 				Dependency.OnValue("dep", "val1")
-			});
+			]);
 			using var serviceProvider = serviceCollection.BuildServiceProvider();
 
 			var service = serviceProvider.GetRequiredService<ServiceWithValueDep>();
@@ -62,9 +62,9 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		public void Singleton_Resolve_DependsOn_Value()
 		{
 			var serviceCollection = new ServiceCollection();
-			serviceCollection.AddSingleton(typeof(ServiceWithValueDep), new Dependency[] {
+			serviceCollection.AddSingleton<ServiceWithValueDep>([
 				Dependency.OnValue("dep", "val1")
-				});
+			]);
 			using var serviceProvider = serviceCollection.BuildServiceProvider();
 
 			var service = serviceProvider.GetRequiredService<ServiceWithValueDep>();
@@ -81,15 +81,15 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			serviceCollection.TryAddKeyedTransient<IKeyedService, KeyedService2>("two");
 			serviceCollection.TryAddKeyedSingleton<ServiceWithKeyedDep>(
 				"keyed",
-				new Dependency[] {
+				[
 				Parameter.ForKey("keyedService").Eq("one")
-				});
+				]);
 			using var serviceProvider = serviceCollection.BuildServiceProvider();
 
 			var service = serviceProvider.GetRequiredKeyedService<ServiceWithKeyedDep>("keyed");
 			Assert.IsNotNull(service);
 			Assert.IsNotNull(service.KeyedService);
-			Assert.IsInstanceOfType(service.KeyedService, typeof(KeyedService1));
+			Assert.IsInstanceOfType<KeyedService1>(service.KeyedService);
 		}
 
 		[TestMethod]
@@ -98,9 +98,9 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			var serviceCollection = new ServiceCollection();
 			serviceCollection.TryAddKeyedSingleton<ServiceWithValueDep>(
 				"keyed",
-				new Dependency[] {
+				[
 				Dependency.OnValue("dep", "val1")
-				});
+				]);
 			using var serviceProvider = serviceCollection.BuildServiceProvider();
 
 			var service = serviceProvider.GetRequiredKeyedService<ServiceWithValueDep>("keyed");
@@ -113,9 +113,9 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		public void Resolve_DependsOn_Value_Decorated()
 		{
 			var serviceCollection = new ServiceCollection();
-			serviceCollection.AddTransient<IServiceWithValueDep, ServiceWithValueDep>(new Dependency[] {
+			serviceCollection.AddTransient<IServiceWithValueDep, ServiceWithValueDep>([
 				Dependency.OnValue("dep", "val1")
-			});
+			]);
 			serviceCollection.Decorate<IServiceWithValueDep, ServiceWithValueDepDecorator1>();
 			using var serviceProvider = serviceCollection.BuildServiceProvider();
 
@@ -123,9 +123,9 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			Assert.IsNotNull(service);
 			Assert.IsNotNull(service.Dep);
 			Assert.AreEqual("val1", service.Dep);
-			Assert.IsInstanceOfType(service, typeof(ServiceWithValueDepDecorator1));
+			Assert.IsInstanceOfType<ServiceWithValueDepDecorator1>(service);
 			var decorator = (ServiceWithValueDepDecorator1)service;
-			Assert.IsInstanceOfType(decorator.Inner, typeof(ServiceWithValueDep));
+			Assert.IsInstanceOfType<ServiceWithValueDep>(decorator.Inner);
 		}
 
 		[TestMethod]
@@ -139,10 +139,10 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 					.FromAssemblyContaining<ServiceWithKeyedDep>()
 					.BasedOn<ServiceWithKeyedDep>()
 					.WithServiceSelf()
-					.Configure((configurer, implementationType) => configurer.DependsOn = new Dependency[]
-					{
+					.Configure((configureAction, _) => configureAction.DependsOn =
+					[
 						Parameter.ForKey("keyedService").Eq("one")
-					})
+					])
 					.LifestyleSingleton()
 				);
 			using var serviceProvider = serviceCollection.BuildServiceProvider();
@@ -150,7 +150,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			var service = serviceProvider.GetRequiredService<ServiceWithKeyedDep>();
 			Assert.IsNotNull(service);
 			Assert.IsNotNull(service.KeyedService);
-			Assert.IsInstanceOfType(service.KeyedService, typeof(KeyedService1));
+			Assert.IsInstanceOfType<KeyedService1>(service.KeyedService);
 		}
 
 		[TestMethod]
@@ -164,13 +164,13 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 					.FromAssemblyContaining<ServiceWithKeyedDep>()
 					.BasedOn<ServiceWithKeyedDep>()
 					.WithServiceSelf()
-					.Configure((configurer, implementationType) =>
+					.Configure((configureAction, _) =>
 					{
-						configurer.ServiceKey = "three";
-						configurer.DependsOn = new Dependency[]
-						{
+						configureAction.ServiceKey = "three";
+						configureAction.DependsOn =
+						[
 							Parameter.ForKey("keyedService").Eq("one")
-						};
+						];
 					})
 					.LifestyleSingleton()
 				);
@@ -179,7 +179,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			var service = serviceProvider.GetRequiredKeyedService<ServiceWithKeyedDep>("three");
 			Assert.IsNotNull(service);
 			Assert.IsNotNull(service.KeyedService);
-			Assert.IsInstanceOfType(service.KeyedService, typeof(KeyedService1));
+			Assert.IsInstanceOfType<KeyedService1>(service.KeyedService);
 		}
 
 		[TestMethod]
@@ -187,15 +187,15 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		{
 			var serviceCollection = new ServiceCollection();
 			serviceCollection.AddTransient<IKeyedService, KeyedService1>();
-			serviceCollection.AddTransient(typeof(IOpengenericServiceWithKeyedDep<>), typeof(OpenGenericServiceWithKeyedDep<>));
+			serviceCollection.AddTransient(typeof(IOpenGenericServiceWithKeyedDep<>), typeof(OpenGenericServiceWithKeyedDep<>));
 
 			using var serviceProvider = serviceCollection.BuildServiceProvider();
 
-			var service = serviceProvider.GetRequiredService<IOpengenericServiceWithKeyedDep<string>>();
+			var service = serviceProvider.GetRequiredService<IOpenGenericServiceWithKeyedDep<string>>();
 			Assert.IsNotNull(service);
 			Assert.AreEqual(typeof(string).FullName, service.GetType().GenericTypeArguments[0].FullName);
 			Assert.IsNotNull(service.KeyedService);
-			Assert.IsInstanceOfType(service.KeyedService, typeof(KeyedService1));
+			Assert.IsInstanceOfType<KeyedService1>(service.KeyedService);
 		}
 
 		/// <summary>
@@ -210,11 +210,11 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			serviceCollection.TryAddKeyedTransient<IKeyedService, KeyedService1>("one");
 			serviceCollection.TryAddKeyedTransient<IKeyedService, KeyedService2>("two");
 			// DependsOn is simulated by using a factory function
-			serviceCollection.AddTransient(typeof(IOpengenericServiceWithKeyedDep<>), typeof(OpenGenericServiceWithKeyedDep<>),
-				dependsOn: new Dependency[]
-				{
+			serviceCollection.AddTransient(typeof(IOpenGenericServiceWithKeyedDep<>), typeof(OpenGenericServiceWithKeyedDep<>),
+				dependsOn:
+				[
 					Parameter.ForKey("keyedService").Eq("one")
-				});
+				]);
 
 			Assert.ThrowsException<ArgumentException>(() =>
 			{
@@ -222,7 +222,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			});
 
 			/*
-			var service = serviceProvider.GetRequiredService<IOpengenericServiceWithKeyedDep<string>>();
+			var service = serviceProvider.GetRequiredService<IOpenGenericServiceWithKeyedDep<string>>();
 			Assert.IsNotNull(service);
 			Assert.AreEqual(typeof(string).FullName, service.GetType().GenericTypeArguments[0].FullName);
 			Assert.IsNotNull(service.KeyedService);
@@ -272,12 +272,12 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			public string Dep => Inner.Dep;
 		}
 
-		public interface IOpengenericServiceWithKeyedDep<T>
+		public interface IOpenGenericServiceWithKeyedDep<T>
 		{
 			IKeyedService KeyedService { get; }
 		}
 
-		public class OpenGenericServiceWithKeyedDep<T> : IOpengenericServiceWithKeyedDep<T>
+		public class OpenGenericServiceWithKeyedDep<T> : IOpenGenericServiceWithKeyedDep<T>
 		{
 			public OpenGenericServiceWithKeyedDep(IKeyedService keyedService)
 			{

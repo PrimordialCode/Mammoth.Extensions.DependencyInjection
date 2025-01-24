@@ -1,9 +1,9 @@
 ﻿namespace Mammoth.Extensions.DependencyInjection.Configuration
 {
-	// DependsOn is an array of dependecies that will be used to select the implementation to use
+	// DependsOn is an array of dependencies that will be used to select the implementation to use
 	// syntax will be like:
 	// Parameter.ForKey("eventStore").Eq("${PmEventStore}"),
-	// Dependency.OnValue("undispatchedMessageHeader", "UndispatchedMessage_")
+	// Dependency.OnValue("messageHeader", "DispatchedMessage_")
 
 	/// <summary>
 	/// A dependency that will be assigned to a constructor parameter

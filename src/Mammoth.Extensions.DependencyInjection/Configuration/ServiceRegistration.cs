@@ -6,7 +6,7 @@
 	public class ServiceRegistration
 	{
 		/// <summary>
-		/// Optinal service key.
+		/// Optional service key.
 		/// </summary>
 		public object? ServiceKey { get; set; }
 

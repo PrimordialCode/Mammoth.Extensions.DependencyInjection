@@ -3,6 +3,7 @@
 ## 0.3.0
 
 - Improved NuGet package (deterministic, source link).
+- Added net9.0 tests.
 
 ## 0.2.0
 

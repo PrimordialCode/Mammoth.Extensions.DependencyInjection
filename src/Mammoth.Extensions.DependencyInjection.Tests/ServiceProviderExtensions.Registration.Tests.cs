@@ -21,7 +21,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			var serviceCollection = new ServiceCollection();
 			var sp = serviceCollection.BuildServiceProvider();
 
-			Assert.ThrowsException<InvalidOperationException>(() => sp.IsServiceRegistered(typeof(TestService)));
+			Assert.ThrowsException<InvalidOperationException>(() => sp.IsServiceRegistered<TestService>());
 		}
 
 		[TestMethod]

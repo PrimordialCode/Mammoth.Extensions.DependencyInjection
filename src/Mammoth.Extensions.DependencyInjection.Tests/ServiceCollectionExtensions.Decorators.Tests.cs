@@ -308,14 +308,14 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		{
 			var serviceCollection = new ServiceCollection();
 
-			serviceCollection.AddTransient<ITestService>((_) => new TestService()); // this will not be corated
+			serviceCollection.AddTransient<ITestService>((_) => new TestService()); // this will not be created
 
-			serviceCollection.TryAddKeyedTransient<ITestService>("key", (_, key) => new TestService()); // innermost service
+			serviceCollection.TryAddKeyedTransient<ITestService>("key", (_, _) => new TestService()); // innermost service
 			serviceCollection.Decorate<ITestService, TestServiceDecorator1>(); //innermost decorator
 			serviceCollection.Decorate<ITestService, TestServiceDecorator2>();
 			serviceCollection.Decorate<ITestService, TestServiceDecorator3>(); // outermost decorator
 
-			serviceCollection.TryAddKeyedTransient<ITestService>("key2", (_, key) => new TestService()); // innermost service
+			serviceCollection.TryAddKeyedTransient<ITestService>("key2", (_, _) => new TestService()); // innermost service
 
 			serviceCollection.AddTransient<ExternalService>();
 

@@ -1,6 +1,6 @@
 ﻿using Mammoth.Cqrs.Infrastructure.Tests.Infrastructure;
 using Mammoth.Cqrs.Infrastructure.Tests.Infrastructure.Nested;
-using Mammoth.Cqrs.Infrastructure.Tests.Infrastructure.Nested.Subnamespace;
+using Mammoth.Cqrs.Infrastructure.Tests.Infrastructure.Nested.SubNamespace;
 using Mammoth.Extensions.DependencyInjection.Configuration;
 using Mammoth.Extensions.DependencyInjection.Inspector;
 
@@ -15,7 +15,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			// Create service descriptors for all types implementing ITestService
 			var descriptors = new AssemblyInspector()
 				.FromAssemblyContaining<ITestService>()
-				.BasedOn(typeof(ITestService))
+				.BasedOn<ITestService>()
 				.WithServiceBase()
 				.LifestyleTransient();
 
@@ -35,7 +35,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			// Create service descriptors for all types implementing TestService
 			var descriptors = new AssemblyInspector()
 				.FromAssemblyContaining<TestService>()
-				.BasedOn(typeof(TestService))
+				.BasedOn<TestService>()
 				.WithServiceBase()
 				.LifestyleTransient();
 
@@ -52,7 +52,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			// Create service descriptors for all types implementing ITestService
 			var descriptors = new AssemblyInspector()
 				.FromAssemblyContaining<TestService>()
-				.BasedOn(typeof(ITestService))
+				.BasedOn<ITestService>()
 				.WithServiceAllInterfaces()
 				.LifestyleTransient();
 
@@ -78,7 +78,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			// Create service descriptors for all types implementing ITestService
 			var descriptors = new AssemblyInspector()
 				.FromAssemblyContaining<ITestService>()
-				.BasedOn(typeof(ITestService))
+				.BasedOn<ITestService>()
 				.WithServiceSelf()
 				.LifestyleTransient();
 
@@ -130,8 +130,8 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 				&& d.ImplementationType == typeof(NestedTransientService1)));
 			Assert.IsTrue(descriptors.Any(d => d.ServiceType == typeof(NestedTransientService2)
 				&& d.ImplementationType == typeof(NestedTransientService2)));
-			Assert.IsTrue(descriptors.Any(d => d.ServiceType == typeof(SubnamespaceTransientService1)
-				&& d.ImplementationType == typeof(SubnamespaceTransientService1)));
+			Assert.IsTrue(descriptors.Any(d => d.ServiceType == typeof(SubNamespaceTransientService1)
+				&& d.ImplementationType == typeof(SubNamespaceTransientService1)));
 		}
 
 		[TestMethod]
@@ -173,7 +173,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		{
 			var descriptors = new AssemblyInspector()
 				.FromAssemblyContaining<TestService>()
-				.BasedOn(typeof(TestService))
+				.BasedOn<TestService>()
 				.WithServiceBase()
 				.Configure((configureAction, implementationType) =>
 				{
@@ -204,7 +204,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		{
 			var descriptors = new AssemblyInspector()
 				.FromAssemblyContaining<TestService>()
-				.BasedOn(typeof(TestService))
+				.BasedOn<TestService>()
 				.WithServiceBase()
 				.Configure((configureAction, implementationType) =>
 				{
@@ -233,7 +233,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		{
 			var descriptors = new AssemblyInspector()
 				.FromAssemblyContaining<TestService>()
-				.BasedOn(typeof(TestService))
+				.BasedOn<TestService>()
 				.WithServiceBase()
 				.Configure((configureAction, implementationType) =>
 				{
