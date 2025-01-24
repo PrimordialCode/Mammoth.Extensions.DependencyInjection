@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Mammoth.Extensions.DependencyInjection.Inspector
+﻿namespace Mammoth.Extensions.DependencyInjection.Inspector
 {
 	/// <summary>
 	/// Represents a class selector that allows specifying the base type.
@@ -10,9 +8,11 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 		/// <summary>
 		/// Specifies that the selected types should match a condition to be included.
 		/// </summary>
-		/// <param name="ifFilter">Condition to match</param>
+		/// <param name="condition">Condition to match</param>
 		/// <returns>A Service selector</returns>
-		IServiceSelector If(Predicate<Type> ifFilter);
+#pragma warning disable CA1716 // Identifiers should not match keywords
+		IServiceSelector If(Predicate<Type> condition);
+#pragma warning restore CA1716 // Identifiers should not match keywords
 
 		/// <summary>
 		/// Specifies the base type that the selected types should be based on.
@@ -24,19 +24,19 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 		/// <summary>
 		/// Specifies the base type that the selected types should be based on.
 		/// </summary>
-		/// <typeparam name="Type">The base type.</typeparam>
+		/// <typeparam name="T">The base type.</typeparam>
 		/// <returns>The service selector.</returns>
-		IServiceSelector BasedOn<Type>();
+		IServiceSelector BasedOn<T>();
 
 		/// <summary>
 		/// Specifies that the selected types should be in the same exact namespace as the specified type.
 		/// </summary>
-		IServiceSelector InSameNamespaceAs<Type>();
+		IServiceSelector InSameNamespaceAs<T>();
 
 		/// <summary>
 		/// Specifies that the selected types should be in the same namespace as the specified type.
 		/// </summary>
-		/// <param name="includeSubnamespaces">If set to true, will also include types from subnamespaces.</param>
-		IServiceSelector InSameNamespaceAs<Type>(bool includeSubnamespaces);
+		/// <param name="includeSubNamespaces">If set to true, will also include types from sub-namespaces.</param>
+		IServiceSelector InSameNamespaceAs<T>(bool includeSubNamespaces);
 	}
 }

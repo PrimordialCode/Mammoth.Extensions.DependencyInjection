@@ -21,18 +21,18 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			// resolve all non-keyed services
 			var services = serviceProvider.GetServices<ITestService>();
 			Assert.AreEqual(1, services.Count());
-			Assert.IsInstanceOfType(services.First(), typeof(AnotherTestService));
+			Assert.IsInstanceOfType<AnotherTestService>(services.First());
 
 			// passing "null" as the key should return all non-keyed services
 			var keyedServices = serviceProvider.GetKeyedServices<ITestService>(null);
 			Assert.AreEqual(1, keyedServices.Count());
-			Assert.IsInstanceOfType(keyedServices.First(), typeof(AnotherTestService));
+			Assert.IsInstanceOfType<AnotherTestService>(keyedServices.First());
 
 			// resolve all keyed services
 			keyedServices = serviceProvider.GetKeyedServices<ITestService>("one");
 			Assert.AreEqual(2, keyedServices.Count());
-			Assert.IsInstanceOfType(keyedServices.First(), typeof(TestService));
-			Assert.IsInstanceOfType(keyedServices.Last(), typeof(AnotherTestService));
+			Assert.IsInstanceOfType<TestService>(keyedServices.First());
+			Assert.IsInstanceOfType<AnotherTestService>(keyedServices.Last());
 
 			keyedServices = serviceProvider.GetKeyedServices<ITestService>(KeyedService.AnyKey);
 			Assert.AreEqual(0, keyedServices.Count()); // this is not an expected behavior, I expected it to return all services
@@ -56,7 +56,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			// framework only resolves non-keyed services
 			Assert.IsNotNull(service);
 			Assert.AreEqual(1, service.Services.Count());
-			Assert.IsInstanceOfType(service.Services.First(), typeof(AnotherTestService));
+			Assert.IsInstanceOfType<AnotherTestService>(service.Services.First());
 			// you need to register with a resolve function that uses GetAllServices<T> to resolve all services
 			// see a test below
 		}
@@ -72,13 +72,13 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			serviceCollection.AddTransient<ITestService, AnotherTestService>();
 			var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
-			var services = serviceProvider.GetAllServices(typeof(ITestService));
+			var services = serviceProvider.GetAllServices<ITestService>();
 			Assert.AreEqual(5, services.Count());
-			Assert.IsInstanceOfType(services.First(), typeof(AnotherTestService));
-			Assert.IsInstanceOfType(services.ElementAt(1), typeof(TestService));
-			Assert.IsInstanceOfType(services.ElementAt(2), typeof(AnotherTestService));
-			Assert.IsInstanceOfType(services.ElementAt(3), typeof(TestService));
-			Assert.IsInstanceOfType(services.Last(), typeof(AnotherTestService));
+			Assert.IsInstanceOfType<AnotherTestService>(services.First());
+			Assert.IsInstanceOfType<TestService>(services.ElementAt(1));
+			Assert.IsInstanceOfType<AnotherTestService>(services.ElementAt(2));
+			Assert.IsInstanceOfType<TestService>(services.ElementAt(3));
+			Assert.IsInstanceOfType<AnotherTestService>(services.Last());
 		}
 
 		[TestMethod]
@@ -94,11 +94,11 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 
 			var services = serviceProvider.GetAllServices<ITestService>();
 			Assert.AreEqual(5, services.Count());
-			Assert.IsInstanceOfType(services.First(), typeof(AnotherTestService));
-			Assert.IsInstanceOfType(services.ElementAt(1), typeof(TestService));
-			Assert.IsInstanceOfType(services.ElementAt(2), typeof(AnotherTestService));
-			Assert.IsInstanceOfType(services.ElementAt(3), typeof(TestService));
-			Assert.IsInstanceOfType(services.Last(), typeof(AnotherTestService));
+			Assert.IsInstanceOfType<AnotherTestService>(services.First());
+			Assert.IsInstanceOfType<TestService>(services.ElementAt(1));
+			Assert.IsInstanceOfType<AnotherTestService>(services.ElementAt(2));
+			Assert.IsInstanceOfType<TestService>(services.ElementAt(3));
+			Assert.IsInstanceOfType<AnotherTestService>(services.Last());
 		}
 
 		/// <summary>
@@ -125,9 +125,9 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			// framework only resolves non-keyed services
 			Assert.IsNotNull(service);
 			Assert.AreEqual(3, service.Services.Count());
-			Assert.IsInstanceOfType(service.Services.First(), typeof(AnotherTestService));
-			Assert.IsInstanceOfType(service.Services.ElementAt(1), typeof(TestService));
-			Assert.IsInstanceOfType(service.Services.Last(), typeof(AnotherTestService));
+			Assert.IsInstanceOfType<AnotherTestService>(service.Services.First());
+			Assert.IsInstanceOfType<TestService>(service.Services.ElementAt(1));
+			Assert.IsInstanceOfType<AnotherTestService>(service.Services.Last());
 		}
 
 		[TestMethod]
@@ -142,13 +142,13 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			serviceCollection.AddTransient<ITestService, AnotherTestService>();
 			var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
-			var services = serviceProvider.GetAllServices(typeof(ITestService));
+			var services = serviceProvider.GetAllServices<ITestService>();
 			Assert.AreEqual(5, services.Count());
-			Assert.IsInstanceOfType(services.First(), typeof(AnotherTestService));
-			Assert.IsInstanceOfType(services.ElementAt(1), typeof(TestService));
-			Assert.IsInstanceOfType(services.ElementAt(2), typeof(TestServiceDecorator1));
-			Assert.IsInstanceOfType(services.ElementAt(3), typeof(TestService));
-			Assert.IsInstanceOfType(services.Last(), typeof(AnotherTestService));
+			Assert.IsInstanceOfType<AnotherTestService>(services.First());
+			Assert.IsInstanceOfType<TestService>(services.ElementAt(1));
+			Assert.IsInstanceOfType<TestServiceDecorator1>(services.ElementAt(2));
+			Assert.IsInstanceOfType<TestService>(services.ElementAt(3));
+			Assert.IsInstanceOfType<AnotherTestService>(services.Last());
 		}
 
 		[TestMethod]
@@ -165,11 +165,11 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 
 			var services = serviceProvider.GetAllServices<ITestService>();
 			Assert.AreEqual(5, services.Count());
-			Assert.IsInstanceOfType(services.First(), typeof(AnotherTestService));
-			Assert.IsInstanceOfType(services.ElementAt(1), typeof(TestService));
-			Assert.IsInstanceOfType(services.ElementAt(2), typeof(TestServiceDecorator1));
-			Assert.IsInstanceOfType(services.ElementAt(3), typeof(TestService));
-			Assert.IsInstanceOfType(services.Last(), typeof(AnotherTestService));
+			Assert.IsInstanceOfType<AnotherTestService>(services.First());
+			Assert.IsInstanceOfType<TestService>(services.ElementAt(1));
+			Assert.IsInstanceOfType<TestServiceDecorator1>(services.ElementAt(2));
+			Assert.IsInstanceOfType<TestService>(services.ElementAt(3));
+			Assert.IsInstanceOfType<AnotherTestService>(services.Last());
 		}
 
 		[TestMethod]

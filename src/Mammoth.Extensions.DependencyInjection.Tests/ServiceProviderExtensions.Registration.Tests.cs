@@ -21,7 +21,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			var serviceCollection = new ServiceCollection();
 			var sp = serviceCollection.BuildServiceProvider();
 
-			Assert.ThrowsException<InvalidOperationException>(() => sp.IsServiceRegistered(typeof(TestService)));
+			Assert.ThrowsException<InvalidOperationException>(() => sp.IsServiceRegistered<TestService>());
 		}
 
 		[TestMethod]
@@ -90,7 +90,9 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			serviceCollection.AddSingleton<TestService>();
 			var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
 			Assert.ThrowsException<ArgumentNullException>(() => sp.IsServiceRegistered(serviceKey: null));
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 		}
 	}
 }

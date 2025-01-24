@@ -4,7 +4,7 @@
 
 & dotnet tool run dotnet-gitversion /updateprojectfiles
 
-& dotnet build ./src/Mammoth.Extensions.DependencyInjection.sln --configuration Release --no-restore
+& dotnet build ./src/Mammoth.Extensions.DependencyInjection.sln --configuration Release --no-restore -p:ContinuousIntegrationBuild=True
 
 # & dotnet test ./src/Mammoth.Extensions.DependencyInjection.sln --configuration Release --no-build --verbosity normal
 

@@ -1,6 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Linq;
 
 namespace Mammoth.Extensions.DependencyInjection
 {
@@ -63,7 +61,7 @@ namespace Mammoth.Extensions.DependencyInjection
 				newServiceDescriptor = new ServiceDescriptor(
 					typeof(TInterface),
 					originalServiceDescriptor.ServiceKey,
-					(serviceProvider, key) =>
+					(serviceProvider, _) =>
 					{
 						TInterface originalService = (TInterface)serviceProvider.GetRequiredKeyedService(originalServiceDescriptorReplacement.ServiceType, originalServiceDescriptor.ServiceKey);
 						return ActivatorUtilities.CreateInstance<TDecorator>(serviceProvider, originalService);

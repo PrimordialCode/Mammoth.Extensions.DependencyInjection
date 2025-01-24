@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.0</TargetFrameworks>
 		<OutputPath>bin\$(Configuration)\</OutputPath>
@@ -13,26 +12,31 @@
 		<RepositoryUrl>https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection</RepositoryUrl>
 		<Copyright>Copyright Giorgetti Alessandro 2024</Copyright>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<LangVersion>latest</LangVersion>
-		<Nullable>enable</Nullable>
 		<DebugSymbols>true</DebugSymbols>
 		<IncludeSymbols>true</IncludeSymbols>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<Deterministic>true</Deterministic>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<ContinuousIntegrationBuild Condition="'$(TF_BUILD)' == 'true'">True</ContinuousIntegrationBuild>
+		<ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">True</ContinuousIntegrationBuild>
+		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+		<EnableNETAnalyzers>True</EnableNETAnalyzers>
+		<AnalysisLevel>latest-recommended</AnalysisLevel>
 	</PropertyGroup>
-
 	<ItemGroup>
 	  <Compile Remove="ServiceProviderExtensions.Reflection.cs" />
 	</ItemGroup>
-
 	<ItemGroup>
 	  <None Include="ServiceProviderExtensions.Reflection.cs" />
 		<None Include="..\..\README.md" Pack="true" PackagePath="\" />
 		<None Include="..\..\Mammoth.png" Pack="true" PackagePath="\" />
 	</ItemGroup>
-
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
 		<PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
+		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 	</ItemGroup>
-
 </Project>

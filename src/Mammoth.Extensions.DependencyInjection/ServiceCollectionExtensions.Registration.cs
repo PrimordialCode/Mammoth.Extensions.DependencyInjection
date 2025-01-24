@@ -1,6 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Linq;
 
 namespace Mammoth.Extensions.DependencyInjection
 {
@@ -63,13 +61,13 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <param name="services">The service collection.</param>
 		/// <param name="serviceType">The type of the service.</param>
 		/// <returns><c>true</c> if the last registration of the service is transient; otherwise, <c>false</c>.</returns>
-		/// <exception cref="Exception">Thrown when the service is not registered.</exception>
+		/// <exception cref="InvalidOperationException">Thrown when the service is not registered.</exception>
 		public static bool IsTransientServiceRegistered(this IServiceCollection services, Type serviceType)
 		{
 			var descriptors = services.GetServiceDescriptors(serviceType);
 			if (descriptors.Length == 0)
 			{
-				throw new Exception($"Service {serviceType.FullName} is not registered.");
+				throw new InvalidOperationException($"Service {serviceType.FullName} is not registered.");
 			}
 			return descriptors.Last().Lifetime == ServiceLifetime.Transient;
 		}
@@ -91,13 +89,13 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <param name="services">The service collection.</param>
 		/// <param name="serviceType">The type of the service.</param>
 		/// <returns><c>true</c> if the last registration of the service is scoped; otherwise, <c>false</c>.</returns>
-		/// <exception cref="Exception">Thrown when the service is not registered.</exception>
+		/// <exception cref="InvalidOperationException">Thrown when the service is not registered.</exception>
 		public static bool IsScopedServiceRegistered(this IServiceCollection services, Type serviceType)
 		{
 			var descriptors = services.GetServiceDescriptors(serviceType);
 			if (descriptors.Length == 0)
 			{
-				throw new Exception($"Service {serviceType.FullName} is not registered.");
+				throw new InvalidOperationException($"Service {serviceType.FullName} is not registered.");
 			}
 			return descriptors.Last().Lifetime == ServiceLifetime.Scoped;
 		}
@@ -119,13 +117,13 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <param name="services">The service collection.</param>
 		/// <param name="serviceType">The type of the service.</param>
 		/// <returns><c>true</c> if the last registration of the service is singleton; otherwise, <c>false</c>.</returns>
-		/// <exception cref="Exception">Thrown when the service is not registered.</exception>
+		/// <exception cref="InvalidOperationException">Thrown when the service is not registered.</exception>
 		public static bool IsSingletonServiceRegistered(this IServiceCollection services, Type serviceType)
 		{
 			var descriptors = services.GetServiceDescriptors(serviceType);
 			if (descriptors.Length == 0)
 			{
-				throw new Exception($"Service {serviceType.FullName} is not registered.");
+				throw new InvalidOperationException($"Service {serviceType.FullName} is not registered.");
 			}
 			return descriptors.Last().Lifetime == ServiceLifetime.Singleton;
 		}
