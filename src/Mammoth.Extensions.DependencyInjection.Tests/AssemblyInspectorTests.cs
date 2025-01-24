@@ -115,12 +115,12 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		}
 
 		[TestMethod]
-		public void ServiceDescriptors_InSameNamespaceAs_IncludeSubnamespaces_WithServiceSelf()
+		public void ServiceDescriptors_InSameNamespaceAs_IncludeSubNamespaces_WithServiceSelf()
 		{
 			// Create service descriptors for all types implementing ITestService
 			var descriptors = new AssemblyInspector()
 				.FromAssemblyContaining<ITestService>()
-				.InSameNamespaceAs<NestedTransientService1>(includeSubnamespaces: true)
+				.InSameNamespaceAs<NestedTransientService1>(includeSubNamespaces: true)
 				.WithServiceSelf()
 				.LifestyleTransient();
 
@@ -165,7 +165,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		}
 
 		/// <summary>
-		/// AssebmlyInspector using Configure() will create ServiceDescriptrs with ImplementationFactory
+		/// AssemblyInspector using Configure() will create ServiceDescriptors with ImplementationFactory
 		/// that will be used to resolve all the configured parameters.
 		/// </summary>
 		[TestMethod]
@@ -175,14 +175,14 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 				.FromAssemblyContaining<TestService>()
 				.BasedOn(typeof(TestService))
 				.WithServiceBase()
-				.Configure((configurer, implementationType) =>
+				.Configure((configureAction, implementationType) =>
 				{
 					Assert.AreEqual(typeof(TestService), implementationType);
 
-					configurer.DependsOn = new Dependency[]
-					{
+					configureAction.DependsOn =
+					[
 						Parameter.ForKey("param").Eq("nonexisting")
-					};
+					];
 				})
 				.LifestyleTransient();
 
@@ -196,7 +196,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		}
 
 		/// <summary>
-		/// AssebmlyInspector using Configure() will create ServiceDescriptrs with ImplementationFactory
+		/// AssemblyInspector using Configure() will create ServiceDescriptors with ImplementationFactory
 		/// that will be used to resolve all the configured parameters.
 		/// </summary>
 		[TestMethod]
@@ -206,11 +206,11 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 				.FromAssemblyContaining<TestService>()
 				.BasedOn(typeof(TestService))
 				.WithServiceBase()
-				.Configure((configurer, implementationType) =>
+				.Configure((configureAction, implementationType) =>
 				{
 					Assert.AreEqual(typeof(TestService), implementationType);
 
-					configurer.ServiceKey = "one";
+					configureAction.ServiceKey = "one";
 				})
 				.LifestyleTransient();
 
@@ -225,7 +225,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		}
 
 		/// <summary>
-		/// AssebmlyInspector using Configure() will create ServiceDescriptrs with ImplementationFactory
+		/// AssemblyInspector using Configure() will create ServiceDescriptors with ImplementationFactory
 		/// that will be used to resolve all the configured parameters.
 		/// </summary>
 		[TestMethod]
@@ -235,15 +235,15 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 				.FromAssemblyContaining<TestService>()
 				.BasedOn(typeof(TestService))
 				.WithServiceBase()
-				.Configure((configurer, implementationType) =>
+				.Configure((configureAction, implementationType) =>
 				{
 					Assert.AreEqual(typeof(TestService), implementationType);
 
-					configurer.ServiceKey = "one";
-					configurer.DependsOn = new Dependency[]
-					{
+					configureAction.ServiceKey = "one";
+					configureAction.DependsOn =
+					[
 						Parameter.ForKey("param").Eq("nonexisting")
-					};
+					];
 				})
 				.LifestyleTransient();
 
