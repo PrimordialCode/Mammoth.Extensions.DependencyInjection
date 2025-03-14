@@ -17,45 +17,6 @@ namespace Mammoth.Extensions.DependencyInjection;
 public static partial class ServiceProviderExtensions
 {
 	/// <summary>
-	/// Determines whether the specified service type is registered in the service provider (keyed or non-keyed).
-	/// </summary>
-	public static bool IsServiceRegistered(this IServiceProvider serviceProvider, Type serviceType)
-	{
-		if (serviceType is null)
-		{
-			throw new ArgumentNullException(nameof(serviceType));
-		}
-		var serviceTypes = serviceProvider.GetService<ServiceTypes>()
-			?? throw BuildExceptionBecauseProviderWasNotBuiltUsingTheFactory();
-
-		return serviceTypes.Any(type => type == serviceType);
-	}
-
-	/// <summary>
-	/// Determines whether the specified service type is registered in the service provider (keyed or non-keyed).
-	/// </summary>
-	public static bool IsServiceRegistered<TServiceType>(this IServiceProvider serviceProvider)
-	{
-		return IsServiceRegistered(serviceProvider, typeof(TServiceType));
-	}
-
-	/// <summary>
-	/// Determines whether the specified service type is registered in the service provider (keyed or non-keyed).
-	/// </summary>
-	public static bool IsServiceRegistered(this IServiceProvider serviceProvider, object serviceKey)
-	{
-		if (serviceKey is null)
-		{
-			throw new ArgumentNullException(nameof(serviceKey));
-		}
-
-		var serviceKeys = serviceProvider.GetService<Keys>()
-			?? throw BuildExceptionBecauseProviderWasNotBuiltUsingTheFactory();
-
-		return serviceKeys.Any(key => key.Equals(serviceKey));
-	}
-
-	/// <summary>
 	/// Resolves all the services of the specified ServiceTye (both keyed and non-keyed) from the service provider.
 	/// Order of services is not guaranteed to be the same as the order of registration:
 	/// - first will be resolved non-keyed services (in the order of registration)
@@ -67,7 +28,7 @@ public static partial class ServiceProviderExtensions
 	/// </remarks>
 	public static IEnumerable<object?> GetAllServices(this IServiceProvider serviceProvider, Type serviceType)
 	{
-		var KeysType = typeof(Keys<>).MakeGenericType(serviceType);
+		var KeysType = typeof(ServiceKeys<>).MakeGenericType(serviceType);
 		var serviceList = new List<object?>();
 		// add null key to get all non-keyed services
 		serviceList.AddRange(serviceProvider.GetServices(serviceType));
@@ -97,7 +58,7 @@ public static partial class ServiceProviderExtensions
 	/// </remarks>
 	public static IEnumerable<TServiceType> GetAllServices<TServiceType>(this IServiceProvider serviceProvider)
 	{
-		var keys = serviceProvider.GetService<Keys<TServiceType>>();
+		var keys = serviceProvider.GetService<ServiceKeys<TServiceType>>();
 		var serviceList = new List<TServiceType>();
 		// add null key to get all non-keyed services
 		serviceList.AddRange(serviceProvider.GetServices<TServiceType>());

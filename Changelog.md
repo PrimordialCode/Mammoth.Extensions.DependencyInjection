@@ -1,5 +1,9 @@
 # Mammoth.Extensions.DependencyInjection
 
+## vNext
+
+- Added ServiceProvider extension methods to check if Registered Services are: Transient, Scoped, Singleton [#1](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/1)
+
 ## 0.3.0
 
 - Improved NuGet package (deterministic, source link).
