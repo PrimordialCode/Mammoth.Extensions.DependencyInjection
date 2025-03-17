@@ -22,7 +22,26 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// Enrich the <paramref name="containerBuilder"/> with the necessary services to be able to resolve the keys
 		/// and other useful services; then build the <see cref="IServiceProvider"/>.
 		/// </summary>
-		public static IServiceProvider CreateServiceProvider(IServiceCollection containerBuilder)
+		public static ServiceProvider CreateServiceProvider(IServiceCollection containerBuilder, ExtendedServiceProviderOptions? options = null)
+		{
+			AddIsRegisteredSupportServices(containerBuilder);
+
+			if (options == null)
+			{
+				return containerBuilder.BuildServiceProvider();
+			}
+			var sc = containerBuilder;
+			if (options.DetectIncorrectUsageOfTransientDisposables)
+			{
+				sc = DetectIncorrectUsageOfTransientDisposables.PatchServiceCollection(containerBuilder);
+			}
+			return sc.BuildServiceProvider(options);
+		}
+
+		/// <summary>
+		/// Registers support services related to service keys, types, and lifetimes in the provided service collection.
+		/// </summary>
+		private static void AddIsRegisteredSupportServices(IServiceCollection containerBuilder)
 		{
 			var dict = new Dictionary<Type, HashSet<object>>();
 			var keys = new ServiceKeys();
@@ -67,8 +86,6 @@ namespace Mammoth.Extensions.DependencyInjection
 			containerBuilder.AddSingleton(typeof(ServiceKeys<>));
 			// Insert ServiceLifetimes as a service
 			containerBuilder.AddSingleton(serviceLifetimes);
-
-			return containerBuilder.BuildServiceProvider();
 		}
 	}
 

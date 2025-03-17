@@ -139,17 +139,34 @@ Helper methods to check if a service was registered or a ServiceDescriptor exist
 
 To use the following extensions you need to build the ServiceProvider using our `ServiceProviderFactory`.
 
-It will inject some support services that are used to keep tracks of the registered services.
+It will inject support services used to detect incorrect usage of Transient Disposable services and keep track of registered services.
 
 ```csharp
-new HostBuilder().UseServiceProviderFactory(new ServiceProviderFactory());
+new HostBuilder().UseServiceProviderFactory(new ServiceProviderFactory(new ExtendedServiceProviderOptions()));
 
 // - or -
 
-var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection, new ExtendedServiceProviderOptions());
 ```
 
-You can then use the following extensions:
+###### Detect incorrect usage of Transient Disposables
+
+To detect incorrect usage of Transient Disposable when they are resolved by Root Scope, create the service provider with:
+
+```csharp
+new HostBuilder().UseServiceProviderFactory(new ServiceProviderFactory(
+  new ExtendedServiceProviderOptions 
+  {
+    DetectIncorrectUsageOfTransientDisposables = true 
+  }));
+```
+
+WARNING: use this feature only in debug and development build, because it has a performance impact and internally uses reflection to 
+access internal Service Provider implementation (it can be fragile).
+
+###### IsRegistered extension methods
+
+You can use the following `IServiceProvider` extension methods:
 
 - `GetAllServices`: resolves all keyed and non-keyed services of a given service type.
 - `IsServiceRegistered`: checks whether the specified service type is registered in the service provider (keyed or non-keyed).
