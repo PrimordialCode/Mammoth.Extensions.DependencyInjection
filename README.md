@@ -26,7 +26,7 @@ This is useful when you want to add new functionality to an existing service wit
 
 The following example demonstrates how to decorate an existing service with a new implementation.
 
-The current implementation requires that the sservice to be decorated implements an interface.
+The current implementation requires that the service to be decorated implements an interface.
 
 ```csharp
 public interface ITestService { }
@@ -167,7 +167,7 @@ The `AssemblyInspector` class is used to inspect the assemblies looking for serv
 
 It is once again inspired by the syntax used in [Castle.Windsor](https://github.com/castleproject) to inspect and register services.
 
-It looks for classes and offers a series of methods that are pretty self explanatory to output ServiceDescriptos that
+It looks for classes and offers a series of methods that are pretty self explanatory to output ServiceDescriptors that
 will be registered in the ServiceCollection.
 
 It also supports the `DependsOn` registration extensions:

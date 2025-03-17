@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿#pragma warning disable IDE0079 // Remove unnecessary suppression
+#pragma warning disable MSTEST0032 // Assertion condition is always true
+
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Mammoth.Cqrs.Infrastructure.Tests.Infrastructure;
 using Mammoth.Extensions.DependencyInjection.Inspector;
@@ -216,7 +219,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 					Parameter.ForKey("keyedService").Eq("one")
 				]);
 
-			Assert.ThrowsException<ArgumentException>(() =>
+			Assert.ThrowsExactly<ArgumentException>(() =>
 			{
 				using var serviceProvider = serviceCollection.BuildServiceProvider();
 			});
@@ -288,3 +291,6 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		}
 	}
 }
+
+#pragma warning restore MSTEST0032 // Assertion condition is always true
+#pragma warning restore IDE0079 // Remove unnecessary suppression
