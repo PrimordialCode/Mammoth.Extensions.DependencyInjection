@@ -24,10 +24,10 @@
 		<AnalysisLevel>latest-recommended</AnalysisLevel>
 	</PropertyGroup>
 	<ItemGroup>
-	  <Compile Remove="ServiceProviderExtensions.Reflection.cs" />
+	  <Compile Remove="ServiceProviderExtensions.Reflection.Disabled.cs" />
 	</ItemGroup>
 	<ItemGroup>
-	  <None Include="ServiceProviderExtensions.Reflection.cs" />
+	  <None Include="ServiceProviderExtensions.Reflection.Disabled.cs" />
 		<None Include="..\..\README.md" Pack="true" PackagePath="\" />
 		<None Include="..\..\Mammoth.png" Pack="true" PackagePath="\" />
 	</ItemGroup>
