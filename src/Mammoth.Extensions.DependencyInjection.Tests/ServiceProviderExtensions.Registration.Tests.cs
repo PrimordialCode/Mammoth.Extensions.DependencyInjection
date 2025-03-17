@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿#pragma warning disable IDE0079 // Remove unnecessary suppression
+#pragma warning disable CA2263 // Prefer generic overload
+
+using Microsoft.Extensions.DependencyInjection;
 using Mammoth.Cqrs.Infrastructure.Tests.Infrastructure;
 
 namespace Mammoth.Extensions.DependencyInjection.Tests
@@ -12,10 +15,10 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			var serviceCollection = new ServiceCollection();
 			var sp = serviceCollection.BuildServiceProvider();
 
-			Assert.ThrowsException<InvalidOperationException>(() => sp.IsServiceRegistered(typeof(TestService)));
-			Assert.ThrowsException<InvalidOperationException>(() => sp.IsSingletonServiceRegistered(typeof(TestService)));
-			Assert.ThrowsException<InvalidOperationException>(() => sp.IsTransientServiceRegistered(typeof(TestService)));
-			Assert.ThrowsException<InvalidOperationException>(() => sp.IsScopedServiceRegistered(typeof(TestService)));
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsServiceRegistered(typeof(TestService)));
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsSingletonServiceRegistered(typeof(TestService)));
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsTransientServiceRegistered(typeof(TestService)));
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsScopedServiceRegistered(typeof(TestService)));
 		}
 
 		[TestMethod]
@@ -24,10 +27,10 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			var serviceCollection = new ServiceCollection();
 			var sp = serviceCollection.BuildServiceProvider();
 
-			Assert.ThrowsException<InvalidOperationException>(() => sp.IsServiceRegistered<TestService>());
-			Assert.ThrowsException<InvalidOperationException>(() => sp.IsSingletonServiceRegistered<TestService>());
-			Assert.ThrowsException<InvalidOperationException>(() => sp.IsTransientServiceRegistered<TestService>());
-			Assert.ThrowsException<InvalidOperationException>(() => sp.IsScopedServiceRegistered<TestService>());
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsServiceRegistered<TestService>());
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsSingletonServiceRegistered<TestService>());
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsTransientServiceRegistered<TestService>());
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsScopedServiceRegistered<TestService>());
 		}
 
 		[TestMethod]
@@ -36,10 +39,10 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			var serviceCollection = new ServiceCollection();
 			var sp = serviceCollection.BuildServiceProvider();
 
-			Assert.ThrowsException<InvalidOperationException>(() => sp.IsKeyedServiceRegistered("service"));
-			Assert.ThrowsException<InvalidOperationException>(() => sp.IsKeyedSingletonServiceRegistered(typeof(TestService), "service"));
-			Assert.ThrowsException<InvalidOperationException>(() => sp.IsKeyedTransientServiceRegistered(typeof(TestService), "service"));
-			Assert.ThrowsException<InvalidOperationException>(() => sp.IsKeyedScopedServiceRegistered(typeof(TestService), "service"));
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsKeyedServiceRegistered("service"));
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsKeyedSingletonServiceRegistered(typeof(TestService), "service"));
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsKeyedTransientServiceRegistered(typeof(TestService), "service"));
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsKeyedScopedServiceRegistered(typeof(TestService), "service"));
 		}
 
 		[TestMethod]
@@ -48,10 +51,10 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			var serviceCollection = new ServiceCollection();
 			var sp = serviceCollection.BuildServiceProvider();
 
-			Assert.ThrowsException<InvalidOperationException>(() => sp.IsKeyedServiceRegistered("service"));
-			Assert.ThrowsException<InvalidOperationException>(() => sp.IsKeyedSingletonServiceRegistered<TestService>("service"));
-			Assert.ThrowsException<InvalidOperationException>(() => sp.IsKeyedTransientServiceRegistered<TestService>("service"));
-			Assert.ThrowsException<InvalidOperationException>(() => sp.IsKeyedScopedServiceRegistered<TestService>("service"));
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsKeyedServiceRegistered("service"));
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsKeyedSingletonServiceRegistered<TestService>("service"));
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsKeyedTransientServiceRegistered<TestService>("service"));
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsKeyedScopedServiceRegistered<TestService>("service"));
 		}
 
 		[TestMethod]
@@ -100,10 +103,10 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-			Assert.ThrowsException<ArgumentNullException>(() => sp.IsKeyedServiceRegistered(serviceKey: null));
-			Assert.ThrowsException<ArgumentNullException>(() => sp.IsKeyedSingletonServiceRegistered<TestService>(serviceKey: null));
-			Assert.ThrowsException<ArgumentNullException>(() => sp.IsKeyedTransientServiceRegistered<TestService>(serviceKey: null));
-			Assert.ThrowsException<ArgumentNullException>(() => sp.IsKeyedScopedServiceRegistered<TestService>(serviceKey: null));
+			Assert.ThrowsExactly<ArgumentNullException>(() => sp.IsKeyedServiceRegistered(serviceKey: null));
+			Assert.ThrowsExactly<ArgumentNullException>(() => sp.IsKeyedSingletonServiceRegistered<TestService>(serviceKey: null));
+			Assert.ThrowsExactly<ArgumentNullException>(() => sp.IsKeyedTransientServiceRegistered<TestService>(serviceKey: null));
+			Assert.ThrowsExactly<ArgumentNullException>(() => sp.IsKeyedScopedServiceRegistered<TestService>(serviceKey: null));
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 		}
 
@@ -255,3 +258,6 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		}
 	}
 }
+
+#pragma warning restore CA2263 // Prefer generic overload
+#pragma warning restore IDE0079 // Remove unnecessary suppression

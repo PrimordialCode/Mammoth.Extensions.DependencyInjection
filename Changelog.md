@@ -2,6 +2,8 @@
 
 ## vNext
 
+## 0.4.0
+
 - Added ServiceProvider extension methods to check if Registered Services are: Transient, Scoped, Singleton [#1](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/1)
 
 ### Breaking Changes

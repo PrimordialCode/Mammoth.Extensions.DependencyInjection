@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿#pragma warning disable IDE0079 // Remove unnecessary suppression
+#pragma warning disable MSTEST0032 // Assertion condition is always true
+
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Mammoth.Cqrs.Infrastructure.Tests.Infrastructure;
 
@@ -24,18 +27,18 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			var service = _serviceProvider.GetRequiredService<ITestService>();
 
 			Assert.IsNotNull(service);
-			Assert.IsInstanceOfType(service, typeof(TestServiceDecorator3));
+			Assert.IsInstanceOfType<TestServiceDecorator3>(service);
 			var decorator3 = (TestServiceDecorator3)service;
 			Assert.IsNotNull(decorator3.Inner);
-			Assert.IsInstanceOfType(decorator3.Inner, typeof(TestServiceDecorator2));
+			Assert.IsInstanceOfType<TestServiceDecorator2>(decorator3.Inner);
 			var decorator2 = (TestServiceDecorator2)decorator3.Inner;
 			Assert.IsNotNull(decorator2.ExternalService);
-			Assert.IsInstanceOfType(decorator2.ExternalService, typeof(ExternalService));
+			Assert.IsInstanceOfType<ExternalService>(decorator2.ExternalService);
 			Assert.IsNotNull(decorator2.Inner);
-			Assert.IsInstanceOfType(decorator2.Inner, typeof(TestServiceDecorator1));
+			Assert.IsInstanceOfType<TestServiceDecorator1>(decorator2.Inner);
 			var decorator1 = (TestServiceDecorator1)decorator2.Inner;
 			Assert.IsNotNull(decorator1.Inner);
-			Assert.IsInstanceOfType(decorator1.Inner, typeof(TestService));
+			Assert.IsInstanceOfType<TestService>(decorator1.Inner);
 			Assert.AreEqual(decorator1.Inner, implementationInstance);
 		}
 
@@ -60,23 +63,23 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 
 			var service = services.First();
 			Assert.IsNotNull(service);
-			Assert.IsInstanceOfType(service, typeof(TestServiceDecorator3));
+			Assert.IsInstanceOfType<TestServiceDecorator3>(service);
 			var decorator3 = (TestServiceDecorator3)service;
 			Assert.IsNotNull(decorator3.Inner);
-			Assert.IsInstanceOfType(decorator3.Inner, typeof(TestServiceDecorator2));
+			Assert.IsInstanceOfType<TestServiceDecorator2>(decorator3.Inner);
 			var decorator2 = (TestServiceDecorator2)decorator3.Inner;
 			Assert.IsNotNull(decorator2.ExternalService);
-			Assert.IsInstanceOfType(decorator2.ExternalService, typeof(ExternalService));
+			Assert.IsInstanceOfType<ExternalService>(decorator2.ExternalService);
 			Assert.IsNotNull(decorator2.Inner);
-			Assert.IsInstanceOfType(decorator2.Inner, typeof(TestServiceDecorator1));
+			Assert.IsInstanceOfType<TestServiceDecorator1>(decorator2.Inner);
 			var decorator1 = (TestServiceDecorator1)decorator2.Inner;
 			Assert.IsNotNull(decorator1.Inner);
-			Assert.IsInstanceOfType(decorator1.Inner, typeof(TestService));
+			Assert.IsInstanceOfType<TestService>(decorator1.Inner);
 			Assert.AreEqual(decorator1.Inner, implementationInstance);
 
 			service = services.Last();
 			Assert.IsNotNull(service);
-			Assert.IsInstanceOfType(service, typeof(TestService));
+			Assert.IsInstanceOfType<TestService>(service);
 			Assert.AreEqual(service, implementationInstance2);
 		}
 
@@ -96,18 +99,18 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			var service = _serviceProvider.GetRequiredService<ITestService>();
 
 			Assert.IsNotNull(service);
-			Assert.IsInstanceOfType(service, typeof(TestServiceDecorator3));
+			Assert.IsInstanceOfType<TestServiceDecorator3>(service);
 			var decorator3 = (TestServiceDecorator3)service;
 			Assert.IsNotNull(decorator3.Inner);
-			Assert.IsInstanceOfType(decorator3.Inner, typeof(TestServiceDecorator2));
+			Assert.IsInstanceOfType<TestServiceDecorator2>(decorator3.Inner);
 			var decorator2 = (TestServiceDecorator2)decorator3.Inner;
 			Assert.IsNotNull(decorator2.ExternalService);
-			Assert.IsInstanceOfType(decorator2.ExternalService, typeof(ExternalService));
+			Assert.IsInstanceOfType<ExternalService>(decorator2.ExternalService);
 			Assert.IsNotNull(decorator2.Inner);
-			Assert.IsInstanceOfType(decorator2.Inner, typeof(TestServiceDecorator1));
+			Assert.IsInstanceOfType<TestServiceDecorator1>(decorator2.Inner);
 			var decorator1 = (TestServiceDecorator1)decorator2.Inner;
 			Assert.IsNotNull(decorator1.Inner);
-			Assert.IsInstanceOfType(decorator1.Inner, typeof(TestService));
+			Assert.IsInstanceOfType<TestService>(decorator1.Inner);
 		}
 
 		[TestMethod]
@@ -129,22 +132,22 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 
 			var service = services.First();
 			Assert.IsNotNull(service);
-			Assert.IsInstanceOfType(service, typeof(TestServiceDecorator3));
+			Assert.IsInstanceOfType<TestServiceDecorator3>(service);
 			var decorator3 = (TestServiceDecorator3)service;
 			Assert.IsNotNull(decorator3.Inner);
-			Assert.IsInstanceOfType(decorator3.Inner, typeof(TestServiceDecorator2));
+			Assert.IsInstanceOfType<TestServiceDecorator2>(decorator3.Inner);
 			var decorator2 = (TestServiceDecorator2)decorator3.Inner;
 			Assert.IsNotNull(decorator2.ExternalService);
-			Assert.IsInstanceOfType(decorator2.ExternalService, typeof(ExternalService));
+			Assert.IsInstanceOfType<ExternalService>(decorator2.ExternalService);
 			Assert.IsNotNull(decorator2.Inner);
-			Assert.IsInstanceOfType(decorator2.Inner, typeof(TestServiceDecorator1));
+			Assert.IsInstanceOfType<TestServiceDecorator1>(decorator2.Inner);
 			var decorator1 = (TestServiceDecorator1)decorator2.Inner;
 			Assert.IsNotNull(decorator1.Inner);
-			Assert.IsInstanceOfType(decorator1.Inner, typeof(TestService));
+			Assert.IsInstanceOfType<TestService>(decorator1.Inner);
 
 			service = services.Last();
 			Assert.IsNotNull(service);
-			Assert.IsInstanceOfType(service, typeof(AnotherTestService));
+			Assert.IsInstanceOfType<AnotherTestService>(service);
 		}
 
 		[TestMethod]
@@ -163,18 +166,18 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			var service = _serviceProvider.GetRequiredService<ITestService>();
 
 			Assert.IsNotNull(service);
-			Assert.IsInstanceOfType(service, typeof(TestServiceDecorator3));
+			Assert.IsInstanceOfType<TestServiceDecorator3>(service);
 			var decorator3 = (TestServiceDecorator3)service;
 			Assert.IsNotNull(decorator3.Inner);
-			Assert.IsInstanceOfType(decorator3.Inner, typeof(TestServiceDecorator2));
+			Assert.IsInstanceOfType<TestServiceDecorator2>(decorator3.Inner);
 			var decorator2 = (TestServiceDecorator2)decorator3.Inner;
 			Assert.IsNotNull(decorator2.ExternalService);
-			Assert.IsInstanceOfType(decorator2.ExternalService, typeof(ExternalService));
+			Assert.IsInstanceOfType<ExternalService>(decorator2.ExternalService);
 			Assert.IsNotNull(decorator2.Inner);
-			Assert.IsInstanceOfType(decorator2.Inner, typeof(TestServiceDecorator1));
+			Assert.IsInstanceOfType<TestServiceDecorator1>(decorator2.Inner);
 			var decorator1 = (TestServiceDecorator1)decorator2.Inner;
 			Assert.IsNotNull(decorator1.Inner);
-			Assert.IsInstanceOfType(decorator1.Inner, typeof(TestService));
+			Assert.IsInstanceOfType<TestService>(decorator1.Inner);
 		}
 
 		[TestMethod]
@@ -196,22 +199,22 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 
 			var service = services.First();
 			Assert.IsNotNull(service);
-			Assert.IsInstanceOfType(service, typeof(TestServiceDecorator3));
+			Assert.IsInstanceOfType<TestServiceDecorator3>(service);
 			var decorator3 = (TestServiceDecorator3)service;
 			Assert.IsNotNull(decorator3.Inner);
-			Assert.IsInstanceOfType(decorator3.Inner, typeof(TestServiceDecorator2));
+			Assert.IsInstanceOfType<TestServiceDecorator2>(decorator3.Inner);
 			var decorator2 = (TestServiceDecorator2)decorator3.Inner;
 			Assert.IsNotNull(decorator2.ExternalService);
-			Assert.IsInstanceOfType(decorator2.ExternalService, typeof(ExternalService));
+			Assert.IsInstanceOfType<ExternalService>(decorator2.ExternalService);
 			Assert.IsNotNull(decorator2.Inner);
-			Assert.IsInstanceOfType(decorator2.Inner, typeof(TestServiceDecorator1));
+			Assert.IsInstanceOfType<TestServiceDecorator1>(decorator2.Inner);
 			var decorator1 = (TestServiceDecorator1)decorator2.Inner;
 			Assert.IsNotNull(decorator1.Inner);
-			Assert.IsInstanceOfType(decorator1.Inner, typeof(TestService));
+			Assert.IsInstanceOfType<TestService>(decorator1.Inner);
 
 			service = services.Last();
 			Assert.IsNotNull(service);
-			Assert.IsInstanceOfType(service, typeof(AnotherTestService));
+			Assert.IsInstanceOfType<AnotherTestService>(service);
 		}
 
 		[TestMethod]
@@ -236,28 +239,28 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 
 			var service = _serviceProvider.GetRequiredService<ITestService>();
 			Assert.IsNotNull(service);
-			Assert.IsInstanceOfType(service, typeof(TestService));
+			Assert.IsInstanceOfType< TestService>(service);
 			Assert.AreEqual(service, implementationInstance);
 
 			service = _serviceProvider.GetRequiredKeyedService<ITestService>("key");
 			Assert.IsNotNull(service);
-			Assert.IsInstanceOfType(service, typeof(TestServiceDecorator3));
+			Assert.IsInstanceOfType< TestServiceDecorator3>(service);
 			var decorator3 = (TestServiceDecorator3)service;
 			Assert.IsNotNull(decorator3.Inner);
-			Assert.IsInstanceOfType(decorator3.Inner, typeof(TestServiceDecorator2));
+			Assert.IsInstanceOfType<TestServiceDecorator2>(decorator3.Inner);
 			var decorator2 = (TestServiceDecorator2)decorator3.Inner;
 			Assert.IsNotNull(decorator2.ExternalService);
-			Assert.IsInstanceOfType(decorator2.ExternalService, typeof(ExternalService));
+			Assert.IsInstanceOfType<ExternalService>(decorator2.ExternalService);
 			Assert.IsNotNull(decorator2.Inner);
-			Assert.IsInstanceOfType(decorator2.Inner, typeof(TestServiceDecorator1));
+			Assert.IsInstanceOfType<TestServiceDecorator1>(decorator2.Inner);
 			var decorator1 = (TestServiceDecorator1)decorator2.Inner;
 			Assert.IsNotNull(decorator1.Inner);
-			Assert.IsInstanceOfType(decorator1.Inner, typeof(TestService));
+			Assert.IsInstanceOfType<TestService>(decorator1.Inner);
 			Assert.AreEqual(decorator1.Inner, implementationInstance);
 
 			service = _serviceProvider.GetRequiredKeyedService<ITestService>("key2");
 			Assert.IsNotNull(service);
-			Assert.IsInstanceOfType(service, typeof(TestService));
+			Assert.IsInstanceOfType<TestService>(service);
 			Assert.AreEqual(service, implementationInstance2);
 		}
 
@@ -281,26 +284,26 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 
 			var service = _serviceProvider.GetRequiredService<ITestService>();
 			Assert.IsNotNull(service);
-			Assert.IsInstanceOfType(service, typeof(TestService));
+			Assert.IsInstanceOfType<TestService>(service);
 
 			service = _serviceProvider.GetRequiredKeyedService<ITestService>("key");
 			Assert.IsNotNull(service);
-			Assert.IsInstanceOfType(service, typeof(TestServiceDecorator3));
+			Assert.IsInstanceOfType<TestServiceDecorator3>(service);
 			var decorator3 = (TestServiceDecorator3)service;
 			Assert.IsNotNull(decorator3.Inner);
-			Assert.IsInstanceOfType(decorator3.Inner, typeof(TestServiceDecorator2));
+			Assert.IsInstanceOfType<TestServiceDecorator2>(decorator3.Inner);
 			var decorator2 = (TestServiceDecorator2)decorator3.Inner;
 			Assert.IsNotNull(decorator2.ExternalService);
-			Assert.IsInstanceOfType(decorator2.ExternalService, typeof(ExternalService));
+			Assert.IsInstanceOfType<ExternalService>(decorator2.ExternalService);
 			Assert.IsNotNull(decorator2.Inner);
-			Assert.IsInstanceOfType(decorator2.Inner, typeof(TestServiceDecorator1));
+			Assert.IsInstanceOfType<TestServiceDecorator1>(decorator2.Inner);
 			var decorator1 = (TestServiceDecorator1)decorator2.Inner;
 			Assert.IsNotNull(decorator1.Inner);
-			Assert.IsInstanceOfType(decorator1.Inner, typeof(TestService));
+			Assert.IsInstanceOfType<TestService>(decorator1.Inner);
 
 			service = _serviceProvider.GetRequiredKeyedService<ITestService>("key2");
 			Assert.IsNotNull(service);
-			Assert.IsInstanceOfType(service, typeof(TestService));
+			Assert.IsInstanceOfType<TestService>(service);
 		}
 
 		[TestMethod]
@@ -323,26 +326,26 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 
 			var service = _serviceProvider.GetRequiredService<ITestService>();
 			Assert.IsNotNull(service);
-			Assert.IsInstanceOfType(service, typeof(TestService));
+			Assert.IsInstanceOfType<TestService>(service);
 
 			service = _serviceProvider.GetRequiredKeyedService<ITestService>("key");
 			Assert.IsNotNull(service);
-			Assert.IsInstanceOfType(service, typeof(TestServiceDecorator3));
+			Assert.IsInstanceOfType<TestServiceDecorator3>(service);
 			var decorator3 = (TestServiceDecorator3)service;
 			Assert.IsNotNull(decorator3.Inner);
-			Assert.IsInstanceOfType(decorator3.Inner, typeof(TestServiceDecorator2));
+			Assert.IsInstanceOfType<TestServiceDecorator2>(decorator3.Inner);
 			var decorator2 = (TestServiceDecorator2)decorator3.Inner;
 			Assert.IsNotNull(decorator2.ExternalService);
-			Assert.IsInstanceOfType(decorator2.ExternalService, typeof(ExternalService));
+			Assert.IsInstanceOfType<ExternalService>(decorator2.ExternalService);
 			Assert.IsNotNull(decorator2.Inner);
-			Assert.IsInstanceOfType(decorator2.Inner, typeof(TestServiceDecorator1));
+			Assert.IsInstanceOfType<TestServiceDecorator1>(decorator2.Inner);
 			var decorator1 = (TestServiceDecorator1)decorator2.Inner;
 			Assert.IsNotNull(decorator1.Inner);
-			Assert.IsInstanceOfType(decorator1.Inner, typeof(TestService));
+			Assert.IsInstanceOfType<TestService>(decorator1.Inner);
 
 			service = _serviceProvider.GetRequiredKeyedService<ITestService>("key2");
 			Assert.IsNotNull(service);
-			Assert.IsInstanceOfType(service, typeof(TestService));
+			Assert.IsInstanceOfType<TestService>(service);
 		}
 	}
 
@@ -411,3 +414,6 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		}
 	}
 }
+
+#pragma warning restore MSTEST0032 // Assertion condition is always true
+#pragma warning restore IDE0079 // Remove unnecessary suppression
