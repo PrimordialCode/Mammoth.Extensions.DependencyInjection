@@ -153,7 +153,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		[TestMethod]
 		public void ServiceDescriptors_Cannot_Set_If_Twice()
 		{
-			Assert.ThrowsException<NotSupportedException>(() =>
+			Assert.ThrowsExactly<NotSupportedException>(() =>
 			{
 				var descriptors = new AssemblyInspector()
 					.FromAssemblyContaining<ITestService>()

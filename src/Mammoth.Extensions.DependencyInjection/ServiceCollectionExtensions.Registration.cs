@@ -26,6 +26,11 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <returns><c>true</c> if the service type is registered; otherwise, <c>false</c>.</returns>
 		public static bool IsServiceRegistered(this IServiceCollection services, Type serviceType)
 		{
+			if (serviceType is null)
+			{
+				throw new ArgumentNullException(nameof(serviceType));
+			}
+
 			var descriptors = services.GetServiceDescriptors(serviceType);
 			return descriptors.Length > 0;
 		}
@@ -36,8 +41,12 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <param name="services">The service collection.</param>
 		/// <param name="serviceKey">The service key.</param>
 		/// <returns><c>true</c> if the service is registered; otherwise, <c>false</c>.</returns>
-		public static bool IsServiceRegistered(this IServiceCollection services, object? serviceKey)
+		public static bool IsKeyedServiceRegistered(this IServiceCollection services, object serviceKey)
 		{
+			if (serviceKey is null)
+			{
+				throw new ArgumentNullException(nameof(serviceKey));
+			}
 			return services.Any(s => s.IsKeyedService && s.ServiceKey == serviceKey);
 		}
 
@@ -46,12 +55,18 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// </summary>
 		/// <param name="services">The service collection.</param>
 		/// <param name="serviceType">The type of the service.</param>
+		/// <param name="isKeyedService">Indicates whether the service is keyed or not. If null both kinds of services will be returned</param>
 		/// <returns>An array of <see cref="ServiceDescriptor"/> objects.</returns>
-		public static ServiceDescriptor[] GetServiceDescriptors(this IServiceCollection services, Type serviceType)
+		public static ServiceDescriptor[] GetServiceDescriptors(this IServiceCollection services, Type serviceType, bool? isKeyedService = null)
 		{
+			if (serviceType is null)
+			{
+				throw new ArgumentNullException(nameof(serviceType));
+			}
+
 			return services.Where(serviceDescriptor =>
-				serviceType.IsAssignableFrom(serviceDescriptor.ServiceType)
-				|| serviceDescriptor.ServiceType.IsAssignableFrom(serviceType))
+				(isKeyedService == null || serviceDescriptor.IsKeyedService == isKeyedService)
+				&& (serviceType.IsAssignableFrom(serviceDescriptor.ServiceType) || serviceDescriptor.ServiceType.IsAssignableFrom(serviceType)))
 				.ToArray();
 		}
 
@@ -61,14 +76,14 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <param name="services">The service collection.</param>
 		/// <param name="serviceType">The type of the service.</param>
 		/// <returns><c>true</c> if the last registration of the service is transient; otherwise, <c>false</c>.</returns>
-		/// <exception cref="InvalidOperationException">Thrown when the service is not registered.</exception>
 		public static bool IsTransientServiceRegistered(this IServiceCollection services, Type serviceType)
 		{
-			var descriptors = services.GetServiceDescriptors(serviceType);
-			if (descriptors.Length == 0)
+			if (serviceType is null)
 			{
-				throw new InvalidOperationException($"Service {serviceType.FullName} is not registered.");
+				throw new ArgumentNullException(nameof(serviceType));
 			}
+
+			var descriptors = services.GetServiceDescriptors(serviceType, isKeyedService: false);
 			return descriptors.Last().Lifetime == ServiceLifetime.Transient;
 		}
 
@@ -89,14 +104,14 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <param name="services">The service collection.</param>
 		/// <param name="serviceType">The type of the service.</param>
 		/// <returns><c>true</c> if the last registration of the service is scoped; otherwise, <c>false</c>.</returns>
-		/// <exception cref="InvalidOperationException">Thrown when the service is not registered.</exception>
 		public static bool IsScopedServiceRegistered(this IServiceCollection services, Type serviceType)
 		{
-			var descriptors = services.GetServiceDescriptors(serviceType);
-			if (descriptors.Length == 0)
+			if (serviceType is null)
 			{
-				throw new InvalidOperationException($"Service {serviceType.FullName} is not registered.");
+				throw new ArgumentNullException(nameof(serviceType));
 			}
+
+			var descriptors = services.GetServiceDescriptors(serviceType, isKeyedService: false);
 			return descriptors.Last().Lifetime == ServiceLifetime.Scoped;
 		}
 
@@ -117,14 +132,14 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <param name="services">The service collection.</param>
 		/// <param name="serviceType">The type of the service.</param>
 		/// <returns><c>true</c> if the last registration of the service is singleton; otherwise, <c>false</c>.</returns>
-		/// <exception cref="InvalidOperationException">Thrown when the service is not registered.</exception>
 		public static bool IsSingletonServiceRegistered(this IServiceCollection services, Type serviceType)
 		{
-			var descriptors = services.GetServiceDescriptors(serviceType);
-			if (descriptors.Length == 0)
+			if (serviceType is null)
 			{
-				throw new InvalidOperationException($"Service {serviceType.FullName} is not registered.");
+				throw new ArgumentNullException(nameof(serviceType));
 			}
+
+			var descriptors = services.GetServiceDescriptors(serviceType, isKeyedService: false);
 			return descriptors.Last().Lifetime == ServiceLifetime.Singleton;
 		}
 
@@ -137,6 +152,115 @@ namespace Mammoth.Extensions.DependencyInjection
 		public static bool IsSingletonServiceRegistered<TServiceType>(this IServiceCollection services)
 		{
 			return services.IsSingletonServiceRegistered(typeof(TServiceType));
+		}
+
+		/// <summary>
+		/// Checks if the last registration of a keyed service of the specified <paramref name="serviceType"/> and <paramref name="serviceKey"/> is singleton.
+		/// </summary>
+		/// <param name="services">The service collection.</param>
+		/// <param name="serviceType">The type of the service.</param>
+		/// <param name="serviceKey">The service key.</param>
+		/// <returns><c>true</c> if the last registration of the service is singleton; otherwise, <c>false</c>.</returns>
+		public static bool IsKeyedSingletonServiceRegistered(this IServiceCollection services, Type serviceType, object serviceKey)
+		{
+			if (serviceType is null)
+			{
+				throw new ArgumentNullException(nameof(serviceType));
+			}
+
+			if (serviceKey is null)
+			{
+				throw new ArgumentNullException(nameof(serviceKey));
+			}
+
+			var descriptors = services.GetServiceDescriptors(serviceType, isKeyedService: true)
+				.Where(d => d.ServiceKey == serviceKey)
+				.ToArray();
+			return descriptors.Last().Lifetime == ServiceLifetime.Singleton;
+		}
+
+		/// <summary>
+		/// Checks if the last registration of a keyed service of type <typeparamref name="TServiceType"/> and <paramref name="serviceKey"/> is singleton.
+		/// </summary>
+		/// <typeparam name="TServiceType">The type of the service.</typeparam>
+		/// <param name="services">The service collection.</param>
+		/// <param name="serviceKey">The service key.</param>
+		/// <returns><c>true</c> if the last registration of the service is singleton; otherwise, <c>false</c>.</returns>
+		public static bool IsKeyedSingletonServiceRegistered<TServiceType>(this IServiceCollection services, object serviceKey)
+		{
+			return services.IsKeyedSingletonServiceRegistered(typeof(TServiceType), serviceKey);
+		}
+
+		/// <summary>
+		/// Checks if the last registration of a keyed service of the specified <paramref name="serviceType"/> and <paramref name="serviceKey"/> is scoped.
+		/// </summary>
+		/// <param name="services">The service collection.</param>
+		/// <param name="serviceType">The type of the service.</param>
+		/// <param name="serviceKey">The service key.</param>
+		/// <returns><c>true</c> if the last registration of the service is scoped; otherwise, <c>false</c>.</returns>
+		public static bool IsKeyedScopedServiceRegistered(this IServiceCollection services, Type serviceType, object serviceKey)
+		{
+			if (serviceType is null)
+			{
+				throw new ArgumentNullException(nameof(serviceType));
+			}
+			if (serviceKey is null)
+			{
+				throw new ArgumentNullException(nameof(serviceKey));
+			}
+
+			var descriptors = services.GetServiceDescriptors(serviceType, isKeyedService: true)
+				.Where(d => d.ServiceKey == serviceKey)
+				.ToArray();
+			return descriptors.Last().Lifetime == ServiceLifetime.Scoped;
+		}
+
+		/// <summary>
+		/// Checks if the last registration of a keyed service of type <typeparamref name="TServiceType"/> and <paramref name="serviceKey"/> is scoped.
+		/// </summary>
+		/// <typeparam name="TServiceType">The type of the service.</typeparam>
+		/// <param name="services">The service collection.</param>
+		/// <param name="serviceKey">The service key.</param>
+		/// <returns><c>true</c> if the last registration of the service is scoped; otherwise, <c>false</c>.</returns>
+		public static bool IsKeyedScopedServiceRegistered<TServiceType>(this IServiceCollection services, object serviceKey)
+		{
+			return services.IsKeyedScopedServiceRegistered(typeof(TServiceType), serviceKey);
+		}
+
+		/// <summary>
+		/// Checks if the last registration of a keyed service of the specified <paramref name="serviceType"/> and <paramref name="serviceKey"/> is transient.
+		/// </summary>
+		/// <param name="services">The service collection.</param>
+		/// <param name="serviceType">The type of the service.</param>
+		/// <param name="serviceKey">The service key.</param>
+		/// <returns><c>true</c> if the last registration of the service is transient; otherwise, <c>false</c>.</returns>
+		public static bool IsKeyedTransientServiceRegistered(this IServiceCollection services, Type serviceType, object serviceKey)
+		{
+			if (serviceType is null)
+			{
+				throw new ArgumentNullException(nameof(serviceType));
+			}
+			if (serviceKey is null)
+			{
+				throw new ArgumentNullException(nameof(serviceKey));
+			}
+
+			var descriptors = services.GetServiceDescriptors(serviceType, isKeyedService: true)
+				.Where(d => d.ServiceKey == serviceKey)
+				.ToArray();
+			return descriptors.Last().Lifetime == ServiceLifetime.Transient;
+		}
+
+		/// <summary>
+		/// Checks if the last registration of a keyed service of type <typeparamref name="TServiceType"/> and <paramref name="serviceKey"/> is transient.
+		/// </summary>
+		/// <typeparam name="TServiceType">The type of the service.</typeparam>
+		/// <param name="services">The service collection.</param>
+		/// <param name="serviceKey">The service key.</param>
+		/// <returns><c>true</c> if the last registration of the service is transient; otherwise, <c>false</c>.</returns>
+		public static bool IsKeyedTransientServiceRegistered<TServiceType>(this IServiceCollection services, object serviceKey)
+		{
+			return services.IsKeyedTransientServiceRegistered(typeof(TServiceType), serviceKey);
 		}
 	}
 }

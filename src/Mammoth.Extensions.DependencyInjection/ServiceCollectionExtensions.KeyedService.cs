@@ -538,6 +538,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			services.TryAddKeyedTransient<TService>(serviceKey, KeyedDependsOnResolutionFunc<TImplementation>(dependsOn, ctor, parameter));
 		}
 
+#pragma warning disable RCS1224 // Make method an extension method
 		internal static Func<IServiceProvider, TTarget> DependsOnResolutionFunc<TTarget>(Dependency[] dependsOn, ConstructorInfo ctor, ParameterInfo[] parameter) where TTarget : class
 		{
 			return sp =>
@@ -621,5 +622,6 @@ namespace Mammoth.Extensions.DependencyInjection
 				.First();
 			parameter = ctor.GetParameters();
 		}
+#pragma warning restore RCS1224 // Make method an extension method
 	}
 }
