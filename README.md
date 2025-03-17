@@ -126,10 +126,14 @@ Helper methods to check if a service was registered or a ServiceDescriptor exist
 ##### ServiceCollection
 
 - `GetServiceDescriptors`: returns all the ServiceDescriptors (keyed and non keyed) of a given service type.
-- `IsServiceRegistered`
+- `IsServiceRegistered`: checks whether the specified service type is registered in the service collection (keyed or not).
+- `IsKeyedServiceRegistered`: checks whether the specified service type is registered as keyed in the service collection.
 - `IsTransientServiceRegistered`
 - `IsScopedServiceRegistered`
 - `IsSingletonServiceRegistered`
+- `IsKeyedTransientServiceRegistered`
+- `IsKeyedScopedServiceRegistered`
+- `IsKeyedSingletonServiceRegistered`
 
 ##### ServiceProvider
 
@@ -149,9 +153,13 @@ You can then use the following extensions:
 
 - `GetAllServices`: resolves all keyed and non-keyed services of a given service type.
 - `IsServiceRegistered`: checks whether the specified service type is registered in the service provider (keyed or non-keyed).
-- `IsTransientServiceRegistered`: checks whether the specified service type is registered as transient in the service provider (there are two versions to check for keyed and non keyed registrations).
-- `IsScopedServiceRegistered`: checks whether the specified service type is registered as scoped in the service provider (there are two versions to check for keyed and non keyed registrations).
-- `IsSingletonServiceRegistered`: checks whether the specified service type is registered as singleton in the service provider (there are two versions to check for keyed and non keyed registrations).
+- `IsKeyedServiceRegistered`: checks whether the specified service type is registered as keyed in the service provider.
+- `IsTransientServiceRegistered`: checks whether the specified service type is registered as transient in the service provider (non keyed services).
+- `IsScopedServiceRegistered`: checks whether the specified service type is registered as scoped in the service provider (non keyed services).
+- `IsSingletonServiceRegistered`: checks whether the specified service type is registered as singleton in the service provider (non keyed services).
+- `IsKeyedTransientServiceRegistered`: checks whether the specified service type is registered as transient in the service provider (keyed services).
+- `IsKeyedScopedServiceRegistered`: checks whether the specified service type is registered as scoped in the service provider (keyed services).
+- `IsKeyedSingletonServiceRegistered`: checks whether the specified service type is registered as singleton in the service provider (keyed services).
 
 #### Inspectors
 

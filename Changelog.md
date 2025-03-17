@@ -4,6 +4,14 @@
 
 - Added ServiceProvider extension methods to check if Registered Services are: Transient, Scoped, Singleton [#1](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/1)
 
+### Breaking Changes
+
+- `IServiceCollection` extension methods behavior changes:
+  - `IsTransientServiceRegistered`: looks for non-keyed services only.
+  - `IsScopedServiceRegistered`: looks for non-keyed services only.
+  - `IsSingletonServiceRegistered`: looks for non-keyed services only.
+  - Added `IsKeyedTransientServiceRegistered`, `IsKeyedScopedServiceRegistered`, `IsKeyedSingletonServiceRegistered` to check for keyed services.
+
 ## 0.3.0
 
 - Improved NuGet package (deterministic, source link).
@@ -24,27 +32,27 @@
 
   ```csharp
   var descriptors = new AssemblyInspector()
-  	.FromAssemblyContaining<TestService>()
-  	.BasedOn(typeof(TestService))
-  	.WithServiceBase()
-  	.LifestyleTransient(dependsOn: new Dependency[]
-  	{
-  		Parameter.ForKey("param").Eq("nonexisting")
-  	});
+    .FromAssemblyContaining<TestService>()
+    .BasedOn(typeof(TestService))
+    .WithServiceBase()
+    .LifestyleTransient(dependsOn: new Dependency[]
+    {
+        Parameter.ForKey("param").Eq("nonexisting")
+    });
   ```
   
   becomes:
   
   ```csharp
   var descriptors = new AssemblyInspector()
-  	.FromAssemblyContaining<TestService>()
-  	.BasedOn(typeof(TestService))
-  	.WithServiceBase()
-  	.Configure(cfg => cfg.DependsOn = new Dependency[]
-  	{
-  		Parameter.ForKey("param").Eq("nonexisting")
-  	})
-  	.LifestyleTransient();
+    .FromAssemblyContaining<TestService>()
+    .BasedOn(typeof(TestService))
+    .WithServiceBase()
+    .Configure(cfg => cfg.DependsOn = new Dependency[]
+    {
+        Parameter.ForKey("param").Eq("nonexisting")
+    })
+    .LifestyleTransient();
   ```
 
 ## 0.1.2

@@ -30,7 +30,7 @@ public static partial class ServiceProviderExtensions
 	/// <summary>
 	/// Determines whether the specified service key is registered in the service provider.
 	/// </summary>
-	public static bool IsServiceRegistered(this IServiceProvider serviceProvider, object serviceKey)
+	public static bool IsKeyedServiceRegistered(this IServiceProvider serviceProvider, object serviceKey)
 	{
 		if (serviceKey is null)
 		{
@@ -191,32 +191,6 @@ public static partial class ServiceProviderExtensions
 		return IsKeyedSingletonServiceRegistered(serviceProvider, typeof(TServiceType), serviceKey);
 	}
 
-	/*
-	 * TODO
-	 * 
-	/// <summary>
-	/// Determines whether the specified service type with the given key is registered as a singleton service in the service provider (keyed).
-	/// </summary>
-	/// <param name="serviceProvider">The service provider.</param>
-	/// <param name="serviceType">The type of the service.</param>
-	/// <param name="serviceKey">The key of the service.</param>
-	/// <returns><c>true</c> if the service type with the specified key is registered as singleton; otherwise, <c>false</c>.</returns>
-	/// <exception cref="ArgumentNullException">Thrown when serviceType or serviceKey is null.</exception>
-	/// <exception cref="InvalidOperationException">Thrown when the service provider was not built using the ServiceProviderFactory.</exception>
-	public static bool IsKeyedSingletonServiceRegistered(this IServiceProvider serviceProvider, Type serviceType)
-	{
-		if (serviceType is null)
-		{
-			throw new ArgumentNullException(nameof(serviceType));
-		}
-
-		var lifetimes = serviceProvider.GetService<ServiceLifetimes>()
-			?? throw BuildExceptionBecauseProviderWasNotBuiltUsingTheFactory();
-
-		return lifetimes.GetLifetime(serviceType, serviceKey) == ServiceLifetime.Singleton;
-	}
-	*/
-
 	/// <summary>
 	/// Determines whether the specified service type is registered as a scoped service in the service provider (non keyed).
 	/// </summary>
@@ -290,5 +264,4 @@ public static partial class ServiceProviderExtensions
 	{
 		return IsKeyedScopedServiceRegistered(serviceProvider, typeof(TServiceType), serviceKey);
 	}
-
 }
