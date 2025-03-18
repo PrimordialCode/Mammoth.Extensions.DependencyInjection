@@ -30,6 +30,40 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			}
 		}
 
+		public class DisposableConsumer : IDisposable
+		{
+			public TransientDisposable TransientDisposable { get; }
+
+			public DisposableConsumer(TransientDisposable transientDisposable)
+			{
+				TransientDisposable = transientDisposable;
+			}
+
+			public void Dispose()
+			{
+				GC.SuppressFinalize(this);
+			}
+		}
+
+		public class DisposableConsumerFactory
+		{
+			public DisposableConsumer Build(IServiceProvider sp)
+			{
+				return new DisposableConsumer(sp.GetRequiredService<TransientDisposable>());
+			}
+		}
+
+		public class Singleton
+		{
+			public TransientDisposable TransientDisposable { get; }
+
+			public Singleton(TransientDisposable transientDisposable)
+			{
+				TransientDisposable = transientDisposable;
+			}
+		}
+
+
 		[TestMethod]
 		public void ServiceProvider_IsRootScope_True()
 		{
@@ -186,6 +220,59 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			Assert.IsTrue(scope.ServiceProvider.GetDisposables().Contains(consumer.TransientDisposable));
 			Assert.IsTrue(sp.GetIsRootScope());
 			Assert.IsFalse(sp.GetDisposables().Contains(consumer));
+		}
+
+		[TestMethod]
+		public void Resolve_DisposableConsumer_using_factory_InRootScope_WithValidation_Throws()
+		{
+			var serviceCollection = new ServiceCollection();
+			serviceCollection.AddTransient<TransientDisposable>();
+			// serviceCollection.AddTransient<Consumer>();
+			serviceCollection.AddSingleton<DisposableConsumerFactory>();
+			serviceCollection.AddTransient(sp => sp.GetRequiredService<DisposableConsumerFactory>().Build(sp));
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection,
+				new ExtendedServiceProviderOptions
+				{
+					DetectIncorrectUsageOfTransientDisposables = true,
+					ValidateOnBuild = true,
+					ValidateScopes = true
+				});
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.GetService<DisposableConsumer>());
+
+			// resolving in scope works!
+			using var scope = sp.CreateScope();
+			var disposableConsumer = scope.ServiceProvider.GetService<DisposableConsumer>();
+
+			Assert.IsNotNull(disposableConsumer);
+			Assert.IsFalse(scope.ServiceProvider.GetIsRootScope());
+			Assert.IsTrue(scope.ServiceProvider.GetDisposables().Contains(disposableConsumer));
+			Assert.IsTrue(sp.GetIsRootScope());
+			Assert.IsFalse(sp.GetDisposables().Contains(disposableConsumer));
+		}
+
+		[TestMethod]
+		public void Resolve_Singleton_with_Transient_Dependency_InRootScope_WithValidation_Throws()
+		{
+			var serviceCollection = new ServiceCollection();
+			serviceCollection.AddTransient<TransientDisposable>();
+			serviceCollection.AddSingleton<Singleton>();
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection,
+				new ExtendedServiceProviderOptions
+				{
+					DetectIncorrectUsageOfTransientDisposables = true,
+					ValidateOnBuild = true,
+					ValidateScopes = true
+				});
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.GetService<Singleton>());
+
+			using var scope = sp.CreateScope();
+			var s = scope.ServiceProvider.GetService<Singleton>();
+
+			Assert.IsNotNull(s);
+			Assert.IsFalse(scope.ServiceProvider.GetIsRootScope());
+			Assert.IsTrue(scope.ServiceProvider.GetDisposables().Contains(s));
+			Assert.IsTrue(sp.GetIsRootScope());
+			Assert.IsFalse(sp.GetDisposables().Contains(s));
 		}
 	}
 }
