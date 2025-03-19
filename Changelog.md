@@ -2,9 +2,13 @@
 
 ## vNext
 
+## 0.5.1
+
+- Improved Incorrect Usage of Transient Disposables: we optionally allow Singleton Objects to create Transient Disposable services [#7](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/7).
+
 ## 0.5.0
 
-- Detect incorrect usage of Transient Disposable services: resolving a transient disposable result in a memory leak [#5](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/5).
+- Detect Incorrect Usage of Transient Disposables services: resolving a transient disposable result in a memory leak [#5](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/5).
 
 ## 0.4.0
 
