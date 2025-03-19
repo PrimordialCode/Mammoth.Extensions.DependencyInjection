@@ -12,7 +12,10 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <summary>
 		/// Create a new "patched" service collection that will throw an exception if a transient disposable service is resolved in the root scope.
 		/// </summary>
-		public static IServiceCollection PatchServiceCollection(IServiceCollection containerBuilder)
+		public static IServiceCollection PatchServiceCollection(
+			IServiceCollection containerBuilder,
+			bool allowSingletonToResolveTransientDisposables
+			)
 		{
 			var collection = new ServiceCollection();
 
@@ -25,15 +28,15 @@ namespace Mammoth.Extensions.DependencyInjection
 							&& typeof(IDisposable).IsAssignableFrom(descriptor.KeyedImplementationType))
 							|| (descriptor is { IsKeyedService: false, ImplementationType: not null }
 								&& typeof(IDisposable).IsAssignableFrom(descriptor.ImplementationType)):
-						collection.Add(CreatePatchedDescriptor(descriptor));
+						collection.Add(CreatePatchedDescriptor(descriptor, allowSingletonToResolveTransientDisposables));
 						break;
 					case ServiceLifetime.Transient
 						when descriptor is { IsKeyedService: true, KeyedImplementationFactory: not null }:
-						collection.Add(CreatePatchedKeyedFactoryDescriptor(descriptor));
+						collection.Add(CreatePatchedKeyedFactoryDescriptor(descriptor, allowSingletonToResolveTransientDisposables));
 						break;
 					case ServiceLifetime.Transient
 						when descriptor is { IsKeyedService: false, ImplementationFactory: not null }:
-						collection.Add(CreatePatchedFactoryDescriptor(descriptor));
+						collection.Add(CreatePatchedFactoryDescriptor(descriptor, allowSingletonToResolveTransientDisposables));
 						break;
 					default:
 						collection.Add(descriptor);
@@ -45,9 +48,11 @@ namespace Mammoth.Extensions.DependencyInjection
 		}
 
 		private static ServiceDescriptor CreatePatchedFactoryDescriptor(
-			ServiceDescriptor original)
+			ServiceDescriptor original,
+			bool allowSingletonToResolveTransientDisposables
+			)
 		{
-			var newDescriptor = new ServiceDescriptor(
+			return new ServiceDescriptor(
 				original.ServiceType,
 				(sp) =>
 				{
@@ -58,19 +63,25 @@ namespace Mammoth.Extensions.DependencyInjection
 
 					if (sp.GetIsRootScope() && originalResult is IDisposable d)
 					{
-						ThrowTransientDisposableException(d.GetType().Name);
+						//check the ResolutionContext to see if the service is being resolved by a singleton
+						//if it is, then it's safe to resolve the transient disposable service
+						if (!IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
+						{
+							ThrowTransientDisposableException(d.GetType().Name);
+						}
 					}
 
 					return originalResult;
 				},
 				ServiceLifetime.Transient);
-
-			return newDescriptor;
 		}
 
-		private static ServiceDescriptor CreatePatchedKeyedFactoryDescriptor(ServiceDescriptor original)
+		private static ServiceDescriptor CreatePatchedKeyedFactoryDescriptor(
+			ServiceDescriptor original,
+			bool allowSingletonToResolveTransientDisposables
+			)
 		{
-			var newDescriptor = new ServiceDescriptor(
+			return new ServiceDescriptor(
 				original.ServiceType,
 				original.ServiceKey,
 				(sp, obj) =>
@@ -82,26 +93,36 @@ namespace Mammoth.Extensions.DependencyInjection
 
 					if (sp.GetIsRootScope() && originalResult is IDisposable d)
 					{
-						ThrowTransientDisposableException(d.GetType().Name);
+						//check the ResolutionContext to see if the service is being resolved by a singleton
+						//if it is, then it's safe to resolve the transient disposable service
+						if (!IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
+						{
+							ThrowTransientDisposableException(d.GetType().Name);
+						}
 					}
 
 					return originalResult;
 				},
 				ServiceLifetime.Transient);
-
-			return newDescriptor;
 		}
 
 		private static ServiceDescriptor CreatePatchedDescriptor(
-			ServiceDescriptor original)
+			ServiceDescriptor original,
+			bool allowSingletonToResolveTransientDisposables
+			)
 		{
-			var newDescriptor = new ServiceDescriptor(
+			return new ServiceDescriptor(
 				original.ServiceType,
 				(sp) =>
 				{
 					if (sp.GetIsRootScope())
 					{
-						ThrowTransientDisposableException(original.ImplementationType?.Name);
+						//check the ResolutionContext to see if the service is being resolved by a singleton
+						//if it is, then it's safe to resolve the transient disposable service
+						if (!IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
+						{
+							ThrowTransientDisposableException(original.ImplementationType?.Name);
+						}
 					}
 
 					if (original.ImplementationType is null)
@@ -114,14 +135,41 @@ namespace Mammoth.Extensions.DependencyInjection
 						original.ImplementationType);
 				},
 				ServiceLifetime.Transient);
-
-			return newDescriptor;
 		}
 
 		private static void ThrowTransientDisposableException(string? typeName)
 		{
 			throw new InvalidOperationException(
 				$"Trying to resolve transient disposable service {typeName} in the wrong scope (root scope).");
+		}
+
+		private static bool IsResolvedBySingleton(
+			IServiceProvider sp,
+			bool allowSingletonToResolveTransientDisposables
+			)
+		{
+			if (allowSingletonToResolveTransientDisposables)
+			{
+				var stack = ResolutionContext.CurrentStack;
+				foreach (var entry in stack)
+				{
+					// If we used our tracking, each entry is either a Type or a KeyedResolution.
+					bool isSingleton;
+					if (entry.ServiceKey == null)
+					{
+						isSingleton = sp.IsSingletonServiceRegistered(entry.ServiceType);
+					}
+					else
+					{
+						isSingleton = sp.IsKeyedSingletonServiceRegistered(entry.ServiceType, entry.ServiceKey);
+					}
+					if (isSingleton)
+					{
+						return true;
+					}
+				}
+			}
+			return false;
 		}
 	}
 }

@@ -22,7 +22,7 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// Enrich the <paramref name="containerBuilder"/> with the necessary services to be able to resolve the keys
 		/// and other useful services; then build the <see cref="IServiceProvider"/>.
 		/// </summary>
-		public static ServiceProvider CreateServiceProvider(IServiceCollection containerBuilder, ExtendedServiceProviderOptions? options = null)
+		public static IServiceProvider CreateServiceProvider(IServiceCollection containerBuilder, ExtendedServiceProviderOptions? options = null)
 		{
 			AddIsRegisteredSupportServices(containerBuilder);
 
@@ -33,7 +33,11 @@ namespace Mammoth.Extensions.DependencyInjection
 			var sc = containerBuilder;
 			if (options.DetectIncorrectUsageOfTransientDisposables)
 			{
-				sc = DetectIncorrectUsageOfTransientDisposables.PatchServiceCollection(containerBuilder);
+				sc = DetectIncorrectUsageOfTransientDisposables.PatchServiceCollection(
+					containerBuilder,
+					options.AllowSingletonToResolveTransientDisposables
+					);
+				return new ResolutionContextTrackingServiceProviderDecorator(sc.BuildServiceProvider(options));
 			}
 			return sc.BuildServiceProvider(options);
 		}

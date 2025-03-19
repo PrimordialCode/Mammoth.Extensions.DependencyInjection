@@ -20,5 +20,11 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// </para>
 		/// </summary>
 		public bool DetectIncorrectUsageOfTransientDisposables { get; set; }
+
+		/// <summary>
+		/// Indicates whether a singleton can resolve transient disposable objects.
+		/// This setting is only relevant if <see cref="DetectIncorrectUsageOfTransientDisposables"/> is set to true.
+		/// </summary>
+		public bool AllowSingletonToResolveTransientDisposables { get; set; }
 	}
 }

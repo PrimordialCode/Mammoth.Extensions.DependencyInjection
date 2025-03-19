@@ -17,12 +17,17 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <returns>Returns the service provider, which may be the original or the root service provider if accessible.</returns>
 		private static IServiceProvider GetServiceProviderEngineScope(IServiceProvider serviceProvider)
 		{
+			// if it's a TrackerServiceProvider, we need to get the ServiceProvider from it
 			var sp = serviceProvider;
-			var rootProperty = serviceProvider.GetType().GetProperty("Root",
+			if (sp is ResolutionContextTrackingServiceProviderDecorator trackingServiceProvider)
+			{
+				sp = trackingServiceProvider.InnerServiceProvider;
+			}
+			var rootProperty = sp.GetType().GetProperty("Root",
 				BindingFlags.NonPublic | BindingFlags.Instance);
 			if (rootProperty != null)
 			{
-				sp = (IServiceProvider)rootProperty.GetValue(serviceProvider)!;
+				sp = (IServiceProvider)rootProperty.GetValue(sp)!;
 			}
 			return sp;
 		}

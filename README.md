@@ -157,12 +157,16 @@ To detect incorrect usage of Transient Disposable when they are resolved by Root
 new HostBuilder().UseServiceProviderFactory(new ServiceProviderFactory(
   new ExtendedServiceProviderOptions 
   {
-    DetectIncorrectUsageOfTransientDisposables = true 
+    DetectIncorrectUsageOfTransientDisposables = true
+    AllowSingletonToResolveTransientDisposables = true
   }));
 ```
 
 WARNING: use this feature only in debug and development build, because it has a performance impact and internally uses reflection to 
 access internal Service Provider implementation (it can be fragile).
+
+Implementing these validity checks during the ServiceProvider build phase was a bit complicated and would have required to build a new ServiceProvider from scratch (due to the fact that the actual classes are sealed and there are no extension points to use),
+Thus we opted for a more straightforward approach that throws an exception when the service is resolved.
 
 ###### IsRegistered extension methods
 
