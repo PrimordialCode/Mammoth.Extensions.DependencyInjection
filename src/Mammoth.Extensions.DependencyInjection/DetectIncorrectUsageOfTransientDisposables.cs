@@ -10,11 +10,126 @@ namespace Mammoth.Extensions.DependencyInjection
 	internal static class DetectIncorrectUsageOfTransientDisposables
 	{
 		/// <summary>
+		/// Create a new "patched" service collection that replace ServiceDescriptors with new one capable of tracking the resolution context.
+		/// Wraps each ServiceDescriptor so that when an instance is created the provided callback is invoked.
+		/// </summary>
+		public static IServiceCollection PatchForResolutionContextTracking(this IServiceCollection services)
+		{
+			var collection = new ServiceCollection();
+
+			for (int i = 0; i < services.Count; i++)
+			{
+				var descriptor = services[i];
+
+				if (!descriptor.IsKeyedService)
+				{
+					// If the service type or implementation type is an open generic, skip patching.
+					if (descriptor.ServiceType.IsGenericTypeDefinition ||
+						(descriptor.ImplementationType?.IsGenericTypeDefinition == true))
+					{
+						collection.Add(descriptor);
+						continue;
+					}
+
+					// Wrap a registration that uses an ImplementationFactory.
+					if (descriptor.ImplementationFactory != null)
+					{
+						var originalFactory = descriptor.ImplementationFactory;
+						var d = ServiceDescriptor.Describe(
+							descriptor.ServiceType,
+							sp =>
+							{
+								// track the object we are about to resolve
+								ResolutionContext.CurrentStack.Push(new ServiceIdentifier(descriptor.ServiceKey, descriptor.ServiceType));
+								var instance = originalFactory(sp);
+								ResolutionContext.CurrentStack.Pop();
+								return instance;
+							},
+							descriptor.Lifetime);
+						collection.Add(d);
+						continue;
+					}
+					// Wrap a registration that uses an ImplementationType.
+					else if (descriptor.ImplementationType != null)
+					{
+						var implementationType = descriptor.ImplementationType;
+						var d = ServiceDescriptor.Describe(
+							descriptor.ServiceType,
+							sp =>
+							{
+								ResolutionContext.CurrentStack.Push(new ServiceIdentifier(descriptor.ServiceKey, descriptor.ServiceType));
+								var instance = ActivatorUtilities.CreateInstance(sp, implementationType);
+								ResolutionContext.CurrentStack.Pop();
+								return instance;
+							},
+							descriptor.Lifetime);
+						collection.Add(d);
+						continue;
+					}
+				}
+				else
+				{
+					// If the service type or implementation type is an open generic, skip patching.
+					if (descriptor.ServiceType.IsGenericTypeDefinition ||
+						(descriptor.KeyedImplementationType?.IsGenericTypeDefinition == true))
+					{
+						collection.Add(descriptor);
+						continue;
+					}
+
+					// Wrap a registration that uses an ImplementationFactory.
+					if (descriptor.KeyedImplementationFactory != null)
+					{
+						var originalFactory = descriptor.KeyedImplementationFactory;
+						var d = ServiceDescriptor.DescribeKeyed(
+							descriptor.ServiceType,
+							descriptor.ServiceKey,
+							(sp, key) =>
+							{
+								// track the object we are about to resolve
+								ResolutionContext.CurrentStack.Push(new ServiceIdentifier(descriptor.ServiceKey, descriptor.ServiceType));
+								var instance = originalFactory(sp, key);
+								ResolutionContext.CurrentStack.Pop();
+								return instance;
+							},
+							descriptor.Lifetime);
+						collection.Add(d);
+						continue;
+					}
+					// Wrap a registration that uses an ImplementationType.
+					else if (descriptor.KeyedImplementationType != null)
+					{
+						var implementationType = descriptor.KeyedImplementationType;
+						var d = ServiceDescriptor.DescribeKeyed(
+							descriptor.ServiceType,
+							descriptor.ServiceKey,
+							(sp, key) =>
+							{
+								ResolutionContext.CurrentStack.Push(new ServiceIdentifier(descriptor.ServiceKey, descriptor.ServiceType));
+								var instance = ActivatorUtilities.CreateInstance(sp, implementationType);
+								ResolutionContext.CurrentStack.Pop();
+								return instance;
+							},
+							descriptor.Lifetime);
+						collection.Add(d);
+						continue;
+					}
+				}
+				// For registrations that use an already-created instance,
+				// there's nothing to patch.
+				collection.Add(descriptor);
+			}
+
+			return collection;
+		}
+
+		/// <summary>
 		/// Create a new "patched" service collection that will throw an exception if a transient disposable service is resolved in the root scope.
 		/// </summary>
-		public static IServiceCollection PatchServiceCollection(
+		public static IServiceCollection PatchForDetectIncorrectUsageOfTransientDisposables(
 			IServiceCollection containerBuilder,
-			bool allowSingletonToResolveTransientDisposables
+			bool allowSingletonToResolveTransientDisposables,
+			bool throwOnOpenGenericTransientDisposable
 			)
 		{
 			var collection = new ServiceCollection();
@@ -23,6 +138,19 @@ namespace Mammoth.Extensions.DependencyInjection
 			{
 				switch (descriptor.Lifetime)
 				{
+					// if its an open generic, we can't patch it
+					case ServiceLifetime.Transient
+						when (descriptor.IsKeyedService && descriptor.KeyedImplementationType?.IsGenericTypeDefinition == true)
+							|| (!descriptor.IsKeyedService && descriptor.ImplementationType?.IsGenericTypeDefinition == true):
+						if (throwOnOpenGenericTransientDisposable
+							&& ((descriptor.IsKeyedService && typeof(IDisposable).IsAssignableFrom(descriptor.KeyedImplementationType))
+								|| (!descriptor.IsKeyedService && typeof(IDisposable).IsAssignableFrom(descriptor.ImplementationType))))
+						{
+							throw new InvalidOperationException(
+								$"Trying to register an open generic transient disposable service {descriptor.KeyedImplementationType?.Name}.");
+						}
+						collection.Add(descriptor);
+						break;
 					case ServiceLifetime.Transient
 						when (descriptor is { IsKeyedService: true, KeyedImplementationType: not null }
 							&& typeof(IDisposable).IsAssignableFrom(descriptor.KeyedImplementationType))
@@ -111,30 +239,61 @@ namespace Mammoth.Extensions.DependencyInjection
 			bool allowSingletonToResolveTransientDisposables
 			)
 		{
-			return new ServiceDescriptor(
-				original.ServiceType,
-				(sp) =>
-				{
-					if (sp.GetIsRootScope())
+			if (!original.IsKeyedService)
+			{
+				return new ServiceDescriptor(
+					original.ServiceType,
+					(sp) =>
 					{
-						//check the ResolutionContext to see if the service is being resolved by a singleton
-						//if it is, then it's safe to resolve the transient disposable service
-						if (!IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
+						if (sp.GetIsRootScope())
 						{
-							ThrowTransientDisposableException(original.ImplementationType?.Name);
+							//check the ResolutionContext to see if the service is being resolved by a singleton
+							//if it is, then it's safe to resolve the transient disposable service
+							if (!IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
+							{
+								ThrowTransientDisposableException(original.ImplementationType?.Name);
+							}
 						}
-					}
 
-					if (original.ImplementationType is null)
+						if (original.ImplementationType is null)
+						{
+							throw new InvalidOperationException(
+								"ImplementationType is null.");
+						}
+
+						return ActivatorUtilities.CreateInstance(sp,
+							original.ImplementationType);
+					},
+					ServiceLifetime.Transient);
+			}
+			else
+			{
+				return new ServiceDescriptor(
+					original.ServiceType,
+					original.ServiceKey,
+					(sp, key) =>
 					{
-						throw new InvalidOperationException(
-							"ImplementationType is null.");
-					}
+						if (sp.GetIsRootScope())
+						{
+							//check the ResolutionContext to see if the service is being resolved by a singleton
+							//if it is, then it's safe to resolve the transient disposable service
+							if (!IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
+							{
+								ThrowTransientDisposableException(original.KeyedImplementationType?.Name);
+							}
+						}
 
-					return ActivatorUtilities.CreateInstance(sp,
-						original.ImplementationType);
-				},
-				ServiceLifetime.Transient);
+						if (original.KeyedImplementationType is null)
+						{
+							throw new InvalidOperationException(
+								"KeyedImplementationType is null.");
+						}
+
+						return ActivatorUtilities.CreateInstance(sp,
+							original.KeyedImplementationType);
+					},
+					ServiceLifetime.Transient);
+			}
 		}
 
 		private static void ThrowTransientDisposableException(string? typeName)

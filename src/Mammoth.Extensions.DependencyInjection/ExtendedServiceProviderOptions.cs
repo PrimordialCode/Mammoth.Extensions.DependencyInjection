@@ -26,5 +26,12 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// This setting is only relevant if <see cref="DetectIncorrectUsageOfTransientDisposables"/> is set to true.
 		/// </summary>
 		public bool AllowSingletonToResolveTransientDisposables { get; set; }
+
+		/// <summary>
+		/// Throw an exception if a open generic transient disposable is registered.
+		/// Open Generic cannot be tracked, so it's better to use only closed type registrations.
+		/// This setting is only relevant if <see cref="DetectIncorrectUsageOfTransientDisposables"/> is set to true.
+		/// </summary>
+		public bool ThrowOnOpenGenericTransientDisposable { get; set; }
 	}
 }

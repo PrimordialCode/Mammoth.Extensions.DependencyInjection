@@ -2,6 +2,18 @@
 
 ## vNext
 
+## 0.5.2
+
+- Improved detection of incorrect usage of transient disposable objects:
+  - Fixed a bug for keyed service descriptors.
+  - Now correctly identifies the resolution for all but open generics.
+  - Open generic resolution context cannot be tracked! They will NOT result in errors if they are disposable and registered as transient when resolved by the root scope.
+  - Added a new option to throw an exception when an open generic transient disposable service is registered (we cannot track open generics, better to use all closed types to avoid memory leaks).
+
+### Breaking Changes
+
+- Removed `ResolutionContextTrackingServiceProviderDecorator` from compilation (it was bugged and only tracked the root object instead of the entire resolution chain). The implementation file is kept for reference. Resolution context tracking is now implemented with new service decorators that "wrap" the original code and replace the original ones (similar to how the detection of incorrect usage of transient disposables works).
+
 ## 0.5.1
 
 - Improved Incorrect Usage of Transient Disposables: we optionally allow Singleton Objects to create Transient Disposable services [#7](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/7).

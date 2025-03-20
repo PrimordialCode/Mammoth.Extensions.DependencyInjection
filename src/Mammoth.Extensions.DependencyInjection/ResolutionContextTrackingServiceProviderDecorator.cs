@@ -7,95 +7,11 @@ namespace Mammoth.Extensions.DependencyInjection;
  * While detecting incorrect usage of transient disposables,
  * we need resolution context tracking to know if we are resolving a transient disposable service
  * from a Singleton object (which is allowed because the singleton objects belongs to the root scope).
+ * 
+ * WARNING: this approach do not work well: it tracks only the 'root service' being resolved,
+ *          all injected dependencies are resolved by internal non decorated methods, so they are not tracked.
+ *          maybe a better approach is to "patch" all the ServiceDescriptors to track the services being resolved.
  */
-
-/// <summary>
-/// Service identifier (implementation tool from dotnet repository).
-/// </summary>
-internal readonly struct ServiceIdentifier : IEquatable<ServiceIdentifier>
-{
-	public object? ServiceKey { get; }
-
-	public Type ServiceType { get; }
-
-	public ServiceIdentifier(Type serviceType)
-	{
-		ServiceType = serviceType;
-	}
-
-	public ServiceIdentifier(object? serviceKey, Type serviceType)
-	{
-		ServiceKey = serviceKey;
-		ServiceType = serviceType;
-	}
-
-	public static ServiceIdentifier FromDescriptor(ServiceDescriptor serviceDescriptor)
-		=> new ServiceIdentifier(serviceDescriptor.ServiceKey, serviceDescriptor.ServiceType);
-
-	public static ServiceIdentifier FromServiceType(Type type) => new ServiceIdentifier(null, type);
-
-	public bool Equals(ServiceIdentifier other)
-	{
-		if (ServiceKey == null && other.ServiceKey == null)
-		{
-			return ServiceType == other.ServiceType;
-		}
-		else if (ServiceKey != null && other.ServiceKey != null)
-		{
-			return ServiceType == other.ServiceType && ServiceKey.Equals(other.ServiceKey);
-		}
-		return false;
-	}
-
-	public override bool Equals(object? obj)
-	{
-		return obj is ServiceIdentifier && Equals((ServiceIdentifier)obj);
-	}
-
-	public override int GetHashCode()
-	{
-		if (ServiceKey == null)
-		{
-			return ServiceType.GetHashCode();
-		}
-		unchecked
-		{
-			return (ServiceType.GetHashCode() * 397) ^ ServiceKey.GetHashCode();
-		}
-	}
-
-	public bool IsConstructedGenericType => ServiceType.IsConstructedGenericType;
-
-	public ServiceIdentifier GetGenericTypeDefinition() => new ServiceIdentifier(ServiceKey, ServiceType.GetGenericTypeDefinition());
-
-	public override string? ToString()
-	{
-		if (ServiceKey == null)
-		{
-			return ServiceType.ToString();
-		}
-
-		return $"({ServiceKey}, {ServiceType})";
-	}
-}
-
-/// <summary>
-/// Holds an AsyncLocal stack for types or markers being resolved. Provides access to the current stack of
-/// ServiceIdentifiers.
-/// </summary>
-internal static class ResolutionContext
-{
-	// An AsyncLocal stack that holds the types (or keyed markers) currently being resolved.
-	private static readonly AsyncLocal<Stack<ServiceIdentifier>?> _currentStack = new AsyncLocal<Stack<ServiceIdentifier>?>();
-
-	/// <summary>
-	/// Returns the current stack of ServiceIdentifier. If the stack is not initialized, it creates a new one.
-	/// </summary>
-	public static Stack<ServiceIdentifier> CurrentStack
-	{
-		get => _currentStack.Value ??= new Stack<ServiceIdentifier>();
-	}
-}
 
 /// <summary>
 /// Manages a service scope while tracking resolution context. It wraps an inner service scope and provides a decorated

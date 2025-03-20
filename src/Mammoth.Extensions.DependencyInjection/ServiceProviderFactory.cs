@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using System.Runtime;
 
 namespace Mammoth.Extensions.DependencyInjection
 {
@@ -33,11 +34,14 @@ namespace Mammoth.Extensions.DependencyInjection
 			var sc = containerBuilder;
 			if (options.DetectIncorrectUsageOfTransientDisposables)
 			{
-				sc = DetectIncorrectUsageOfTransientDisposables.PatchServiceCollection(
+				sc = DetectIncorrectUsageOfTransientDisposables.PatchForDetectIncorrectUsageOfTransientDisposables(
 					containerBuilder,
-					options.AllowSingletonToResolveTransientDisposables
+					options.AllowSingletonToResolveTransientDisposables,
+					options.ThrowOnOpenGenericTransientDisposable
 					);
-				return new ResolutionContextTrackingServiceProviderDecorator(sc.BuildServiceProvider(options));
+				sc = DetectIncorrectUsageOfTransientDisposables.PatchForResolutionContextTracking(sc);
+				//return new ResolutionContextTrackingServiceProviderDecorator(sc.BuildServiceProvider(options));
+				return sc.BuildServiceProvider(options);
 			}
 			return sc.BuildServiceProvider(options);
 		}

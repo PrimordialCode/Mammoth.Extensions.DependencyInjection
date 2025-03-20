@@ -19,10 +19,12 @@ namespace Mammoth.Extensions.DependencyInjection
 		{
 			// if it's a TrackerServiceProvider, we need to get the ServiceProvider from it
 			var sp = serviceProvider;
+			/*
 			if (sp is ResolutionContextTrackingServiceProviderDecorator trackingServiceProvider)
 			{
 				sp = trackingServiceProvider.InnerServiceProvider;
 			}
+			*/
 			var rootProperty = sp.GetType().GetProperty("Root",
 				BindingFlags.NonPublic | BindingFlags.Instance);
 			if (rootProperty != null)

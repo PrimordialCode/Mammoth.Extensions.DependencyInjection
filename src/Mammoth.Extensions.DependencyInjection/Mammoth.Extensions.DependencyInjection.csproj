@@ -24,9 +24,11 @@
 		<AnalysisLevel>latest-recommended</AnalysisLevel>
 	</PropertyGroup>
 	<ItemGroup>
+	  <Compile Remove="ResolutionContextTrackingServiceProviderDecorator.cs" />
 	  <Compile Remove="ServiceProviderExtensions.Reflection.Disabled.cs" />
 	</ItemGroup>
 	<ItemGroup>
+	  <None Include="ResolutionContextTrackingServiceProviderDecorator.cs" />
 	  <None Include="ServiceProviderExtensions.Reflection.Disabled.cs" />
 		<None Include="..\..\README.md" Pack="true" PackagePath="\" />
 		<None Include="..\..\Mammoth.png" Pack="true" PackagePath="\" />
