@@ -159,6 +159,7 @@ new HostBuilder().UseServiceProviderFactory(new ServiceProviderFactory(
   {
     DetectIncorrectUsageOfTransientDisposables = true
     AllowSingletonToResolveTransientDisposables = true
+    ThrowOnOpenGenericTransientDisposable = true
   }));
 ```
 
@@ -166,7 +167,18 @@ WARNING: use this feature only in debug and development build, because it has a 
 access internal Service Provider implementation (it can be fragile).
 
 Implementing these validity checks during the ServiceProvider build phase was a bit complicated and would have required to build a new ServiceProvider from scratch (due to the fact that the actual classes are sealed and there are no extension points to use),
-Thus we opted for a more straightforward approach that throws an exception when the service is resolved.
+Thus we opted for a more straightforward approach:
+- Patch all the ServiceDescriptors with new ones that tack the resolution context and throws an exception when the Transient Disposable service is resolved by the root scope.
+
+**Limitations:**
+
+- _Open generic resolution context cannot be tracked!_ They will NOT result in errors if they are disposable and registered as transient when resolved by the root scope.
+
+Options:
+
+- AllowSingletonToResolveTransientDisposables: allow singletons to resolve transient disposable services (if false an exception will be thrown).
+- ThrowOnOpenGenericTransientDisposable: throw an exception when an open generic transient disposable service is registered (we cannot track open generics, better to use all closed types to avoid memory leaks).
+
 
 ###### IsRegistered extension methods
 
