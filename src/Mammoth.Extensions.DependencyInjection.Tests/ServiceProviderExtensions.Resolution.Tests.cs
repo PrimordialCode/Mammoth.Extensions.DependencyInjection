@@ -16,7 +16,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			serviceCollection.AddKeyedSingleton<ITestService, TestService>("one");
 			serviceCollection.AddKeyedSingleton<ITestService, AnotherTestService>("one");
 			serviceCollection.AddTransient<ITestService, AnotherTestService>();
-			var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+			using var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 			// resolve all non-keyed services
 			var services = serviceProvider.GetServices<ITestService>();
@@ -49,7 +49,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			serviceCollection.AddKeyedSingleton<ITestService, AnotherTestService>("one");
 			serviceCollection.AddTransient<ITestService, AnotherTestService>();
 			serviceCollection.AddTransient<ItHasIEnumerableDependency>();
-			var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+			using var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 			// resolve service that has IEnumerable<T> dependency
 			var service = serviceProvider.GetService<ItHasIEnumerableDependency>();
@@ -70,7 +70,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			serviceCollection.AddKeyedSingleton<ITestService, TestService>("one");
 			serviceCollection.AddKeyedSingleton<ITestService, AnotherTestService>("one");
 			serviceCollection.AddTransient<ITestService, AnotherTestService>();
-			var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+			using var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 			var services = serviceProvider.GetAllServices<ITestService>();
 			Assert.AreEqual(5, services.Count());
@@ -90,7 +90,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			serviceCollection.AddKeyedSingleton<ITestService, TestService>("one");
 			serviceCollection.AddKeyedSingleton<ITestService, AnotherTestService>("one");
 			serviceCollection.AddTransient<ITestService, AnotherTestService>();
-			var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+			using var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 			var services = serviceProvider.GetAllServices<ITestService>();
 			Assert.AreEqual(5, services.Count());
@@ -118,7 +118,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 					sp.GetAllServices<ITestService>()
 					);
 			});
-			var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+			using var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 			// resolve service that has IEnumerable<T> dependency
 			var service = serviceProvider.GetService<ItHasIEnumerableDependency>();
@@ -140,7 +140,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			serviceCollection.AddKeyedSingleton<ITestService, TestService>("one");
 			serviceCollection.AddKeyedSingleton<ITestService, AnotherTestService>("one");
 			serviceCollection.AddTransient<ITestService, AnotherTestService>();
-			var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+			using var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 			var services = serviceProvider.GetAllServices<ITestService>();
 			Assert.AreEqual(5, services.Count());
@@ -161,7 +161,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			serviceCollection.AddKeyedSingleton<ITestService, TestService>("one");
 			serviceCollection.AddKeyedSingleton<ITestService, AnotherTestService>("one");
 			serviceCollection.AddTransient<ITestService, AnotherTestService>();
-			var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+			using var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 			var services = serviceProvider.GetAllServices<ITestService>();
 			Assert.AreEqual(5, services.Count());
@@ -179,7 +179,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			serviceCollection.AddKeyedSingleton<ITestService, TestService>("one");
 			serviceCollection.AddKeyedSingleton<ITestService, AnotherTestService>("one");
 			serviceCollection.AddTransient<ITestService, AnotherTestService>();
-			var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+			using var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 			var services = serviceProvider.GetAllServices<IAnotherInterface>();
 			Assert.AreEqual(0, services.Count());

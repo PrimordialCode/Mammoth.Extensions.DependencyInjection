@@ -2,6 +2,10 @@
 
 ## vNext
 
+## 0.5.4
+
+- `ServiceProviderFactory.CreateServiceProvider()` now return `ServiceProvider` instead of `IServiceProvider`.
+
 ## 0.5.3
 
 - Improved detection of incorrect usage of transient disposable objects:
