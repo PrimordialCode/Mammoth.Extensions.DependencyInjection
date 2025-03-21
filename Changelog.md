@@ -2,6 +2,11 @@
 
 ## vNext
 
+## 0.5.3
+
+- Improved detection of incorrect usage of transient disposable objects:
+  - Log warning when a transient disposable open generic service is registered.
+
 ## 0.5.2
 
 - Improved detection of incorrect usage of transient disposable objects:
