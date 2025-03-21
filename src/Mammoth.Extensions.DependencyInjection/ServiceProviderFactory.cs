@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using System.Runtime;
+using Microsoft.Extensions.Logging;
 
 namespace Mammoth.Extensions.DependencyInjection
 {
@@ -10,6 +10,12 @@ namespace Mammoth.Extensions.DependencyInjection
 	/// </summary>
 	public class ServiceProviderFactory : IServiceProviderFactory<IServiceCollection>
 	{
+		private static readonly Action<ILogger, object?, Type, Type, Exception?> _logOpenGenericWarning =
+				LoggerMessage.Define<object?, Type, Type>(
+					LogLevel.Warning,
+					new EventId(1),
+					"Open generic transient disposable registration detected, ServiceKey: {ServiceKey}, ServiceType: {ServiceType}, ImplementationType: {ImplementationType}");
+
 		/// <inheritdoc/>
 		public IServiceCollection CreateBuilder(IServiceCollection services) => services;
 
@@ -34,14 +40,31 @@ namespace Mammoth.Extensions.DependencyInjection
 			var sc = containerBuilder;
 			if (options.DetectIncorrectUsageOfTransientDisposables)
 			{
-				sc = DetectIncorrectUsageOfTransientDisposables.PatchForDetectIncorrectUsageOfTransientDisposables(
+				var (patchedSc, openGenerics) = DetectIncorrectUsageOfTransientDisposables.PatchForDetectIncorrectUsageOfTransientDisposables(
 					containerBuilder,
 					options.AllowSingletonToResolveTransientDisposables,
 					options.ThrowOnOpenGenericTransientDisposable
 					);
-				sc = DetectIncorrectUsageOfTransientDisposables.PatchForResolutionContextTracking(sc);
+				sc = DetectIncorrectUsageOfTransientDisposables.PatchForResolutionContextTracking(patchedSc);
 				//return new ResolutionContextTrackingServiceProviderDecorator(sc.BuildServiceProvider(options));
-				return sc.BuildServiceProvider(options);
+				var sp = sc.BuildServiceProvider(options);
+				if (openGenerics.Count > 0 && !options.ThrowOnOpenGenericTransientDisposable)
+				{
+					// log warning for open generic registration
+					using var score = sp.CreateScope();
+					var logger = score.ServiceProvider.GetService<ILogger<ServiceProviderFactory>>();
+					if (logger != null)
+					{
+						foreach (var openGeneric in openGenerics)
+						{
+							if (!openGeneric.IsKeyedService)
+								_logOpenGenericWarning.Invoke(logger, openGeneric.ServiceKey, openGeneric.ServiceType, openGeneric.ImplementationType!, null);
+							else
+								_logOpenGenericWarning.Invoke(logger, openGeneric.ServiceKey, openGeneric.ServiceType, openGeneric.KeyedImplementationType!, null);
+						}
+					}
+				}
+				return sp;
 			}
 			return sc.BuildServiceProvider(options);
 		}

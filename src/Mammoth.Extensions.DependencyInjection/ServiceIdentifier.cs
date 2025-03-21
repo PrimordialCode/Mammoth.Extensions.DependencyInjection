@@ -42,7 +42,7 @@ internal readonly struct ServiceIdentifier : IEquatable<ServiceIdentifier>
 
 	public override bool Equals(object? obj)
 	{
-		return obj is ServiceIdentifier && Equals((ServiceIdentifier)obj);
+		return obj is ServiceIdentifier serviceIdentifier && Equals(serviceIdentifier);
 	}
 
 	public override int GetHashCode()
