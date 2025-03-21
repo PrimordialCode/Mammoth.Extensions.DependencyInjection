@@ -6,10 +6,7 @@
 
 ## Introduction
 
-This package provides a set of extensions for the `Microsoft.Extensions.DependencyInjection` package.
-
-It is intended to use with `Microsoft.Extensions.DependencyInjection 8.0.0` and greater, because it relies heavily on
-the keyed services support introduced in that version.
+This package offers extensions for the `Microsoft.Extensions.DependencyInjection` library. It is designed for `Microsoft.Extensions.DependencyInjection` version `8.0.0` or later, using keyed services introduced in that release.
 
 ## Installation
 
@@ -21,10 +18,11 @@ dotnet add package Mammoth.Extensions.DependencyInjection
 
 ### Decorator
 
-The `Decorator` extension is used to decorate an existing service with a new implementation. 
-This is useful when you want to add new functionality to an existing service without modifying the original implementation.
+Use the `Decorator` extension to wrap an existing service with a new implementation without altering the original.
 
 The following example demonstrates how to decorate an existing service with a new implementation.
+
+**Limitation**
 
 The current implementation requires that the service to be decorated implements an interface.
 
@@ -60,13 +58,11 @@ services.Decorate<IService, DecoratorService1>(); // innermost decorator
 services.Decorate<IService, DecoratorService2>(); // outermost decorator
 ```
 
-This extension works with all kinds of Service Descriptors (Singleton, Scoped, Transient, Keyed, etc).
+This extension works with Singleton, Scoped, Transient, Keyed, and other service descriptors.
 
 ### DependsOn (requires Keyed Services support)
 
-The `DependsOn` registration extensions are used to register a service that depends on specific instances of other services.
-
-The following example demonstrates how to register a service that depends on specific instances of other services.
+Use the `DependsOn` extensions to register a service that depends on specific instances of other services. For example:
 
 ```csharp
 public interface ITestService { }
@@ -92,11 +88,11 @@ services.AddTransient<DependentService>(dependsOn: new Dependency[] {
 });
 ```
 
-Internally, the `DependsOn` extensions create a factory function that resolves the required services and creates the dependent service instances.
+Internally, `DependsOn` creates a factory function to resolve necessary services and build dependent ones.
 
-The current syntax is limited to some common use case and it's very similar to the one offered by [Castle.Windsor](https://github.com/castleproject) from which we took inspiration:
+The current design is limited to some common use case and it's very similar to the one offered by [Castle.Windsor](https://github.com/castleproject), from which we took inspiration:
 
-- inject a specific instance of a service that will be resolved:
+- Inject a specific instance of a service that will be resolved:
 
   ```csharp
   services.AddTransient<DependentService>(dependsOn: new Dependency[] {
@@ -104,7 +100,7 @@ The current syntax is limited to some common use case and it's very similar to t
   });
   ```
 
-- inject a value:
+- Inject a value:
 
   ```csharp
   services.AddTransient<DependentService>(dependsOn: new Dependency[] {
@@ -112,16 +108,15 @@ The current syntax is limited to some common use case and it's very similar to t
   });
   ```
 
-This extension works with all kinds of Service Descriptors (Singleton, Scoped, Transient, Keyed, etc).
+This extension works with Singleton, Scoped, Transient, Keyed, and other service descriptors.
 
 ### Registration Helpers
 
-A series of extensions and helpers methods to check is a component was registered and to 
-inspect the assemblies looking for services to be registered.
+A set of extension methods provides ways to verify component registrations and manage assemblies for service registration.
 
 #### Checks
 
-Helper methods to check if a service was registered or a ServiceDescriptor exists.
+Methods for confirming whether a service or descriptor exists:
 
 ##### ServiceCollection
 
@@ -137,9 +132,7 @@ Helper methods to check if a service was registered or a ServiceDescriptor exist
 
 ##### ServiceProvider
 
-To use the following extensions you need to build the ServiceProvider using our `ServiceProviderFactory`.
-
-It will inject support services used to detect incorrect usage of Transient Disposable services and keep track of registered services.
+To use these extensions, build the `ServiceProvider` with our custom `ServiceProviderFactory`. It injects services that track transient disposables and registered service usage.
 
 ```csharp
 new HostBuilder().UseServiceProviderFactory(new ServiceProviderFactory(new ExtendedServiceProviderOptions()));
@@ -149,9 +142,9 @@ new HostBuilder().UseServiceProviderFactory(new ServiceProviderFactory(new Exten
 var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection, new ExtendedServiceProviderOptions());
 ```
 
-###### Detect incorrect usage of Transient Disposables
+###### Detect Incorrect Usage of Transient Disposables
 
-To detect incorrect usage of Transient Disposable when they are resolved by Root Scope, create the service provider with:
+Enable detection of transient disposable services resolved by the root scope:
 
 ```csharp
 new HostBuilder().UseServiceProviderFactory(new ServiceProviderFactory(
@@ -163,26 +156,22 @@ new HostBuilder().UseServiceProviderFactory(new ServiceProviderFactory(
   }));
 ```
 
-WARNING: use this feature only in debug and development build, because it has a performance impact and internally uses reflection to 
-access internal Service Provider implementation (it can be fragile).
-
-Implementing these validity checks during the ServiceProvider build phase was a bit complicated and would have required to build a new ServiceProvider from scratch (due to the fact that the actual classes are sealed and there are no extension points to use),
-Thus we opted for a more straightforward approach:
-- Patch all the ServiceDescriptors with new ones that tack the resolution context and throws an exception when the Transient Disposable service is resolved by the root scope.
+WARNING: Use this only in debug/development because it relies on reflection and can affect performance.
+Instead of re-implementing a new ServiceProvider from scratch, this approach modifies each ServiceDescriptor to track resolution context and throw exceptions if required.
 
 **Limitations:**
 
-- _Open generic resolution context cannot be tracked!_ They will NOT result in errors if they are disposable and registered as transient when resolved by the root scope.
+- _Open generic resolution context cannot be tracked_, so no error is thrown if they are transient and disposable but resolved by the root scope.
 
 Options:
 
-- AllowSingletonToResolveTransientDisposables: allow singletons to resolve transient disposable services (if false an exception will be thrown).
-- ThrowOnOpenGenericTransientDisposable: throw an exception when an open generic transient disposable service is registered (we cannot track open generics, better to use all closed types to avoid memory leaks).
+- AllowSingletonToResolveTransientDisposables: If false, throws when singleton resolves a transient disposable.
+- ThrowOnOpenGenericTransientDisposable: Throws when an open generic transient disposable is registered.
 
 
 ###### IsRegistered extension methods
 
-You can use the following `IServiceProvider` extension methods:
+Additional methods for `IServiceProvider`:
 
 - `GetAllServices`: resolves all keyed and non-keyed services of a given service type.
 - `IsServiceRegistered`: checks whether the specified service type is registered in the service provider (keyed or non-keyed).
@@ -196,14 +185,14 @@ You can use the following `IServiceProvider` extension methods:
 
 #### Inspectors
 
-The `AssemblyInspector` class is used to inspect the assemblies looking for services to be registered.
+`AssemblyInspector` inspects assemblies for classes to register.
 
 It is once again inspired by the syntax used in [Castle.Windsor](https://github.com/castleproject) to inspect and register services.
 
-It looks for classes and offers a series of methods that are pretty self explanatory to output ServiceDescriptors that
+It looks for classes and offers a series of methods that are pretty self explanatory to output one or more `ServiceDescriptor` that
 will be registered in the ServiceCollection.
 
-It also supports the `DependsOn` registration extensions:
+It supports `DependsOn` for keyed services:
 
 ```csharp
 serviceCollection.Add(

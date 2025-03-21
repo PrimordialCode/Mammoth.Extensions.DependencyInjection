@@ -1,7 +1,8 @@
 ﻿using Mammoth.Extensions.DependencyInjection;
 using Mammoth.Extensions.DependencyInjection.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Testing.Platform.Logging;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
 
 namespace Mammoth.Extensions.DependencyInjection.Tests
 {
@@ -60,7 +61,11 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 
 		public class DisposableConsumerFactory
 		{
+#pragma warning disable IDE0079 // Remove unnecessary suppression
+#pragma warning disable CA1822 // Mark members as static
 			public DisposableConsumer Build(IServiceProvider sp)
+#pragma warning restore CA1822 // Mark members as static
+#pragma warning restore IDE0079 // Remove unnecessary suppression
 			{
 				return new DisposableConsumer(sp.GetRequiredService<TransientDisposable>());
 			}
@@ -102,13 +107,14 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			public SingletonWithTransient SingletonWithTransient { get; }
 		}
 
-		public interface ITransientOpenGeneric<T> : IDisposable
-		{ }
+		public interface ITransientOpenGeneric<T> : IDisposable;
 
 		public class TransientOpenGeneric<T> : ITransientOpenGeneric<T>
 		{
 			public void Dispose()
-			{ }
+			{
+				GC.SuppressFinalize(this);
+			}
 		}
 
 		private static ServiceCollection CreateServiceCollection()
@@ -568,7 +574,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		}
 
 		[TestMethod]
-		public void Register_OpenGeneric_TransientDisposable_Throws()
+		public void Register_OpenGeneric_TransientDisposable_WithValidation_Throws()
 		{
 			var serviceCollection = CreateServiceCollection();
 			Assert.ThrowsExactly<InvalidOperationException>(() =>
@@ -582,6 +588,26 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 						ValidateScopes = true
 					});
 			});
+		}
+
+		[TestMethod]
+		public void Register_OpenGeneric_TransientDisposable_WithoutValidation_LogsError()
+		{
+			var serviceCollection = CreateServiceCollection();
+			// register a fake logger
+			var fakeLogger = new FakeLogger<ServiceProviderFactory>();
+			serviceCollection.AddSingleton<ILogger<ServiceProviderFactory>>(fakeLogger);
+			ServiceProviderFactory.CreateServiceProvider(serviceCollection,
+				new ExtendedServiceProviderOptions
+				{
+					DetectIncorrectUsageOfTransientDisposables = true,
+					ThrowOnOpenGenericTransientDisposable = false,
+					ValidateOnBuild = true,
+					ValidateScopes = true
+				});
+			Assert.AreEqual(1, fakeLogger.Collector.Count);
+			Assert.AreEqual(LogLevel.Warning, fakeLogger.LatestRecord.Level);
+			Assert.AreEqual("Open generic transient disposable registration detected, ServiceKey: (null), ServiceType: Mammoth.Extensions.DependencyInjection.Tests.DetectIncorrectUsageOfTransientDisposablesTests+ITransientOpenGeneric`1[T], ImplementationType: Mammoth.Extensions.DependencyInjection.Tests.DetectIncorrectUsageOfTransientDisposablesTests+TransientOpenGeneric`1[T]", fakeLogger.LatestRecord.Message);
 		}
 	}
 }

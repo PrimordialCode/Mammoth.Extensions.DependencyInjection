@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using System.Diagnostics;
 
 namespace Mammoth.Extensions.DependencyInjection
 {
@@ -13,7 +14,7 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// Create a new "patched" service collection that replace ServiceDescriptors with new one capable of tracking the resolution context.
 		/// Wraps each ServiceDescriptor so that when an instance is created the provided callback is invoked.
 		/// </summary>
-		public static IServiceCollection PatchForResolutionContextTracking(this IServiceCollection services)
+		public static IServiceCollection PatchForResolutionContextTracking(IServiceCollection services)
 		{
 			var collection = new ServiceCollection();
 
@@ -103,7 +104,7 @@ namespace Mammoth.Extensions.DependencyInjection
 						var d = ServiceDescriptor.DescribeKeyed(
 							descriptor.ServiceType,
 							descriptor.ServiceKey,
-							(sp, key) =>
+							(sp, _) =>
 							{
 								ResolutionContext.CurrentStack.Push(new ServiceIdentifier(descriptor.ServiceKey, descriptor.ServiceType));
 								var instance = ActivatorUtilities.CreateInstance(sp, implementationType);
@@ -126,13 +127,14 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <summary>
 		/// Create a new "patched" service collection that will throw an exception if a transient disposable service is resolved in the root scope.
 		/// </summary>
-		public static IServiceCollection PatchForDetectIncorrectUsageOfTransientDisposables(
+		public static (IServiceCollection ServiceCollection, List<ServiceDescriptor> OpenGenericDisposables)PatchForDetectIncorrectUsageOfTransientDisposables(
 			IServiceCollection containerBuilder,
 			bool allowSingletonToResolveTransientDisposables,
 			bool throwOnOpenGenericTransientDisposable
 			)
 		{
 			var collection = new ServiceCollection();
+			var openGenericDisposables = new List<ServiceDescriptor>();
 
 			foreach (var descriptor in containerBuilder)
 			{
@@ -142,12 +144,18 @@ namespace Mammoth.Extensions.DependencyInjection
 					case ServiceLifetime.Transient
 						when (descriptor.IsKeyedService && descriptor.KeyedImplementationType?.IsGenericTypeDefinition == true)
 							|| (!descriptor.IsKeyedService && descriptor.ImplementationType?.IsGenericTypeDefinition == true):
-						if (throwOnOpenGenericTransientDisposable
-							&& ((descriptor.IsKeyedService && typeof(IDisposable).IsAssignableFrom(descriptor.KeyedImplementationType))
-								|| (!descriptor.IsKeyedService && typeof(IDisposable).IsAssignableFrom(descriptor.ImplementationType))))
+						if ((descriptor.IsKeyedService && typeof(IDisposable).IsAssignableFrom(descriptor.KeyedImplementationType))
+							|| (!descriptor.IsKeyedService && typeof(IDisposable).IsAssignableFrom(descriptor.ImplementationType)))
 						{
-							throw new InvalidOperationException(
-								$"Trying to register an open generic transient disposable service {descriptor.KeyedImplementationType?.Name}.");
+							if (throwOnOpenGenericTransientDisposable)
+							{
+								throw new InvalidOperationException(
+									$"Trying to register an open generic transient disposable service {descriptor.KeyedImplementationType?.Name}.");
+							}
+							else
+							{
+								openGenericDisposables.Add(descriptor);
+							}
 						}
 						collection.Add(descriptor);
 						break;
@@ -172,7 +180,7 @@ namespace Mammoth.Extensions.DependencyInjection
 				}
 			}
 
-			return collection;
+			return (collection, openGenericDisposables);
 		}
 
 		private static ServiceDescriptor CreatePatchedFactoryDescriptor(
@@ -271,7 +279,7 @@ namespace Mammoth.Extensions.DependencyInjection
 				return new ServiceDescriptor(
 					original.ServiceType,
 					original.ServiceKey,
-					(sp, key) =>
+					(sp, _) =>
 					{
 						if (sp.GetIsRootScope())
 						{
