@@ -29,7 +29,7 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// Enrich the <paramref name="containerBuilder"/> with the necessary services to be able to resolve the keys
 		/// and other useful services; then build the <see cref="IServiceProvider"/>.
 		/// </summary>
-		public static IServiceProvider CreateServiceProvider(IServiceCollection containerBuilder, ExtendedServiceProviderOptions? options = null)
+		public static ServiceProvider CreateServiceProvider(IServiceCollection containerBuilder, ExtendedServiceProviderOptions? options = null)
 		{
 			AddIsRegisteredSupportServices(containerBuilder);
 

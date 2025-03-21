@@ -13,7 +13,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		public void IsServiceRegistered_Throws_Because_ServiceProvider_Not_Configured()
 		{
 			var serviceCollection = new ServiceCollection();
-			var sp = serviceCollection.BuildServiceProvider();
+			using var sp = serviceCollection.BuildServiceProvider();
 
 			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsServiceRegistered(typeof(TestService)));
 			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsSingletonServiceRegistered(typeof(TestService)));
@@ -25,7 +25,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		public void IsServiceRegistered_Generic_Throws_Because_ServiceProvider_Not_Configured()
 		{
 			var serviceCollection = new ServiceCollection();
-			var sp = serviceCollection.BuildServiceProvider();
+			using var sp = serviceCollection.BuildServiceProvider();
 
 			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsServiceRegistered<TestService>());
 			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsSingletonServiceRegistered<TestService>());
@@ -37,7 +37,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		public void IsKeyedServiceRegistered_Throws_Because_ServiceProvider_Not_Configured()
 		{
 			var serviceCollection = new ServiceCollection();
-			var sp = serviceCollection.BuildServiceProvider();
+			using var sp = serviceCollection.BuildServiceProvider();
 
 			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsKeyedServiceRegistered("service"));
 			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsKeyedSingletonServiceRegistered(typeof(TestService), "service"));
@@ -49,7 +49,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		public void IsKeyedServiceRegistered_Generic_Throws_Because_ServiceProvider_Not_Configured()
 		{
 			var serviceCollection = new ServiceCollection();
-			var sp = serviceCollection.BuildServiceProvider();
+			using var sp = serviceCollection.BuildServiceProvider();
 
 			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsKeyedServiceRegistered("service"));
 			Assert.ThrowsExactly<InvalidOperationException>(() => sp.IsKeyedSingletonServiceRegistered<TestService>("service"));
@@ -61,7 +61,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		public void IsServiceRegistered_Return_False_If_a_ServiceType_was_Not_Registered()
 		{
 			var serviceCollection = new ServiceCollection();
-			var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 			Assert.IsFalse(sp.IsServiceRegistered<TestService>());
 			Assert.IsFalse(sp.IsSingletonServiceRegistered<TestService>());
@@ -73,7 +73,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		public void IsKeyedServiceRegistered_Return_False_If_a_ServiceType_was_Not_Registered()
 		{
 			var serviceCollection = new ServiceCollection();
-			var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 			Assert.IsFalse(sp.IsKeyedServiceRegistered("one"));
 			Assert.IsFalse(sp.IsKeyedSingletonServiceRegistered<TestService>("one"));
@@ -88,7 +88,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			serviceCollection.AddKeyedSingleton<TestService>("one");
 			serviceCollection.AddKeyedTransient<TestService>("one");
 			serviceCollection.AddKeyedScoped<TestService>("one");
-			var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 			Assert.IsFalse(sp.IsKeyedServiceRegistered("two"));
 			Assert.IsFalse(sp.IsKeyedSingletonServiceRegistered<TestService>("two"));
@@ -100,7 +100,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		public void IsKeyedServiceRegistered_Checking_ServiceKey_for_Null_Throws_Exception()
 		{
 			var serviceCollection = new ServiceCollection();
-			var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
 			Assert.ThrowsExactly<ArgumentNullException>(() => sp.IsKeyedServiceRegistered(serviceKey: null));
@@ -115,7 +115,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		{
 			var serviceCollection = new ServiceCollection();
 			serviceCollection.AddSingleton<TestService>();
-			var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 			Assert.IsTrue(sp.IsServiceRegistered<TestService>());
 			Assert.IsTrue(sp.IsSingletonServiceRegistered<TestService>());
@@ -128,7 +128,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		{
 			var serviceCollection = new ServiceCollection();
 			serviceCollection.AddKeyedSingleton<TestService>("one");
-			var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 			Assert.IsTrue(sp.IsServiceRegistered<TestService>());
 
@@ -146,7 +146,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		{
 			var serviceCollection = new ServiceCollection();
 			serviceCollection.AddKeyedSingleton<TestService>("one");
-			var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 			Assert.IsTrue(sp.IsKeyedServiceRegistered("one"));
 
@@ -164,7 +164,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		{
 			var serviceCollection = new ServiceCollection();
 			serviceCollection.AddScoped<TestService>();
-			var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 			Assert.IsTrue(sp.IsServiceRegistered<TestService>());
 			Assert.IsFalse(sp.IsSingletonServiceRegistered<TestService>());
@@ -177,7 +177,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		{
 			var serviceCollection = new ServiceCollection();
 			serviceCollection.AddKeyedScoped<TestService>("one");
-			var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 			Assert.IsTrue(sp.IsServiceRegistered<TestService>());
 
@@ -195,7 +195,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		{
 			var serviceCollection = new ServiceCollection();
 			serviceCollection.AddKeyedScoped<TestService>("one");
-			var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 			Assert.IsTrue(sp.IsKeyedServiceRegistered("one"));
 
@@ -213,7 +213,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		{
 			var serviceCollection = new ServiceCollection();
 			serviceCollection.AddTransient<TestService>();
-			var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 			Assert.IsTrue(sp.IsServiceRegistered<TestService>());
 			Assert.IsFalse(sp.IsSingletonServiceRegistered<TestService>());
@@ -226,7 +226,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		{
 			var serviceCollection = new ServiceCollection();
 			serviceCollection.AddKeyedTransient<TestService>("one");
-			var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 			Assert.IsTrue(sp.IsServiceRegistered<TestService>());
 
@@ -244,7 +244,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		{
 			var serviceCollection = new ServiceCollection();
 			serviceCollection.AddKeyedTransient<TestService>("one");
-			var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 			Assert.IsTrue(sp.IsKeyedServiceRegistered("one"));
 
