@@ -8,7 +8,7 @@ namespace Mammoth.Extensions.DependencyInjection
 	/// all the information needed to know what services are registered (like service type, service key, etc).
 	/// These structures will be used to gather insights about the services registered in the <see cref="IServiceProvider"/>.
 	/// </summary>
-	public class ServiceProviderFactory : IServiceProviderFactory<IServiceCollection>
+	public sealed class ServiceProviderFactory : IServiceProviderFactory<IServiceCollection>
 	{
 		private static readonly Action<ILogger, object?, Type, Type, Exception?> _logOpenGenericWarning =
 				LoggerMessage.Define<object?, Type, Type>(
@@ -16,13 +16,30 @@ namespace Mammoth.Extensions.DependencyInjection
 					new EventId(1),
 					"Open generic transient disposable registration detected, ServiceKey: {ServiceKey}, ServiceType: {ServiceType}, ImplementationType: {ImplementationType}");
 
+		private readonly ExtendedServiceProviderOptions? _options;
+
+		/// <summary>
+		/// Initializes a new instance of the ServiceProviderFactory class.
+		/// </summary>
+		public ServiceProviderFactory()
+		{ }
+
+		/// <summary>
+		/// Initializes a new instance of the service provider factory with specified options.
+		/// </summary>
+		/// <param name="options">The provided options configure the behavior and features of the service provider.</param>
+		public ServiceProviderFactory(ExtendedServiceProviderOptions options)
+		{
+			_options = options;
+		}
+
 		/// <inheritdoc/>
 		public IServiceCollection CreateBuilder(IServiceCollection services) => services;
 
 		/// <inheritdoc/>
 		IServiceProvider IServiceProviderFactory<IServiceCollection>.CreateServiceProvider(IServiceCollection containerBuilder)
 		{
-			return CreateServiceProvider(containerBuilder);
+			return CreateServiceProvider(containerBuilder, _options);
 		}
 
 		/// <summary>

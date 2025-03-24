@@ -2,6 +2,13 @@
 
 ## vNext
 
+## 0.5.5
+
+- `ServiceProviderFactory`: added a constructor that accepts `ExtendedServiceProviderOptions` to be used in Host Builder initialization like:
+  ```csharp
+  Host.CreateDefaultBuilder(args).UseServiceProviderFactory(new ServiceProviderFactory(new ExtendedServiceProviderOptions()))
+  ```
+
 ## 0.5.4
 
 - `ServiceProviderFactory.CreateServiceProvider()` now return `ServiceProvider` instead of `IServiceProvider`.
