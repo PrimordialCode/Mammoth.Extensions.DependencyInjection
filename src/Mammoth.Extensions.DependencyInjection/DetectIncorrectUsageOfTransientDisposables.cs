@@ -324,6 +324,21 @@ namespace Mammoth.Extensions.DependencyInjection
 				}
 				sb.Append($"ImplementationType: {implementationType.FullName}.");
 			}
+			if (ResolutionContext.CurrentStack.Count > 0)
+			{
+				sb.AppendLine();
+				sb.Append("Requested by (Resolution Context Stack):");
+				foreach (var entry in ResolutionContext.CurrentStack)
+				{
+					sb.AppendLine();
+					sb.Append("- ");
+					if (entry.ServiceKey != null)
+					{
+						sb.Append($"ServiceKey: {entry.ServiceKey}, ");
+					}
+					sb.Append($"ServiceType: {entry.ServiceType.FullName}");
+				}
+			}
 			throw new InvalidOperationException(sb.ToString());
 		}
 
