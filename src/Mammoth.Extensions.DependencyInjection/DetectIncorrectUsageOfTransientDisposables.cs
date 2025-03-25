@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Mammoth.Extensions.DependencyInjection
 {
@@ -130,7 +131,8 @@ namespace Mammoth.Extensions.DependencyInjection
 		public static (IServiceCollection ServiceCollection, List<ServiceDescriptor> OpenGenericDisposables) PatchForDetectIncorrectUsageOfTransientDisposables(
 			IServiceCollection containerBuilder,
 			bool allowSingletonToResolveTransientDisposables,
-			bool throwOnOpenGenericTransientDisposable
+			bool throwOnOpenGenericTransientDisposable,
+			IEnumerable<string>? exclusionPatterns
 			)
 		{
 			var collection = new ServiceCollection();
@@ -138,6 +140,17 @@ namespace Mammoth.Extensions.DependencyInjection
 
 			foreach (var descriptor in containerBuilder)
 			{
+				// if the ServiceType matches any of the exclusion patterns (sing regex), skip patching
+				if (descriptor.Lifetime == ServiceLifetime.Transient && exclusionPatterns?.Any() == true)
+				{
+					var serviceType = descriptor.ServiceType.FullName;
+					if (exclusionPatterns.Any(pattern => Regex.IsMatch(serviceType, pattern)))
+					{
+						collection.Add(descriptor);
+						continue;
+					}
+				}
+
 				switch (descriptor.Lifetime)
 				{
 					// if its an open generic, we can't patch it

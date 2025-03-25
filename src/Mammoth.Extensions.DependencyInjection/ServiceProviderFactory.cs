@@ -60,7 +60,8 @@ namespace Mammoth.Extensions.DependencyInjection
 				var (patchedSc, openGenerics) = DetectIncorrectUsageOfTransientDisposables.PatchForDetectIncorrectUsageOfTransientDisposables(
 					containerBuilder,
 					options.AllowSingletonToResolveTransientDisposables,
-					options.ThrowOnOpenGenericTransientDisposable
+					options.ThrowOnOpenGenericTransientDisposable,
+					options.DetectIncorrectUsageOfTransientDisposablesExclusionPatterns
 					);
 				sc = DetectIncorrectUsageOfTransientDisposables.PatchForResolutionContextTracking(patchedSc);
 				//return new ResolutionContextTrackingServiceProviderDecorator(sc.BuildServiceProvider(options));

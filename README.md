@@ -150,9 +150,10 @@ Enable detection of transient disposable services resolved by the root scope:
 new HostBuilder().UseServiceProviderFactory(new ServiceProviderFactory(
   new ExtendedServiceProviderOptions 
   {
-    DetectIncorrectUsageOfTransientDisposables = true
-    AllowSingletonToResolveTransientDisposables = true
-    ThrowOnOpenGenericTransientDisposable = true
+    DetectIncorrectUsageOfTransientDisposables = true,
+    AllowSingletonToResolveTransientDisposables = true,
+    ThrowOnOpenGenericTransientDisposable = true,
+    DetectIncorrectUsageOfTransientDisposablesExclusionPatterns = ["service", "service2"]
   }));
 ```
 
@@ -167,7 +168,7 @@ Options:
 
 - AllowSingletonToResolveTransientDisposables: If false, throws when singleton resolves a transient disposable.
 - ThrowOnOpenGenericTransientDisposable: Throws when an open generic transient disposable is registered.
-
+- DetectIncorrectUsageOfTransientDisposablesExclusionPatterns: list of Regex patterns to exclude services from detection, trandient disposable services that match any entry in this list will behave as normal.
 
 ###### IsRegistered extension methods
 

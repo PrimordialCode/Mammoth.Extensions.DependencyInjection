@@ -4,7 +4,8 @@
 
 ## 0.5.6
 
-- Improved Detect Transient Disposable InvalidOperationException adding more information about the service being resolved.
+- Improved detection of incorrect usage of transient disposable object: InvalidOperationException adding more information about the service being resolved.
+- Improved detection of incorrect usage of transient disposable object: added an exclusion list for services that should not be checked (like some AspNetCore internal services).
 
 ## 0.5.5
 
