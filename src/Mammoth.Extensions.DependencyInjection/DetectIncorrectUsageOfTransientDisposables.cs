@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using System.Diagnostics;
+using System.Text;
 
 namespace Mammoth.Extensions.DependencyInjection
 {
@@ -127,7 +127,7 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <summary>
 		/// Create a new "patched" service collection that will throw an exception if a transient disposable service is resolved in the root scope.
 		/// </summary>
-		public static (IServiceCollection ServiceCollection, List<ServiceDescriptor> OpenGenericDisposables)PatchForDetectIncorrectUsageOfTransientDisposables(
+		public static (IServiceCollection ServiceCollection, List<ServiceDescriptor> OpenGenericDisposables) PatchForDetectIncorrectUsageOfTransientDisposables(
 			IServiceCollection containerBuilder,
 			bool allowSingletonToResolveTransientDisposables,
 			bool throwOnOpenGenericTransientDisposable
@@ -203,7 +203,7 @@ namespace Mammoth.Extensions.DependencyInjection
 						//if it is, then it's safe to resolve the transient disposable service
 						if (!IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
 						{
-							ThrowTransientDisposableException(d.GetType().Name);
+							ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, d.GetType(), isFactory: true);
 						}
 					}
 
@@ -233,7 +233,7 @@ namespace Mammoth.Extensions.DependencyInjection
 						//if it is, then it's safe to resolve the transient disposable service
 						if (!IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
 						{
-							ThrowTransientDisposableException(d.GetType().Name);
+							ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, d.GetType(), isFactory: true);
 						}
 					}
 
@@ -259,7 +259,7 @@ namespace Mammoth.Extensions.DependencyInjection
 							//if it is, then it's safe to resolve the transient disposable service
 							if (!IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
 							{
-								ThrowTransientDisposableException(original.ImplementationType?.Name);
+								ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, original.ImplementationType, isFactory: false);
 							}
 						}
 
@@ -287,7 +287,7 @@ namespace Mammoth.Extensions.DependencyInjection
 							//if it is, then it's safe to resolve the transient disposable service
 							if (!IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
 							{
-								ThrowTransientDisposableException(original.KeyedImplementationType?.Name);
+								ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, original.KeyedImplementationType, isFactory: false);
 							}
 						}
 
@@ -304,10 +304,27 @@ namespace Mammoth.Extensions.DependencyInjection
 			}
 		}
 
-		private static void ThrowTransientDisposableException(string? typeName)
+		private static void ThrowTransientDisposableException(object? serviceKey, Type? serviceType, Type? implementationType, bool isFactory)
 		{
-			throw new InvalidOperationException(
-				$"Trying to resolve transient disposable service {typeName} in the wrong scope (root scope).");
+			var sb = new StringBuilder();
+			sb.Append("Trying to resolve Transient Disposable service - ");
+			if (serviceKey != null)
+			{
+				sb.Append($"ServiceKey: {serviceKey}, ");
+			}
+			if (serviceType != null)
+			{
+				sb.Append($"ServiceType: {serviceType.FullName}, ");
+			}
+			if (implementationType != null)
+			{
+				if (isFactory)
+				{
+					sb.Append("(factory) ");
+				}
+				sb.Append($"ImplementationType: {implementationType.FullName}.");
+			}
+			throw new InvalidOperationException(sb.ToString());
 		}
 
 		private static bool IsResolvedBySingleton(

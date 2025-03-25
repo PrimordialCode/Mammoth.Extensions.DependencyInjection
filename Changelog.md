@@ -2,6 +2,10 @@
 
 ## vNext
 
+## 0.5.6
+
+- Improved Detect Transient Disposable InvalidOperationException adding more information about the service being resolved.
+
 ## 0.5.5
 
 - `ServiceProviderFactory`: added a constructor that accepts `ExtendedServiceProviderOptions` to be used in Host Builder initialization like:
