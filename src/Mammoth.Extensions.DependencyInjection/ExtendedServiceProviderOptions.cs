@@ -33,5 +33,21 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// This setting is only relevant if <see cref="DetectIncorrectUsageOfTransientDisposables"/> is set to true.
 		/// </summary>
 		public bool ThrowOnOpenGenericTransientDisposable { get; set; }
+
+		/// <summary>
+		/// <para>
+		/// Sometimes it's necessary to exclude some services from the detection of incorrect usage of transient disposables.
+		/// </para>
+		/// <para>
+		/// We can specify some patterns to exclude services from the detection. All the services (ServiceType) that matches any of the patterns will be excluded from the check.
+		/// </para>
+		/// <para>
+		/// Some AspNetCore services are registered as transient disposables, but they are managed by the framework.
+		/// </para>
+		/// </summary>
+		/// <remarks>
+		/// These might be potential memory leaks and should be reviewed carefully.
+		/// </remarks>
+		public IEnumerable<string>? DetectIncorrectUsageOfTransientDisposablesExclusionPatterns { get; set; }
 	}
 }

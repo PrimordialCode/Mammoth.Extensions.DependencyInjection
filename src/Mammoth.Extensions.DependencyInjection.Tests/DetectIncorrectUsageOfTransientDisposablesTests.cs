@@ -204,6 +204,32 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			Assert.ThrowsExactly<InvalidOperationException>(() => sp.GetService<TransientDisposable>());
 		}
 
+		/// <summary>
+		/// We can allow some services to be excluded from the detection of incorrect usage of transient disposables.
+		/// Some AspNetCore services are registered as transient disposables, they can be resolved from the root scope.
+		/// They are managed by the framework, we trust it.
+		/// </summary>
+		[TestMethod]
+		public void Resolve_TransientDisposable_InRootScope_WithValidation_ExclusionPatterns_DoesNotThrow()
+		{
+			var serviceCollection = CreateServiceCollection();
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection,
+				new ExtendedServiceProviderOptions
+				{
+					DetectIncorrectUsageOfTransientDisposables = true,
+					DetectIncorrectUsageOfTransientDisposablesExclusionPatterns = ["TransientDisposable"],
+					ValidateOnBuild = true,
+					ValidateScopes = true
+				});
+			var transient = sp.GetService<TransientDisposable>();
+			Assert.IsNotNull(transient);
+			// check for memory leaks: the "transient" object will never be held by internal sp.Disables array property until the container is disposed
+			Assert.IsTrue(sp.GetIsRootScope());
+			var disposables = sp.GetDisposables();
+			Assert.AreEqual(1, disposables.Count());
+			Assert.IsTrue(disposables.Contains(transient));
+		}
+
 		[TestMethod]
 		public void Resolve_TransientDisposable_InScope_WithValidation_NoMemoryLeak()
 		{
@@ -403,7 +429,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		/// container is disposed.
 		/// </summary>
 		[TestMethod]
-		public void Resolve_Singleton_with_Transient_Dependency_InRootScope_WithValidation_AllowTransient_DoesNotThrows2()
+		public void Resolve_ThirdLevel_with_Singleton_and_Transient_Dependency_InRootScope_WithValidation_AllowTransient_DoesNotThrows()
 		{
 			var serviceCollection = CreateServiceCollection();
 			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection,
@@ -431,7 +457,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		}
 
 		[TestMethod]
-		public void Resolve_Singleton_with_Transient_Dependency_InRootScope_WithValidation_AllowTransient_DoesNotThrows3()
+		public void Resolve_KeyedServices_ThirdLevel_with_Singleton_and__Transient_Dependency_InRootScope_WithValidation_AllowTransient_DoesNotThrows()
 		{
 			var serviceCollection = new ServiceCollection();
 			serviceCollection.AddKeyedTransient<TransientDisposable>("one");
