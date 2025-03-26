@@ -112,25 +112,21 @@ This extension works with Singleton, Scoped, Transient, Keyed, and other service
 
 ### Registration Helpers
 
-A set of extension methods provides ways to verify component registrations and manage assemblies for service registration.
+A set of extension methods provide ways to verify component registrations and manage assemblies for service registration.
 
-#### Checks
-
-Methods for confirming whether a service or descriptor exists:
-
-##### ServiceCollection
+#### ServiceCollection
 
 - `GetServiceDescriptors`: returns all the ServiceDescriptors (keyed and non keyed) of a given service type.
 - `IsServiceRegistered`: checks whether the specified service type is registered in the service collection (keyed or not).
 - `IsKeyedServiceRegistered`: checks whether the specified service type is registered as keyed in the service collection.
-- `IsTransientServiceRegistered`
-- `IsScopedServiceRegistered`
-- `IsSingletonServiceRegistered`
-- `IsKeyedTransientServiceRegistered`
-- `IsKeyedScopedServiceRegistered`
-- `IsKeyedSingletonServiceRegistered`
+- `IsTransientServiceRegistered`: checks whether the specified service type is registered as transient in the service collection.
+- `IsScopedServiceRegistered`: checks whether the specified service type is registered as scoped in the service collection.
+- `IsSingletonServiceRegistered`: checks whether the specified service type is registered as singleton in the service collection.
+- `IsKeyedTransientServiceRegistered`: checks whether the specified service type is registered as transient in the service collection (keyed services).
+- `IsKeyedScopedServiceRegistered`: checks whether the specified service type is registered as scoped in the service collection (keyed services).
+- `IsKeyedSingletonServiceRegistered`: checks whether the specified service type is registered as singleton in the service collection (keyed services).
 
-##### ServiceProvider
+#### ServiceProvider
 
 To use these extensions, build the `ServiceProvider` with our custom `ServiceProviderFactory`. It injects services that track transient disposables and registered service usage.
 
@@ -142,7 +138,7 @@ new HostBuilder().UseServiceProviderFactory(new ServiceProviderFactory(new Exten
 var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection, new ExtendedServiceProviderOptions());
 ```
 
-###### Detect Incorrect Usage of Transient Disposables
+##### Detect Incorrect Usage of Transient Disposables
 
 Enable detection of transient disposable services resolved by the root scope:
 
@@ -150,9 +146,10 @@ Enable detection of transient disposable services resolved by the root scope:
 new HostBuilder().UseServiceProviderFactory(new ServiceProviderFactory(
   new ExtendedServiceProviderOptions 
   {
-    DetectIncorrectUsageOfTransientDisposables = true
-    AllowSingletonToResolveTransientDisposables = true
-    ThrowOnOpenGenericTransientDisposable = true
+    DetectIncorrectUsageOfTransientDisposables = true,
+    AllowSingletonToResolveTransientDisposables = true,
+    ThrowOnOpenGenericTransientDisposable = true,
+    DetectIncorrectUsageOfTransientDisposablesExclusionPatterns = ["service", "service2"]
   }));
 ```
 
@@ -161,13 +158,14 @@ Instead of re-implementing a new ServiceProvider from scratch, this approach mod
 
 **Limitations:**
 
-- _Open generic resolution context cannot be tracked_, so no error is thrown if they are transient and disposable but resolved by the root scope.
+- _Open generic transient disposable services cannot be checked_, a ServiceDescriptor cannot be created with an Open Generic as ServiceType and an ImplementationFactory (we cannot "rewrite" service registrations), so no error is thrown if they are resolved by the root scope.
+- _Open generic resolution context cannot be tracked_, a ServiceDescriptor cannot be created with an Open Generic as ServiceType and an ImplementationFactory, so no error is thrown if they are transient and disposable but resolved by the root scope.
 
 Options:
 
 - AllowSingletonToResolveTransientDisposables: If false, throws when singleton resolves a transient disposable.
 - ThrowOnOpenGenericTransientDisposable: Throws when an open generic transient disposable is registered.
-
+- DetectIncorrectUsageOfTransientDisposablesExclusionPatterns: list of Regex patterns to exclude services from detection, transient disposable services that match any entry in this list will behave be captured if resolved by the root scope.
 
 ###### IsRegistered extension methods
 

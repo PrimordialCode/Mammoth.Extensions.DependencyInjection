@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using System.Diagnostics;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Mammoth.Extensions.DependencyInjection
 {
@@ -127,10 +128,11 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <summary>
 		/// Create a new "patched" service collection that will throw an exception if a transient disposable service is resolved in the root scope.
 		/// </summary>
-		public static (IServiceCollection ServiceCollection, List<ServiceDescriptor> OpenGenericDisposables)PatchForDetectIncorrectUsageOfTransientDisposables(
+		public static (IServiceCollection ServiceCollection, List<ServiceDescriptor> OpenGenericDisposables) PatchForDetectIncorrectUsageOfTransientDisposables(
 			IServiceCollection containerBuilder,
 			bool allowSingletonToResolveTransientDisposables,
-			bool throwOnOpenGenericTransientDisposable
+			bool throwOnOpenGenericTransientDisposable,
+			IEnumerable<string>? exclusionPatterns
 			)
 		{
 			var collection = new ServiceCollection();
@@ -138,6 +140,17 @@ namespace Mammoth.Extensions.DependencyInjection
 
 			foreach (var descriptor in containerBuilder)
 			{
+				// if the ServiceType matches any of the exclusion patterns (sing regex), skip patching
+				if (descriptor.Lifetime == ServiceLifetime.Transient && exclusionPatterns?.Any() == true)
+				{
+					var serviceType = descriptor.ServiceType.FullName;
+					if (exclusionPatterns.Any(pattern => Regex.IsMatch(serviceType, pattern)))
+					{
+						collection.Add(descriptor);
+						continue;
+					}
+				}
+
 				switch (descriptor.Lifetime)
 				{
 					// if its an open generic, we can't patch it
@@ -203,7 +216,7 @@ namespace Mammoth.Extensions.DependencyInjection
 						//if it is, then it's safe to resolve the transient disposable service
 						if (!IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
 						{
-							ThrowTransientDisposableException(d.GetType().Name);
+							ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, d.GetType(), isFactory: true);
 						}
 					}
 
@@ -233,7 +246,7 @@ namespace Mammoth.Extensions.DependencyInjection
 						//if it is, then it's safe to resolve the transient disposable service
 						if (!IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
 						{
-							ThrowTransientDisposableException(d.GetType().Name);
+							ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, d.GetType(), isFactory: true);
 						}
 					}
 
@@ -259,7 +272,7 @@ namespace Mammoth.Extensions.DependencyInjection
 							//if it is, then it's safe to resolve the transient disposable service
 							if (!IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
 							{
-								ThrowTransientDisposableException(original.ImplementationType?.Name);
+								ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, original.ImplementationType, isFactory: false);
 							}
 						}
 
@@ -287,7 +300,7 @@ namespace Mammoth.Extensions.DependencyInjection
 							//if it is, then it's safe to resolve the transient disposable service
 							if (!IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
 							{
-								ThrowTransientDisposableException(original.KeyedImplementationType?.Name);
+								ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, original.KeyedImplementationType, isFactory: false);
 							}
 						}
 
@@ -304,10 +317,42 @@ namespace Mammoth.Extensions.DependencyInjection
 			}
 		}
 
-		private static void ThrowTransientDisposableException(string? typeName)
+		private static void ThrowTransientDisposableException(object? serviceKey, Type? serviceType, Type? implementationType, bool isFactory)
 		{
-			throw new InvalidOperationException(
-				$"Trying to resolve transient disposable service {typeName} in the wrong scope (root scope).");
+			var sb = new StringBuilder();
+			sb.Append("Trying to resolve Transient Disposable service - ");
+			if (serviceKey != null)
+			{
+				sb.Append($"ServiceKey: {serviceKey}, ");
+			}
+			if (serviceType != null)
+			{
+				sb.Append($"ServiceType: {serviceType.FullName}, ");
+			}
+			if (implementationType != null)
+			{
+				if (isFactory)
+				{
+					sb.Append("(factory) ");
+				}
+				sb.Append($"ImplementationType: {implementationType.FullName}.");
+			}
+			if (ResolutionContext.CurrentStack.Count > 0)
+			{
+				sb.AppendLine();
+				sb.Append("Requested by (Resolution Context Stack):");
+				foreach (var entry in ResolutionContext.CurrentStack)
+				{
+					sb.AppendLine();
+					sb.Append("- ");
+					if (entry.ServiceKey != null)
+					{
+						sb.Append($"ServiceKey: {entry.ServiceKey}, ");
+					}
+					sb.Append($"ServiceType: {entry.ServiceType.FullName}");
+				}
+			}
+			throw new InvalidOperationException(sb.ToString());
 		}
 
 		private static bool IsResolvedBySingleton(
