@@ -429,7 +429,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		/// container is disposed.
 		/// </summary>
 		[TestMethod]
-		public void Resolve_Singleton_with_Transient_Dependency_InRootScope_WithValidation_AllowTransient_DoesNotThrows2()
+		public void Resolve_ThirdLevel_with_Singleton_and_Transient_Dependency_InRootScope_WithValidation_AllowTransient_DoesNotThrows()
 		{
 			var serviceCollection = CreateServiceCollection();
 			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection,
@@ -457,7 +457,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		}
 
 		[TestMethod]
-		public void Resolve_Singleton_with_Transient_Dependency_InRootScope_WithValidation_AllowTransient_DoesNotThrows3()
+		public void Resolve_KeyedServices_ThirdLevel_with_Singleton_and__Transient_Dependency_InRootScope_WithValidation_AllowTransient_DoesNotThrows()
 		{
 			var serviceCollection = new ServiceCollection();
 			serviceCollection.AddKeyedTransient<TransientDisposable>("one");
