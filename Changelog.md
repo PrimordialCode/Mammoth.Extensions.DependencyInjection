@@ -2,9 +2,9 @@
 
 ## vNext
 
-- added support for .NET 8.0 and .NET 9.0 (previously only netstandard2.0 was supported).
-
 ## 0.5.7
+
+- added support for .NET 8.0 and .NET 9.0 (previously only netstandard2.0 was supported).
 
 ### BugFix
 
