@@ -2,6 +2,8 @@
 
 ## vNext
 
+## 0.5.7
+
 ### BugFix
 
 - ServiceProviderFactory / IsRegistered support: Registering a KeyedService with an object key results in System.ArgumentException: Object must be of type String [#9](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/9)
