@@ -256,6 +256,22 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			Assert.IsTrue(sp.IsKeyedTransientServiceRegistered<TestService>("one"));
 			Assert.IsFalse(sp.IsKeyedScopedServiceRegistered<TestService>("one"));
 		}
+
+		[TestMethod]
+		public void Can_Mix_Object_And_String_Keys()
+		{
+			var serviceCollection = new ServiceCollection();
+			serviceCollection.AddKeyedTransient<TestService>("one");
+			var objectKey = new object();
+			serviceCollection.AddKeyedTransient<TestService>(objectKey);
+			// does not throw an exception
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
+
+			Assert.IsTrue(sp.IsKeyedServiceRegistered("one"));
+			Assert.IsTrue(sp.IsKeyedTransientServiceRegistered<TestService>("one"));
+			Assert.IsTrue(sp.IsKeyedServiceRegistered(objectKey));
+			Assert.IsTrue(sp.IsKeyedTransientServiceRegistered<TestService>(objectKey));
+		}
 	}
 }
 
