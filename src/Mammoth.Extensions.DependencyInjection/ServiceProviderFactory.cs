@@ -153,7 +153,7 @@ namespace Mammoth.Extensions.DependencyInjection
 	/// <summary>
 	/// The list of all keys.
 	/// </summary>
-	public class ServiceKeys : SortedSet<object>;
+	public class ServiceKeys : HashSet<object>;
 
 	/// <summary>
 	/// The list of all registered ServiceType.

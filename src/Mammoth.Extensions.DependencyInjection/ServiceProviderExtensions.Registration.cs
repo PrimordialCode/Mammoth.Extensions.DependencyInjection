@@ -40,7 +40,7 @@ public static partial class ServiceProviderExtensions
 		var serviceKeys = serviceProvider.GetService<ServiceKeys>()
 			?? throw BuildExceptionBecauseProviderWasNotBuiltUsingTheFactory();
 
-		return serviceKeys.Any(key => key.Equals(serviceKey));
+		return serviceKeys.Contains(serviceKey);
 	}
 
 	/// <summary>
