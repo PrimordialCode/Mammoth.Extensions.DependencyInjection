@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>netstandard2.0</TargetFrameworks>
+		<TargetFrameworks>netstandard2.0;net8.0;net9.0</TargetFrameworks>
 		<OutputPath>bin\$(Configuration)\</OutputPath>
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -11,6 +11,7 @@
 		<PackageTags>dependency-injection, service-collection, service-provider</PackageTags>
 		<RepositoryUrl>https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection</RepositoryUrl>
 		<Copyright>Copyright Giorgetti Alessandro 2024</Copyright>
+		<Authors>Alessandro Giorgetti</Authors>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DebugSymbols>true</DebugSymbols>
 		<IncludeSymbols>true</IncludeSymbols>
@@ -37,7 +38,7 @@
 		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
-		<PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
+		<PackageReference Include="System.Reflection.Emit" Version="4.7.0" Condition="'$(TargetFramework)' == 'netstandard2.0'" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

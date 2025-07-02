@@ -2,6 +2,10 @@
 
 ## vNext
 
+- added support for .NET 8.0 and .NET 9.0 (previously only netstandard2.0 was supported).
+
+## 0.5.7
+
 ### BugFix
 
 - ServiceProviderFactory / IsRegistered support: Registering a KeyedService with an object key results in System.ArgumentException: Object must be of type String [#9](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/9)
