@@ -1,5 +1,35 @@
-mode: ContinuousDeployment
-branches: {}
+next-version: 1.0.0
+branches:
+  main:
+    regex: ^main$
+    mode: ContinuousDeployment
+    label: ''
+    increment: Patch
+  develop:
+    regex: ^dev(elop)?(ment)?$
+    mode: ContinuousDeployment
+    label: alpha
+    increment: Minor
+  feature:
+    regex: ^features?[/-]
+    mode: ContinuousDeployment
+    label: useBranchName
+    increment: Inherit
+  release:
+    regex: ^releases?[/-]
+    mode: ContinuousDeployment
+    label: beta
+    increment: None
+  hotfix:
+    regex: ^hotfix(es)?[/-]
+    mode: ContinuousDeployment
+    label: beta
+    increment: Patch
+  support:
+    regex: ^support[/-]
+    mode: ContinuousDeployment
+    label: ''
+    increment: Patch
 ignore:
   sha: []
 merge-message-formats: {}
