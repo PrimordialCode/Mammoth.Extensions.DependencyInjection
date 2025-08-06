@@ -347,6 +347,72 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			Assert.IsNotNull(service);
 			Assert.IsInstanceOfType<TestService>(service);
 		}
+
+		#region Tests for Class Decoration (not just interfaces)
+
+		[TestMethod]
+		public void Decorate_ConcreteClass_Registered_As_Type()
+		{
+			var serviceCollection = new ServiceCollection();
+			serviceCollection.AddTransient<TestService>(); // Register concrete class directly
+			serviceCollection.Decorate<TestService, TestServiceConcreteDecorator>(); 
+
+			serviceCollection.AddTransient<ExternalService>();
+
+			using var _serviceProvider = serviceCollection.BuildServiceProvider();
+
+			var service = _serviceProvider.GetRequiredService<TestService>();
+
+			Assert.IsNotNull(service);
+			Assert.IsInstanceOfType<TestServiceConcreteDecorator>(service);
+			var decorator = (TestServiceConcreteDecorator)service;
+			Assert.IsNotNull(decorator.Inner);
+			Assert.IsInstanceOfType<TestService>(decorator.Inner);
+		}
+
+		[TestMethod]
+		public void Decorate_ConcreteClass_Registered_As_Instance()
+		{
+			var serviceCollection = new ServiceCollection();
+			var implementationInstance = new TestService();
+			serviceCollection.AddSingleton(implementationInstance); // Register concrete class instance
+			serviceCollection.Decorate<TestService, TestServiceConcreteDecorator>();
+
+			serviceCollection.AddTransient<ExternalService>();
+
+			using var _serviceProvider = serviceCollection.BuildServiceProvider();
+
+			var service = _serviceProvider.GetRequiredService<TestService>();
+
+			Assert.IsNotNull(service);
+			Assert.IsInstanceOfType<TestServiceConcreteDecorator>(service);
+			var decorator = (TestServiceConcreteDecorator)service;
+			Assert.IsNotNull(decorator.Inner);
+			Assert.IsInstanceOfType<TestService>(decorator.Inner);
+			Assert.AreEqual(decorator.Inner, implementationInstance);
+		}
+
+		[TestMethod]
+		public void Decorate_ConcreteClass_Registered_As_Factory()
+		{
+			var serviceCollection = new ServiceCollection();
+			serviceCollection.AddTransient<TestService>(_ => new TestService()); // Register with factory
+			serviceCollection.Decorate<TestService, TestServiceConcreteDecorator>();
+
+			serviceCollection.AddTransient<ExternalService>();
+
+			using var _serviceProvider = serviceCollection.BuildServiceProvider();
+
+			var service = _serviceProvider.GetRequiredService<TestService>();
+
+			Assert.IsNotNull(service);
+			Assert.IsInstanceOfType<TestServiceConcreteDecorator>(service);
+			var decorator = (TestServiceConcreteDecorator)service;
+			Assert.IsNotNull(decorator.Inner);
+			Assert.IsInstanceOfType<TestService>(decorator.Inner);
+		}
+
+		#endregion
 	}
 
 	public class TestServiceDecorator1 : ITestService
