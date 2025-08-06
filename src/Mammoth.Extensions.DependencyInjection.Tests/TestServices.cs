@@ -13,7 +13,7 @@
 	{
 		private bool disposedValue;
 
-		public bool WasDisposed()
+		public virtual bool WasDisposed()
 		{
 			return disposedValue;
 		}
@@ -47,7 +47,7 @@
 			GC.SuppressFinalize(this);
 		}
 
-		public T? GetById<T>(string id) where T : class
+		public virtual T? GetById<T>(string id) where T : class
 		{
 			return default;
 		}
@@ -104,6 +104,26 @@
 	public class KeyedService2 : IKeyedService;
 
 	public class ExternalService;
+
+	public class TestServiceConcreteDecorator : TestService
+	{
+		public TestService Inner { get; }
+
+		public TestServiceConcreteDecorator(TestService inner)
+		{
+			Inner = inner;
+		}
+
+		public override T? GetById<T>(string id) where T : class
+		{
+			return Inner.GetById<T>(id);
+		}
+
+		public override bool WasDisposed()
+		{
+			return Inner.WasDisposed();
+		}
+	}
 
 	namespace Nested
 	{

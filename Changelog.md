@@ -3,6 +3,11 @@
 ## vNext
 
 - added support for .NET 8.0 and .NET 9.0 (previously only netstandard2.0 was supported).
+- **Service Decorators Enhancement** [#11](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/11):
+  - **Breaking Performance Improvement**: Eliminated reflection-based proxy creation for factory-registered services, removing `System.Reflection.Emit` overhead.
+  - **New Feature**: Added support for decorating concrete classes (not just interfaces). Previously, decorating concrete classes would throw `InvalidOperationException: "Service type X is not an interface."`.
+  - **Simplified Implementation**: Decorator logic now works directly with `ServiceDescriptor` information, using `ActivatorUtilities.CreateInstance` for type registrations, direct instance usage for instance registrations, and direct factory invocation for factory registrations.
+  - **Full Compatibility**: Maintains complete backward compatibility and support for keyed services.
 
 ## 0.5.7
 

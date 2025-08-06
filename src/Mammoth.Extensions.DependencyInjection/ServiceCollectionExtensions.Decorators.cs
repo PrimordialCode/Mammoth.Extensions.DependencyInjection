@@ -24,25 +24,14 @@ namespace Mammoth.Extensions.DependencyInjection
 			var originalServiceDescriptor = services.LastOrDefault(d => d.ServiceType == typeof(TInterface))
 				?? throw new InvalidOperationException($"Service type {typeof(TInterface).Name} not registered.");
 
-			// Throw exception if TInterface is not an interface
-			if (!typeof(TInterface).IsInterface)
-			{
-				throw new InvalidOperationException($"Service type {typeof(TInterface).Name} is not an interface.");
-			}
-
-			// Remove the original service descriptor that has the interface as the service type
-			// Create a new descriptor that has the implementation type as new service type.
-			// If the original descriptor was registered with a factory function, a new proxy type will be created
-			// and used as the service type to replace the original descriptor.
-			// A new ServiceDescriptor will be created with the interface as the service type and the decorator as the implementation type.
-
+			// Remove the original service descriptor that has the service type
 			services.Remove(originalServiceDescriptor);
-			var implementationType = originalServiceDescriptor.GetImplementationType()
-				?? throw new InvalidOperationException($"Service type {typeof(TInterface).Name} does not have an implementation type.");
-			var originalServiceDescriptorReplacement = originalServiceDescriptor.ChangeServiceType(implementationType);
-			services.Add(originalServiceDescriptorReplacement);
 
-			// Create a new service descriptor for the decorator
+			// Create a new service descriptor for the decorator that wraps the original service.
+			// This works by preserving the original registration information (type, instance, or factory)
+			// and creating a new factory that first creates the original service, then passes it to the decorator.
+			// This approach eliminates the need for reflection-based proxy creation while supporting
+			// both interfaces and concrete classes.
 			ServiceDescriptor newServiceDescriptor;
 			if (!originalServiceDescriptor.IsKeyedService)
 			{
@@ -50,7 +39,7 @@ namespace Mammoth.Extensions.DependencyInjection
 					typeof(TInterface),
 					serviceProvider =>
 					{
-						TInterface originalService = (TInterface)serviceProvider.GetRequiredService(originalServiceDescriptorReplacement.ServiceType);
+						TInterface originalService = CreateOriginalService<TInterface>(originalServiceDescriptor, serviceProvider);
 						return ActivatorUtilities.CreateInstance<TDecorator>(serviceProvider, originalService);
 					},
 					originalServiceDescriptor.Lifetime
@@ -63,15 +52,67 @@ namespace Mammoth.Extensions.DependencyInjection
 					originalServiceDescriptor.ServiceKey,
 					(serviceProvider, _) =>
 					{
-						TInterface originalService = (TInterface)serviceProvider.GetRequiredKeyedService(originalServiceDescriptorReplacement.ServiceType, originalServiceDescriptor.ServiceKey);
+						TInterface originalService = CreateOriginalKeyedService<TInterface>(originalServiceDescriptor, serviceProvider, originalServiceDescriptor.ServiceKey);
 						return ActivatorUtilities.CreateInstance<TDecorator>(serviceProvider, originalService);
 					},
 					originalServiceDescriptor.Lifetime
 				);
 			}
 
-			// Replace or insert the service descriptor
+			// Add the decorator service descriptor
 			services.Add(newServiceDescriptor);
+		}
+
+		/// <summary>
+		/// Creates the original service instance based on the type of registration in the ServiceDescriptor.
+		/// This method handles all three registration types without requiring reflection-based proxies:
+		/// - Type registrations: Uses ActivatorUtilities.CreateInstance to create the implementation type
+		/// - Instance registrations: Returns the pre-registered instance directly  
+		/// - Factory registrations: Calls the original factory function directly
+		/// This approach preserves the original registration behavior while enabling decoration.
+		/// </summary>
+		private static T CreateOriginalService<T>(ServiceDescriptor originalDescriptor, IServiceProvider serviceProvider) where T : class
+		{
+			if (originalDescriptor.ImplementationType != null)
+			{
+				return (T)ActivatorUtilities.CreateInstance(serviceProvider, originalDescriptor.ImplementationType);
+			}
+
+			if (originalDescriptor.ImplementationInstance != null)
+			{
+				return (T)originalDescriptor.ImplementationInstance;
+			}
+
+			if (originalDescriptor.ImplementationFactory != null)
+			{
+				return (T)originalDescriptor.ImplementationFactory(serviceProvider);
+			}
+
+			throw new InvalidOperationException($"Unable to create original service for type {typeof(T).Name}.");
+		}
+
+		/// <summary>
+		/// Creates the original keyed service instance, handling the same three registration types as CreateOriginalService
+		/// but for keyed services. The service key is passed through to maintain proper keyed service resolution.
+		/// </summary>
+		private static T CreateOriginalKeyedService<T>(ServiceDescriptor originalDescriptor, IServiceProvider serviceProvider, object? serviceKey) where T : class
+		{
+			if (originalDescriptor.KeyedImplementationType != null)
+			{
+				return (T)ActivatorUtilities.CreateInstance(serviceProvider, originalDescriptor.KeyedImplementationType);
+			}
+
+			if (originalDescriptor.KeyedImplementationInstance != null)
+			{
+				return (T)originalDescriptor.KeyedImplementationInstance;
+			}
+
+			if (originalDescriptor.KeyedImplementationFactory != null)
+			{
+				return (T)originalDescriptor.KeyedImplementationFactory(serviceProvider, serviceKey);
+			}
+
+			throw new InvalidOperationException($"Unable to create original keyed service for type {typeof(T).Name}.");
 		}
 	}
 }
