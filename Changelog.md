@@ -1,6 +1,6 @@
 # Mammoth.Extensions.DependencyInjection
 
-## vNext
+## 0.5.8
 
 ### BugFix
 
