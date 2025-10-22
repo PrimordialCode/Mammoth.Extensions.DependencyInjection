@@ -1,4 +1,6 @@
-﻿using Mammoth.Extensions.DependencyInjection;
+﻿#pragma warning disable S3881 // "IDisposable" should be implemented correctly
+
+using Mammoth.Extensions.DependencyInjection;
 using Mammoth.Extensions.DependencyInjection.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -63,7 +65,9 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		{
 #pragma warning disable IDE0079 // Remove unnecessary suppression
 #pragma warning disable CA1822 // Mark members as static
+#pragma warning disable S2325 // Methods and properties that don't access instance data should be static
 			public DisposableConsumer Build(IServiceProvider sp)
+#pragma warning restore S2325 // Methods and properties that don't access instance data should be static
 #pragma warning restore CA1822 // Mark members as static
 #pragma warning restore IDE0079 // Remove unnecessary suppression
 			{
@@ -107,7 +111,9 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			public SingletonWithTransient SingletonWithTransient { get; }
 		}
 
+#pragma warning disable S2326 // Unused type parameters should be removed
 		public interface ITransientOpenGeneric<T> : IDisposable;
+#pragma warning restore S2326 // Unused type parameters should be removed
 
 		public class TransientOpenGeneric<T> : ITransientOpenGeneric<T>
 		{
@@ -601,3 +607,5 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		}
 	}
 }
+
+#pragma warning restore S3881 // "IDisposable" should be implemented correctly
