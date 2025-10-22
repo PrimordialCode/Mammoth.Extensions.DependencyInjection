@@ -60,14 +60,14 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			Assert.AreEqual(7, descriptors.Count());
 			// 5 descriptors should match ITransientService and 2 descriptors should match IAnotherInterface
 			var iTransientServiceDescriptors = descriptors.Where(d => d.ServiceType == typeof(ITestService)).ToArray();
-			Assert.AreEqual(5, iTransientServiceDescriptors.Length);
+			Assert.HasCount(5, iTransientServiceDescriptors);
 			Assert.IsTrue(iTransientServiceDescriptors.Any(d => d.ImplementationType == typeof(TestService)));
 			Assert.IsTrue(iTransientServiceDescriptors.Any(d => d.ImplementationType == typeof(AnotherTestService)));
 			Assert.IsTrue(iTransientServiceDescriptors.Any(d => d.ImplementationType == typeof(TestServiceDecorator1)));
 			Assert.IsTrue(iTransientServiceDescriptors.Any(d => d.ImplementationType == typeof(TestServiceDecorator2)));
 			Assert.IsTrue(iTransientServiceDescriptors.Any(d => d.ImplementationType == typeof(TestServiceDecorator3)));
 			var iAnotherInterfaceDescriptors = descriptors.Where(d => d.ServiceType == typeof(IAnotherInterface)).ToArray();
-			Assert.AreEqual(2, iAnotherInterfaceDescriptors.Length);
+			Assert.HasCount(2, iAnotherInterfaceDescriptors);
 			Assert.IsTrue(iAnotherInterfaceDescriptors.Any(d => d.ImplementationType == typeof(TestService)));
 			Assert.IsTrue(iAnotherInterfaceDescriptors.Any(d => d.ImplementationType == typeof(AnotherTestService)));
 		}
@@ -405,12 +405,12 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			Assert.AreEqual(4, descriptors.Count());
 			// Should have ITestService for both TestService and AnotherTestService
 			var iTestServiceDescriptors = descriptors.Where(d => d.ServiceType == typeof(ITestService)).ToArray();
-			Assert.AreEqual(2, iTestServiceDescriptors.Length);
+			Assert.HasCount(2, iTestServiceDescriptors);
 			Assert.IsTrue(iTestServiceDescriptors.Any(d => d.ImplementationType == typeof(TestService)));
 			Assert.IsTrue(iTestServiceDescriptors.Any(d => d.ImplementationType == typeof(AnotherTestService)));
 			// Should also have IAnotherInterface for both
 			var iAnotherInterfaceDescriptors = descriptors.Where(d => d.ServiceType == typeof(IAnotherInterface)).ToArray();
-			Assert.AreEqual(2, iAnotherInterfaceDescriptors.Length);
+			Assert.HasCount(2, iAnotherInterfaceDescriptors);
 			Assert.IsTrue(iAnotherInterfaceDescriptors.Any(d => d.ImplementationType == typeof(TestService)));
 			Assert.IsTrue(iAnotherInterfaceDescriptors.Any(d => d.ImplementationType == typeof(AnotherTestService)));
 		}

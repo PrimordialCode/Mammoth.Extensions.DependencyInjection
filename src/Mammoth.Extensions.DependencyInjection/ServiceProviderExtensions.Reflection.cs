@@ -19,7 +19,7 @@ namespace Mammoth.Extensions.DependencyInjection
 		{
 			// if it's a TrackerServiceProvider, we need to get the ServiceProvider from it
 			var sp = serviceProvider;
-			/*
+			/***
 			if (sp is ResolutionContextTrackingServiceProviderDecorator trackingServiceProvider)
 			{
 				sp = trackingServiceProvider.InnerServiceProvider;
@@ -49,7 +49,12 @@ namespace Mammoth.Extensions.DependencyInjection
 
 			if (isScopeProperty != null)
 			{
-				return (bool)isScopeProperty.GetValue(sp);
+				var value = isScopeProperty.GetValue(sp);
+				if (value is bool boolValue)
+				{
+					return boolValue;
+				}
+				throw new InvalidOperationException("IsRootScope property exists but is not of type bool.");
 			}
 
 			throw new InvalidOperationException("Internal implementation of ServiceProvider changed: cannot access IsRootScope property.");
@@ -64,7 +69,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			// otherwise it's already an instance of ServiceProviderEngineScope and it's a scope.
 			var sp = GetServiceProviderEngineScope(serviceProvider);
 
-			/*
+			/***
 			// Get the Disposables field using reflection
 			var disposablesField = sp.GetType().GetField("_disposables",
 				BindingFlags.NonPublic | BindingFlags.Instance);

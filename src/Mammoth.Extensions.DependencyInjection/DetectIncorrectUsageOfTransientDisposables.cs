@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -144,7 +145,7 @@ namespace Mammoth.Extensions.DependencyInjection
 				if (descriptor.Lifetime == ServiceLifetime.Transient && exclusionPatterns?.Any() == true)
 				{
 					var serviceType = descriptor.ServiceType.FullName;
-					if (exclusionPatterns.Any(pattern => Regex.IsMatch(serviceType, pattern)))
+					if (serviceType != null && exclusionPatterns.Any(pattern => Regex.IsMatch(serviceType, pattern)))
 					{
 						collection.Add(descriptor);
 						continue;
@@ -210,14 +211,13 @@ namespace Mammoth.Extensions.DependencyInjection
 
 					var originalResult = originalFactory(sp);
 
-					if (sp.GetIsRootScope() && originalResult is IDisposable d)
+					//check the ResolutionContext to see if the service is being resolved by a singleton
+					//if it is, then it's safe to resolve the transient disposable service
+					if (sp.GetIsRootScope()
+						&& originalResult is IDisposable d
+						&& !IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
 					{
-						//check the ResolutionContext to see if the service is being resolved by a singleton
-						//if it is, then it's safe to resolve the transient disposable service
-						if (!IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
-						{
-							ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, d.GetType(), isFactory: true);
-						}
+						ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, d.GetType(), isFactory: true);
 					}
 
 					return originalResult;
@@ -240,14 +240,13 @@ namespace Mammoth.Extensions.DependencyInjection
 
 					var originalResult = originalFactory(sp, obj);
 
-					if (sp.GetIsRootScope() && originalResult is IDisposable d)
+					//check the ResolutionContext to see if the service is being resolved by a singleton
+					//if it is, then it's safe to resolve the transient disposable service
+					if (sp.GetIsRootScope()
+						&& originalResult is IDisposable d
+						&& !IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
 					{
-						//check the ResolutionContext to see if the service is being resolved by a singleton
-						//if it is, then it's safe to resolve the transient disposable service
-						if (!IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
-						{
-							ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, d.GetType(), isFactory: true);
-						}
+						ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, d.GetType(), isFactory: true);
 					}
 
 					return originalResult;
@@ -266,14 +265,12 @@ namespace Mammoth.Extensions.DependencyInjection
 					original.ServiceType,
 					(sp) =>
 					{
-						if (sp.GetIsRootScope())
+						//check the ResolutionContext to see if the service is being resolved by a singleton
+						//if it is, then it's safe to resolve the transient disposable service
+						if (sp.GetIsRootScope()
+							&& !IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
 						{
-							//check the ResolutionContext to see if the service is being resolved by a singleton
-							//if it is, then it's safe to resolve the transient disposable service
-							if (!IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
-							{
-								ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, original.ImplementationType, isFactory: false);
-							}
+							ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, original.ImplementationType, isFactory: false);
 						}
 
 						if (original.ImplementationType is null)
@@ -294,14 +291,12 @@ namespace Mammoth.Extensions.DependencyInjection
 					original.ServiceKey,
 					(sp, _) =>
 					{
-						if (sp.GetIsRootScope())
+						//check the ResolutionContext to see if the service is being resolved by a singleton
+						//if it is, then it's safe to resolve the transient disposable service
+						if (sp.GetIsRootScope()
+							&& !IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
 						{
-							//check the ResolutionContext to see if the service is being resolved by a singleton
-							//if it is, then it's safe to resolve the transient disposable service
-							if (!IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
-							{
-								ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, original.KeyedImplementationType, isFactory: false);
-							}
+							ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, original.KeyedImplementationType, isFactory: false);
 						}
 
 						if (original.KeyedImplementationType is null)

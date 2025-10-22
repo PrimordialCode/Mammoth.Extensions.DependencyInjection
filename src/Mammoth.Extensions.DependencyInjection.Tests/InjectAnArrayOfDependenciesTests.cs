@@ -49,7 +49,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 				_services = services;
 			}
 
-			/*
+			/***
 			 * Dependency Resolution Exception.
 			 * 
 			 * Unable to resolve service for type 'Mammoth.Extensions.DependencyInjection.Tests.ArrayOfDependencyResolutionTests+IService[]' 
