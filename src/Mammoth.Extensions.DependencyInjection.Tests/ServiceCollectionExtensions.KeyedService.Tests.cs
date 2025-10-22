@@ -35,7 +35,9 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			var serviceCollection = new ServiceCollection();
 			serviceCollection.TryAddKeyedTransient<IKeyedService, KeyedService1>("one");
 			serviceCollection.TryAddKeyedTransient<IKeyedService, KeyedService2>("two");
-			serviceCollection.AddSingleton<ServiceWithKeyedDep>([
+
+			var serviceWithKeyedDepType = typeof(ServiceWithKeyedDep);
+			serviceCollection.AddSingleton(serviceWithKeyedDepType, [
 				Parameter.ForKey("keyedService").Eq("one")
 				]);
 			using var serviceProvider = serviceCollection.BuildServiceProvider();
@@ -65,7 +67,9 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		public void Singleton_Resolve_DependsOn_Value()
 		{
 			var serviceCollection = new ServiceCollection();
-			serviceCollection.AddSingleton<ServiceWithValueDep>([
+
+			var serviceWithValueDepType = typeof(ServiceWithValueDep);
+			serviceCollection.AddSingleton(serviceWithValueDepType, [
 				Dependency.OnValue("dep", "val1")
 			]);
 			using var serviceProvider = serviceCollection.BuildServiceProvider();
@@ -224,7 +228,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 				using var serviceProvider = serviceCollection.BuildServiceProvider();
 			});
 
-			/*
+			/***
 			var service = serviceProvider.GetRequiredService<IOpenGenericServiceWithKeyedDep<string>>();
 			Assert.IsNotNull(service);
 			Assert.AreEqual(typeof(string).FullName, service.GetType().GenericTypeArguments[0].FullName);
@@ -275,7 +279,9 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			public string Dep => Inner.Dep;
 		}
 
+#pragma warning disable S2326 // Unused type parameters should be removed
 		public interface IOpenGenericServiceWithKeyedDep<T>
+#pragma warning restore S2326 // Unused type parameters should be removed
 		{
 			IKeyedService KeyedService { get; }
 		}

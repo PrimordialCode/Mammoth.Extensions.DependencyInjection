@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using Mammoth.Extensions.DependencyInjection.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
 
 namespace Mammoth.Extensions.DependencyInjection.Inspector
 {
@@ -150,12 +151,9 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 				{
 					case ServiceSelection.AllInterfaces:
 						// inspect interfaces (even of the base types) and exclude some (like IDisposable)
-						foreach (var interfaceType in type.GetAllInterfaces())
+						foreach (var interfaceType in type.GetAllInterfaces().Where(iType => !iType.IsFrameworkType()))
 						{
-							if (!interfaceType.IsFrameworkType())
-							{
-								AddServiceDescriptorToDescriptors(lifetime, descriptors, type, interfaceType);
-							}
+							AddServiceDescriptorToDescriptors(lifetime, descriptors, type, interfaceType);
 						}
 						break;
 					case ServiceSelection.Base:
@@ -205,23 +203,33 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 		private Type[] FilterTypes(Type[] types)
 		{
 			var filteredTypes = types.Where(type => type.IsClass && !type.IsAbstract);
+
+			// Apply BasedOn filter if specified
 			if (_baseType != null)
 			{
-				return filteredTypes.Where(t => _baseType.IsAssignableFrom(t)).ToArray();
+				filteredTypes = filteredTypes.Where(t => _baseType.IsAssignableFrom(t));
 			}
-			if (_inSameNamespaceAsType != null)
+
+			// Apply InSameNamespaceAs filter if specified
+			if (_inSameNamespaceAsType != null && !string.IsNullOrEmpty(_inSameNamespaceAsType.Namespace))
 			{
 				if (_includeSubNamespaces)
 				{
-					return filteredTypes.Where(t => t.Namespace?.StartsWith(_inSameNamespaceAsType.Namespace, StringComparison.InvariantCulture) == true).ToArray();
+					filteredTypes = filteredTypes.Where(t => t.Namespace?.StartsWith(_inSameNamespaceAsType.Namespace, StringComparison.InvariantCulture) == true);
 				}
-				return filteredTypes.Where(t => t.Namespace == _inSameNamespaceAsType.Namespace).ToArray();
+				else
+				{
+					filteredTypes = filteredTypes.Where(t => t.Namespace == _inSameNamespaceAsType.Namespace);
+				}
 			}
+
+			// Apply If filter if specified
 			if (_ifFilter != null)
 			{
-				return filteredTypes.Where(t => _ifFilter(t)).ToArray();
+				filteredTypes = filteredTypes.Where(t => _ifFilter(t));
 			}
-			return types;
+
+			return filteredTypes.ToArray();
 		}
 	}
 }

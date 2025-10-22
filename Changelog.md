@@ -1,10 +1,14 @@
 # Mammoth.Extensions.DependencyInjection
 
-## vNext
+## 0.5.8
 
-- added support for .NET 8.0 and .NET 9.0 (previously only netstandard2.0 was supported).
+### BugFix
+
+- AssemblyInspector does not allow for proper filter composition [#13](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/13)
 
 ## 0.5.7
+
+- added support for .NET 8.0 and .NET 9.0 (previously only netstandard2.0 was supported).
 
 ### BugFix
 

@@ -64,7 +64,7 @@ namespace Mammoth.Extensions.DependencyInjection
 					options.DetectIncorrectUsageOfTransientDisposablesExclusionPatterns
 					);
 				sc = DetectIncorrectUsageOfTransientDisposables.PatchForResolutionContextTracking(patchedSc);
-				//return new ResolutionContextTrackingServiceProviderDecorator(sc.BuildServiceProvider(options));
+				//// return new ResolutionContextTrackingServiceProviderDecorator(sc.BuildServiceProvider(options));
 				var sp = sc.BuildServiceProvider(options);
 				if (openGenerics.Count > 0 && !options.ThrowOnOpenGenericTransientDisposable)
 				{
@@ -141,7 +141,9 @@ namespace Mammoth.Extensions.DependencyInjection
 	/// <summary>
 	/// The list of keys for a given service type.
 	/// </summary>
+#pragma warning disable S2326 // Unused type parameters should be removed
 	public class ServiceKeys<T> : HashSet<object>
+#pragma warning restore S2326 // Unused type parameters should be removed
 	{
 		/// <summary>
 		/// Constructor
@@ -166,7 +168,7 @@ namespace Mammoth.Extensions.DependencyInjection
 	public class ServiceLifetimes
 	{
 		private readonly Dictionary<Type, ServiceLifetime> _lifetimes = [];
-		private readonly Dictionary<Type, Dictionary<object?, ServiceLifetime>> _keyedLifetimes = [];
+		private readonly Dictionary<Type, Dictionary<object, ServiceLifetime>> _keyedLifetimes = [];
 
 		/// <summary>
 		/// Adds a service type with its lifetime and optional key.
@@ -202,13 +204,10 @@ namespace Mammoth.Extensions.DependencyInjection
 			{
 				return lifetime;
 			}
-			if (serviceKey != null)
-			{
-				if (_keyedLifetimes.TryGetValue(serviceType, out var lifetimesByKey) &&
+			if (serviceKey != null && _keyedLifetimes.TryGetValue(serviceType, out var lifetimesByKey) &&
 					lifetimesByKey.TryGetValue(serviceKey, out var lifetime2))
-				{
-					return lifetime2;
-				}
+			{
+				return lifetime2;
 			}
 
 			return null;

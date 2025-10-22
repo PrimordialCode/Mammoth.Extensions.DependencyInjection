@@ -72,7 +72,8 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			serviceCollection.AddTransient<ITestService, AnotherTestService>();
 			using var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
-			var services = serviceProvider.GetAllServices<ITestService>();
+			var iTestServiceType = typeof(ITestService);
+			var services = serviceProvider.GetAllServices(iTestServiceType);
 			Assert.AreEqual(5, services.Count());
 			Assert.IsInstanceOfType<AnotherTestService>(services.First());
 			Assert.IsInstanceOfType<TestService>(services.ElementAt(1));
@@ -142,7 +143,8 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			serviceCollection.AddTransient<ITestService, AnotherTestService>();
 			using var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
-			var services = serviceProvider.GetAllServices<ITestService>();
+			var iTestServiceType = typeof(ITestService);
+			var services = serviceProvider.GetAllServices(iTestServiceType);
 			Assert.AreEqual(5, services.Count());
 			Assert.IsInstanceOfType<AnotherTestService>(services.First());
 			Assert.IsInstanceOfType<TestService>(services.ElementAt(1));

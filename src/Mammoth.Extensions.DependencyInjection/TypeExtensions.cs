@@ -13,8 +13,10 @@
 		/// <returns><c>true</c> if the specified type is a framework type; otherwise, <c>false</c>.</returns>
 		public static bool IsFrameworkType(this Type type)
 		{
-			return type.Assembly.FullName.StartsWith("System", StringComparison.InvariantCulture)
-				|| type.Assembly.FullName.Contains("mscorlib");
+			var assemblyFullName = type.Assembly.FullName;
+			return !string.IsNullOrEmpty(assemblyFullName)
+				&& (assemblyFullName.StartsWith("System", StringComparison.InvariantCulture)
+				|| assemblyFullName.Contains("mscorlib"));
 		}
 
 		/// <summary>
