@@ -1,5 +1,9 @@
 # Mammoth.Extensions.DependencyInjection
 
+## vNext
+
+- Added net10.0 support.
+
 ## 0.5.8
 
 ### BugFix

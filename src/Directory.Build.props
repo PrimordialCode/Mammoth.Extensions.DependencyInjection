@@ -1,7 +1,17 @@
 <Project>
-  <PropertyGroup>
-    <LangVersion>13.0</LangVersion>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<LangVersion>14.0</LangVersion>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+
+		<!-- Defaults (can be overridden with /p:netCoreMinimum=... etc) -->
+		<NetCoreMinimum Condition="'$(NetCoreMinimum)'==''">net8.0</NetCoreMinimum>
+		<NetCorePrevious Condition="'$(NetCorePrevious)'==''">net9.0</NetCorePrevious>
+		<NetCoreCurrent Condition="'$(NetCoreCurrent)'==''">net10.0</NetCoreCurrent>
+
+		<!-- Compose a semicolon-separated list of only the non-empty net core TFMs -->
+		<NetCoreFrameworks>$(NetCoreMinimum)</NetCoreFrameworks>
+		<NetCoreFrameworks Condition="'$(NetCorePrevious)'!=''">$(NetCoreFrameworks);$(NetCorePrevious)</NetCoreFrameworks>
+		<NetCoreFrameworks Condition="'$(NetCoreCurrent)'!=''">$(NetCoreFrameworks);$(NetCoreCurrent)</NetCoreFrameworks>
+	</PropertyGroup>
 </Project>
