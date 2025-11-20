@@ -35,7 +35,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			Assert.IsInstanceOfType<AnotherTestService>(keyedServices.Last());
 
 			keyedServices = serviceProvider.GetKeyedServices<ITestService>(KeyedService.AnyKey);
-			Assert.AreEqual(0, keyedServices.Count()); // this is not an expected behavior, I expected it to return all services
+			Assert.AreEqual(0, keyedServices.Count()); // WARNING: this is not an expected behavior, I expected it to return all services
 		}
 
 		/// <summary>
