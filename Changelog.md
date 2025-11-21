@@ -1,6 +1,6 @@
 # Mammoth.Extensions.DependencyInjection
 
-## vNext
+## 0.6.0
 
 - Added net10.0 support.
 
