@@ -312,6 +312,45 @@ namespace Mammoth.Extensions.DependencyInjection
 			}
 		}
 
+#if NET8_0_OR_GREATER
+		private static void ThrowTransientDisposableException(object? serviceKey, Type? serviceType, Type? implementationType, bool isFactory)
+		{
+			var sb = new StringBuilder();
+			sb.Append("Trying to resolve Transient Disposable service - ");
+			if (serviceKey != null)
+			{
+				sb.Append(CultureInfo.InvariantCulture, $"ServiceKey: {serviceKey}, ");
+			}
+			if (serviceType != null)
+			{
+				sb.Append(CultureInfo.InvariantCulture, $"ServiceType: {serviceType.FullName}, ");
+			}
+			if (implementationType != null)
+			{
+				if (isFactory)
+				{
+					sb.Append("(factory) ");
+				}
+				sb.Append(CultureInfo.InvariantCulture, $"ImplementationType: {implementationType.FullName}.");
+			}
+			if (ResolutionContext.CurrentStack.Count > 0)
+			{
+				sb.AppendLine();
+				sb.Append("Requested by (Resolution Context Stack):");
+				foreach (var entry in ResolutionContext.CurrentStack)
+				{
+					sb.AppendLine();
+					sb.Append("- ");
+					if (entry.ServiceKey != null)
+					{
+						sb.Append(CultureInfo.InvariantCulture, $"ServiceKey: {entry.ServiceKey}, ");
+					}
+					sb.Append(CultureInfo.InvariantCulture, $"ServiceType: {entry.ServiceType.FullName}");
+				}
+			}
+			throw new InvalidOperationException(sb.ToString());
+		}
+#elif NETSTANDARD2_0_OR_GREATER
 		private static void ThrowTransientDisposableException(object? serviceKey, Type? serviceType, Type? implementationType, bool isFactory)
 		{
 			var sb = new StringBuilder();
@@ -349,6 +388,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			}
 			throw new InvalidOperationException(sb.ToString());
 		}
+#endif
 
 		private static bool IsResolvedBySingleton(
 			IServiceProvider sp,

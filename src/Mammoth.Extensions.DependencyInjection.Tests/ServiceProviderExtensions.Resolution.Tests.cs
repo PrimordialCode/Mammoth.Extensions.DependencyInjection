@@ -15,6 +15,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			var serviceCollection = new ServiceCollection();
 			serviceCollection.AddKeyedSingleton<ITestService, TestService>("one");
 			serviceCollection.AddKeyedSingleton<ITestService, AnotherTestService>("one");
+			serviceCollection.AddKeyedSingleton<ITestService, TestService>("two");
 			serviceCollection.AddTransient<ITestService, AnotherTestService>();
 			using var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
@@ -28,14 +29,16 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			Assert.AreEqual(1, keyedServices.Count());
 			Assert.IsInstanceOfType<AnotherTestService>(keyedServices.First());
 
-			// resolve all keyed services
+			// resolve all keyed services for key "one"
 			keyedServices = serviceProvider.GetKeyedServices<ITestService>("one");
 			Assert.AreEqual(2, keyedServices.Count());
 			Assert.IsInstanceOfType<TestService>(keyedServices.First());
 			Assert.IsInstanceOfType<AnotherTestService>(keyedServices.Last());
 
+			// passing KeyedService.AnyKey should return all keyed services for all keys
 			keyedServices = serviceProvider.GetKeyedServices<ITestService>(KeyedService.AnyKey);
-			Assert.AreEqual(0, keyedServices.Count()); // WARNING: this is not an expected behavior, I expected it to return all services
+			// WARNING: Microsoft.Extensions.DependencyInjection 8.0.0 has a bug that causes this to return 0 services instead of all keyed services
+			Assert.AreEqual(3, keyedServices.Count());
 		}
 
 		/// <summary>
@@ -57,8 +60,9 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			Assert.IsNotNull(service);
 			Assert.AreEqual(1, service.Services.Count());
 			Assert.IsInstanceOfType<AnotherTestService>(service.Services.First());
-			// you need to register with a resolve function that uses GetAllServices<T> to resolve all services
-			// see a test below
+
+			// You need to register with a resolve function that uses GetAllServices<T> to resolve all services
+			// like in <see cref="GetAllServices_Resolve_All_NonKeyed_and_KeyedServices_as_IEnumerable_dependency"/>
 		}
 
 		[TestMethod]

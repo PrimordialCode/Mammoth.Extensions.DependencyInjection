@@ -3,7 +3,10 @@
 ## vNext
 
 - Added net10.0 support.
-- Updated .net assemblies dependency to 9.0.0.
+
+### Breaking Changes
+
+- Updated .net assemblies dependencies to 9.0.0.
 
 ## 0.5.8
 
