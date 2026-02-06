@@ -1,6 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
-using System.Reflection.Emit;
 
 namespace Mammoth.Extensions.DependencyInjection
 {
@@ -19,12 +17,6 @@ namespace Mammoth.Extensions.DependencyInjection
 		{
 			if (!original.IsKeyedService)
 			{
-				// Check if the original descriptor uses a factory function
-				if (original.ImplementationFactory != null)
-				{
-					return new ServiceDescriptor(newServiceType, original.ImplementationFactory, original.Lifetime);
-				}
-
 				// Check if the original descriptor was registered with a specific instance
 				if (original.ImplementationInstance != null)
 				{
@@ -36,12 +28,6 @@ namespace Mammoth.Extensions.DependencyInjection
 			}
 			else
 			{
-				// Check if the original descriptor uses a factory function
-				if (original.KeyedImplementationFactory != null)
-				{
-					return new ServiceDescriptor(newServiceType, original.ServiceKey, original.KeyedImplementationFactory, original.Lifetime);
-				}
-
 				// Check if the original descriptor was registered with a specific instance
 				if (original.KeyedImplementationInstance != null)
 				{
@@ -58,8 +44,8 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// </summary>
 		/// <param name="descriptor">The <see cref="ServiceDescriptor"/>.</param>
 		/// <returns>
-		/// The implementation type of the <paramref name="descriptor"/> <see cref="ServiceDescriptor"/>.
-		/// if the service descriptor was registered with a factory function, a proxy type will be returned.
+		/// The implementation type of the <paramref name="descriptor"/> <see cref="ServiceDescriptor"/>,
+		/// or <c>null</c> if the descriptor was registered with a factory function.
 		/// </returns>
 		internal static Type? GetImplementationType(this ServiceDescriptor descriptor)
 		{
@@ -76,14 +62,6 @@ namespace Mammoth.Extensions.DependencyInjection
 				{
 					return descriptor.ImplementationInstance.GetType();
 				}
-
-				// If the descriptor was registered with a factory function
-				// there's no easy way to find out the function return type
-				// we assume it's compatible with the ServiceType that was used to register the service
-				if (descriptor.ImplementationFactory != null)
-				{
-					return CreateProxyTypeForServiceInterface(descriptor.ServiceType);
-				}
 			}
 			else
 			{
@@ -97,40 +75,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				{
 					return descriptor.KeyedImplementationInstance.GetType();
 				}
-
-				// If the descriptor was registered with a factory function
-				// there's no easy way to find out the function return type
-				// we assume it's compatible with the ServiceType that was used to register the service
-				if (descriptor.KeyedImplementationFactory != null)
-				{
-					return CreateProxyTypeForServiceInterface(descriptor.ServiceType);
-				}
 			}
 
 			return null;
-		}
-
-		internal static Type CreateProxyTypeForServiceInterface(this Type serviceType)
-		{
-			if (!serviceType.IsInterface)
-			{
-				throw new InvalidOperationException("The service type must be an interface to create a proxy.");
-			}
-
-			var assemblyName = new AssemblyName("DynamicProxies");
-			var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
-			var moduleBuilder = assemblyBuilder.DefineDynamicModule("MainModule");
-
-			// Define a new interface that inherits from the existing service interface,
-			// this interface will be used as marker to create new service descriptors
-			var typeBuilder = moduleBuilder.DefineType(
-				$"{serviceType.Name}_Proxy_{Guid.NewGuid()}",
-				TypeAttributes.Interface | TypeAttributes.Abstract | TypeAttributes.Public,
-				null,
-				[serviceType]
-			);
-
-			return typeBuilder.CreateTypeInfo()!.AsType();
 		}
 	}
 }
