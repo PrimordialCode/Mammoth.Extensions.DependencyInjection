@@ -13,65 +13,172 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <para>Multiple decorators can be added for the same service implementation.</para>
 		/// <para>The last decorator added will be the outer most decorator.</para>
 		/// </summary>
-		/// <typeparam name="TInterface">The type of the service interface.</typeparam>
+		/// <typeparam name="TService">The type of the service (interface or class).</typeparam>
 		/// <typeparam name="TDecorator">The type of the decorator.</typeparam>
 		/// <param name="services">The service collection.</param>
 		/// <exception cref="InvalidOperationException">Thrown when the service type is not registered.</exception>
-		public static void Decorate<TInterface, TDecorator>(this IServiceCollection services)
-			where TInterface : class
-			where TDecorator : class, TInterface
+		public static void Decorate<TService, TDecorator>(this IServiceCollection services)
+			where TService : class
+			where TDecorator : class, TService
 		{
-			var originalServiceDescriptor = services.LastOrDefault(d => d.ServiceType == typeof(TInterface))
-				?? throw new InvalidOperationException($"Service type {typeof(TInterface).Name} not registered.");
-
-			// Throw exception if TInterface is not an interface
-			if (!typeof(TInterface).IsInterface)
-			{
-				throw new InvalidOperationException($"Service type {typeof(TInterface).Name} is not an interface.");
-			}
-
-			// Remove the original service descriptor that has the interface as the service type
-			// Create a new descriptor that has the implementation type as new service type.
-			// If the original descriptor was registered with a factory function, a new proxy type will be created
-			// and used as the service type to replace the original descriptor.
-			// A new ServiceDescriptor will be created with the interface as the service type and the decorator as the implementation type.
+			var originalServiceDescriptor = services.LastOrDefault(d => d.ServiceType == typeof(TService))
+				?? throw new InvalidOperationException($"Service type {typeof(TService).Name} not registered.");
 
 			services.Remove(originalServiceDescriptor);
-			var implementationType = originalServiceDescriptor.GetImplementationType()
-				?? throw new InvalidOperationException($"Service type {typeof(TInterface).Name} does not have an implementation type.");
-			var originalServiceDescriptorReplacement = originalServiceDescriptor.ChangeServiceType(implementationType);
-			services.Add(originalServiceDescriptorReplacement);
 
-			// Create a new service descriptor for the decorator
-			ServiceDescriptor newServiceDescriptor;
 			if (!originalServiceDescriptor.IsKeyedService)
 			{
-				newServiceDescriptor = new ServiceDescriptor(
-					typeof(TInterface),
-					serviceProvider =>
-					{
-						TInterface originalService = (TInterface)serviceProvider.GetRequiredService(originalServiceDescriptorReplacement.ServiceType);
-						return ActivatorUtilities.CreateInstance<TDecorator>(serviceProvider, originalService);
-					},
-					originalServiceDescriptor.Lifetime
-				);
+				DecorateNonKeyed<TService, TDecorator>(services, originalServiceDescriptor);
 			}
 			else
 			{
-				newServiceDescriptor = new ServiceDescriptor(
-					typeof(TInterface),
-					originalServiceDescriptor.ServiceKey,
-					(serviceProvider, _) =>
+				DecorateKeyed<TService, TDecorator>(services, originalServiceDescriptor);
+			}
+		}
+
+		private static void DecorateNonKeyed<TService, TDecorator>(IServiceCollection services, ServiceDescriptor originalServiceDescriptor)
+			where TService : class
+			where TDecorator : class, TService
+		{
+			// If the original descriptor uses a factory function, capture the factory directly.
+			if (originalServiceDescriptor.ImplementationFactory != null)
+			{
+				var originalFactory = originalServiceDescriptor.ImplementationFactory;
+				services.Add(new ServiceDescriptor(
+					typeof(TService),
+					serviceProvider =>
 					{
-						TInterface originalService = (TInterface)serviceProvider.GetRequiredKeyedService(originalServiceDescriptorReplacement.ServiceType, originalServiceDescriptor.ServiceKey);
+						TService originalService = (TService)originalFactory(serviceProvider);
 						return ActivatorUtilities.CreateInstance<TDecorator>(serviceProvider, originalService);
 					},
 					originalServiceDescriptor.Lifetime
-				);
+				));
+				return;
 			}
 
-			// Replace or insert the service descriptor
-			services.Add(newServiceDescriptor);
+			// If the original descriptor uses an instance, capture it directly.
+			if (originalServiceDescriptor.ImplementationInstance != null)
+			{
+				var originalInstance = originalServiceDescriptor.ImplementationInstance;
+				services.Add(new ServiceDescriptor(
+					typeof(TService),
+					serviceProvider =>
+					{
+						return ActivatorUtilities.CreateInstance<TDecorator>(serviceProvider, originalInstance);
+					},
+					originalServiceDescriptor.Lifetime
+				));
+				return;
+			}
+
+			// For type registrations, swap the service type to the implementation type
+			// and resolve via the container (implementation type differs from service type for interfaces).
+			var implementationType = originalServiceDescriptor.ImplementationType!;
+			if (implementationType != typeof(TService))
+			{
+				// Interface-based: the implementation type is different from the service type,
+				// so we can safely re-register under the implementation type.
+				var replacementDescriptor = originalServiceDescriptor.ChangeServiceType(implementationType);
+				services.Add(replacementDescriptor);
+
+				services.Add(new ServiceDescriptor(
+					typeof(TService),
+					serviceProvider =>
+					{
+						TService originalService = (TService)serviceProvider.GetRequiredService(replacementDescriptor.ServiceType);
+						return ActivatorUtilities.CreateInstance<TDecorator>(serviceProvider, originalService);
+					},
+					originalServiceDescriptor.Lifetime
+				));
+			}
+			else
+			{
+				// Class-based: service type == implementation type, so we can't re-register
+				// under the same type. Use a factory that creates the original directly.
+				services.Add(new ServiceDescriptor(
+					typeof(TService),
+					serviceProvider =>
+					{
+						TService originalService = (TService)ActivatorUtilities.CreateInstance(serviceProvider, implementationType);
+						return ActivatorUtilities.CreateInstance<TDecorator>(serviceProvider, originalService);
+					},
+					originalServiceDescriptor.Lifetime
+				));
+			}
+		}
+
+		private static void DecorateKeyed<TService, TDecorator>(IServiceCollection services, ServiceDescriptor originalServiceDescriptor)
+			where TService : class
+			where TDecorator : class, TService
+		{
+			// If the original descriptor uses a keyed factory function, capture the factory directly.
+			if (originalServiceDescriptor.KeyedImplementationFactory != null)
+			{
+				var originalFactory = originalServiceDescriptor.KeyedImplementationFactory;
+				var serviceKey = originalServiceDescriptor.ServiceKey;
+				services.Add(new ServiceDescriptor(
+					typeof(TService),
+					serviceKey,
+					(serviceProvider, key) =>
+					{
+						TService originalService = (TService)originalFactory(serviceProvider, key);
+						return ActivatorUtilities.CreateInstance<TDecorator>(serviceProvider, originalService);
+					},
+					originalServiceDescriptor.Lifetime
+				));
+				return;
+			}
+
+			// If the original descriptor uses a keyed instance, capture it directly.
+			if (originalServiceDescriptor.KeyedImplementationInstance != null)
+			{
+				var originalInstance = originalServiceDescriptor.KeyedImplementationInstance;
+				var serviceKey = originalServiceDescriptor.ServiceKey;
+				services.Add(new ServiceDescriptor(
+					typeof(TService),
+					serviceKey,
+					(serviceProvider, _) =>
+					{
+						return ActivatorUtilities.CreateInstance<TDecorator>(serviceProvider, originalInstance);
+					},
+					originalServiceDescriptor.Lifetime
+				));
+				return;
+			}
+
+			// For keyed type registrations
+			var implementationType = originalServiceDescriptor.KeyedImplementationType!;
+			if (implementationType != typeof(TService))
+			{
+				// Interface-based: re-register under the implementation type.
+				var replacementDescriptor = originalServiceDescriptor.ChangeServiceType(implementationType);
+				services.Add(replacementDescriptor);
+
+				services.Add(new ServiceDescriptor(
+					typeof(TService),
+					originalServiceDescriptor.ServiceKey,
+					(serviceProvider, _) =>
+					{
+						TService originalService = (TService)serviceProvider.GetRequiredKeyedService(replacementDescriptor.ServiceType, originalServiceDescriptor.ServiceKey);
+						return ActivatorUtilities.CreateInstance<TDecorator>(serviceProvider, originalService);
+					},
+					originalServiceDescriptor.Lifetime
+				));
+			}
+			else
+			{
+				// Class-based: service type == implementation type, use factory creation.
+				services.Add(new ServiceDescriptor(
+					typeof(TService),
+					originalServiceDescriptor.ServiceKey,
+					(serviceProvider, _) =>
+					{
+						TService originalService = (TService)ActivatorUtilities.CreateInstance(serviceProvider, implementationType);
+						return ActivatorUtilities.CreateInstance<TDecorator>(serviceProvider, originalService);
+					},
+					originalServiceDescriptor.Lifetime
+				));
+			}
 		}
 	}
 }
