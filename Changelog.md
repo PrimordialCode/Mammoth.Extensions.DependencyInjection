@@ -1,5 +1,11 @@
 # Mammoth.Extensions.DependencyInjection
 
+## vNext
+
+- Decorators: removed reflection-based proxy creation (`Reflection.Emit`) and allow class decoration [#11](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/11).
+  - The `Decorate<TService, TDecorator>` method now supports decorating services registered by concrete class, not just interfaces.
+  - Factory-registered services can be decorated without generating dynamic proxy interfaces at runtime.
+
 ## 0.6.0
 
 - Added net10.0 support.

@@ -20,11 +20,9 @@ dotnet add package Mammoth.Extensions.DependencyInjection
 
 Use the `Decorator` extension to wrap an existing service with a new implementation without altering the original.
 
-The following example demonstrates how to decorate an existing service with a new implementation.
+Both interface-based and class-based services can be decorated. The following examples demonstrate how to decorate services.
 
-**Limitation**
-
-The current implementation requires that the service to be decorated implements an interface.
+#### Interface-based decoration
 
 ```csharp
 public interface ITestService { }
@@ -54,11 +52,37 @@ public class DecoratorService2 : ITestService
 
 ```csharp
 services.AddTransient<ITestService, TestService>();
-services.Decorate<IService, DecoratorService1>(); // innermost decorator
-services.Decorate<IService, DecoratorService2>(); // outermost decorator
+services.Decorate<ITestService, DecoratorService1>(); // innermost decorator
+services.Decorate<ITestService, DecoratorService2>(); // outermost decorator
 ```
 
-This extension works with Singleton, Scoped, Transient, Keyed, and other service descriptors.
+#### Class-based decoration
+
+```csharp
+public class ConcreteService
+{
+    public virtual string GetValue() => "ConcreteService";
+}
+
+public class ConcreteServiceDecorator : ConcreteService
+{
+    private readonly ConcreteService _inner;
+
+    public ConcreteServiceDecorator(ConcreteService inner)
+    {
+        _inner = inner;
+    }
+
+    public override string GetValue() => $"Decorated({_inner.GetValue()})";
+}
+```
+
+```csharp
+services.AddTransient<ConcreteService>();
+services.Decorate<ConcreteService, ConcreteServiceDecorator>();
+```
+
+This extension works with Singleton, Scoped, Transient, Keyed, and other service descriptors. It supports type, instance, and factory registrations.
 
 ### DependsOn (requires Keyed Services support)
 
