@@ -151,7 +151,7 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 				{
 					case ServiceSelection.AllInterfaces:
 						// inspect interfaces (even of the base types) and exclude some (like IDisposable)
-						foreach (var interfaceType in type.GetAllInterfaces().Where(iType => !iType.IsFrameworkType()))
+						foreach (var interfaceType in type.GetInterfaces().Where(iType => !iType.IsFrameworkType()))
 						{
 							AddServiceDescriptorToDescriptors(lifetime, descriptors, type, interfaceType);
 						}

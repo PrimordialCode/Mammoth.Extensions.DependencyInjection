@@ -18,34 +18,5 @@
 				&& (assemblyFullName.StartsWith("System", StringComparison.InvariantCulture)
 				|| assemblyFullName.Contains("mscorlib"));
 		}
-
-		/// <summary>
-		/// Retrieves all the interfaces implemented by the specified type, including interfaces implemented by its base types.
-		/// </summary>
-		/// <param name="type">The type to retrieve the interfaces from.</param>
-		/// <returns>An enumerable collection of interfaces implemented by the specified type.</returns>
-		public static IEnumerable<Type> GetAllInterfaces(this Type type)
-		{
-			var interfaces = new HashSet<Type>();
-
-			// Add interfaces of the current type
-			foreach (var interfaceType in type.GetInterfaces())
-			{
-				interfaces.Add(interfaceType);
-			}
-
-			// Recursively add interfaces of base types
-			var baseType = type.BaseType;
-			while (baseType != null)
-			{
-				foreach (var interfaceType in baseType.GetInterfaces())
-				{
-					interfaces.Add(interfaceType);
-				}
-				baseType = baseType.BaseType;
-			}
-
-			return interfaces;
-		}
 	}
 }
