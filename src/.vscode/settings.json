@@ -1,9 +1,0 @@
-{
-	"powershell.codeFormatting.addWhitespaceAroundPipe": true,
-	"workbench.externalBrowser": "chrome",
-	"github.copilot.chat.codeGeneration.instructions": [
-		{
-			"file": ".copilot-codeGeneration-instructions.md",
-		}
-	],
-}
