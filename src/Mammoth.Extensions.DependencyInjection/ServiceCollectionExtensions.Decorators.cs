@@ -13,6 +13,42 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <para>Multiple decorators can be added for the same service implementation.</para>
 		/// <para>The last decorator added will be the outer most decorator.</para>
 		/// </summary>
+		/// <remarks>
+		/// <para><b>Algorithm overview:</b></para>
+		/// <para>
+		/// The decorator replaces the original service descriptor with a new one that wraps the
+		/// original service in a decorator. The approach varies by registration style:
+		/// </para>
+		/// <list type="bullet">
+		/// <item><description>
+		/// <b>Factory registrations:</b> The original factory delegate is captured directly in the
+		/// decorator's factory closure. The decorator factory invokes the original factory to obtain
+		/// the inner service, then uses <see cref="ActivatorUtilities"/> to create the decorator
+		/// with the inner service injected. No type swapping or proxy creation is needed.
+		/// </description></item>
+		/// <item><description>
+		/// <b>Instance registrations:</b> The original instance is captured directly in the
+		/// decorator's factory closure. The decorator is created via <see cref="ActivatorUtilities"/>
+		/// with the captured instance injected.
+		/// </description></item>
+		/// <item><description>
+		/// <b>Type registrations (interface-based, i.e. service type ≠ implementation type):</b>
+		/// The original descriptor is re-registered under its implementation type (via
+		/// <see cref="ServiceDescriptorExtensions.ChangeServiceType"/>), and the decorator factory
+		/// resolves the inner service from the container by that implementation type.
+		/// </description></item>
+		/// <item><description>
+		/// <b>Type registrations (class-based, i.e. service type == implementation type):</b>
+		/// Since re-registering under the same type would cause infinite recursion, the decorator
+		/// factory creates the inner service directly via <see cref="ActivatorUtilities.CreateInstance"/>
+		/// and then wraps it in the decorator.
+		/// </description></item>
+		/// </list>
+		/// <para>
+		/// In all cases, the resulting <see cref="ServiceDescriptor"/> preserves the original lifetime
+		/// (Transient/Scoped/Singleton). The DI container manages caching according to that lifetime.
+		/// </para>
+		/// </remarks>
 		/// <typeparam name="TService">The type of the service (interface or class).</typeparam>
 		/// <typeparam name="TDecorator">The type of the decorator.</typeparam>
 		/// <param name="services">The service collection.</param>
@@ -40,7 +76,8 @@ namespace Mammoth.Extensions.DependencyInjection
 			where TService : class
 			where TDecorator : class, TService
 		{
-			// If the original descriptor uses a factory function, capture the factory directly.
+			// Factory registration: capture the original factory directly in the decorator closure.
+			// The decorator factory invokes the original factory to get the inner service, then wraps it.
 			if (originalServiceDescriptor.ImplementationFactory != null)
 			{
 				var originalFactory = originalServiceDescriptor.ImplementationFactory;
@@ -56,7 +93,7 @@ namespace Mammoth.Extensions.DependencyInjection
 				return;
 			}
 
-			// If the original descriptor uses an instance, capture it directly.
+			// Instance registration: capture the original instance directly in the decorator closure.
 			if (originalServiceDescriptor.ImplementationInstance != null)
 			{
 				var originalInstance = originalServiceDescriptor.ImplementationInstance;
@@ -71,13 +108,12 @@ namespace Mammoth.Extensions.DependencyInjection
 				return;
 			}
 
-			// For type registrations, swap the service type to the implementation type
-			// and resolve via the container (implementation type differs from service type for interfaces).
+			// Type registration: behavior depends on whether service type differs from implementation type.
 			var implementationType = originalServiceDescriptor.ImplementationType!;
 			if (implementationType != typeof(TService))
 			{
-				// Interface-based: the implementation type is different from the service type,
-				// so we can safely re-register under the implementation type.
+				// Interface-based (service type ≠ implementation type): re-register the original
+				// under its implementation type, then resolve it in the decorator factory.
 				var replacementDescriptor = originalServiceDescriptor.ChangeServiceType(implementationType);
 				services.Add(replacementDescriptor);
 
@@ -93,8 +129,8 @@ namespace Mammoth.Extensions.DependencyInjection
 			}
 			else
 			{
-				// Class-based: service type == implementation type, so we can't re-register
-				// under the same type. Use a factory that creates the original directly.
+				// Class-based (service type == implementation type): can't re-register under the
+				// same type (would cause infinite recursion), so create the inner service directly.
 				services.Add(new ServiceDescriptor(
 					typeof(TService),
 					serviceProvider =>
@@ -111,7 +147,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			where TService : class
 			where TDecorator : class, TService
 		{
-			// If the original descriptor uses a keyed factory function, capture the factory directly.
+			// Keyed factory registration: capture the original keyed factory directly in the decorator closure.
 			if (originalServiceDescriptor.KeyedImplementationFactory != null)
 			{
 				var originalFactory = originalServiceDescriptor.KeyedImplementationFactory;
@@ -129,7 +165,7 @@ namespace Mammoth.Extensions.DependencyInjection
 				return;
 			}
 
-			// If the original descriptor uses a keyed instance, capture it directly.
+			// Keyed instance registration: capture the original keyed instance directly in the decorator closure.
 			if (originalServiceDescriptor.KeyedImplementationInstance != null)
 			{
 				var originalInstance = originalServiceDescriptor.KeyedImplementationInstance;
@@ -146,11 +182,12 @@ namespace Mammoth.Extensions.DependencyInjection
 				return;
 			}
 
-			// For keyed type registrations
+			// Keyed type registration: behavior depends on whether service type differs from implementation type.
 			var implementationType = originalServiceDescriptor.KeyedImplementationType!;
 			if (implementationType != typeof(TService))
 			{
-				// Interface-based: re-register under the implementation type.
+				// Interface-based (service type ≠ implementation type): re-register under the
+				// implementation type, then resolve it by key in the decorator factory.
 				var replacementDescriptor = originalServiceDescriptor.ChangeServiceType(implementationType);
 				services.Add(replacementDescriptor);
 
@@ -167,7 +204,8 @@ namespace Mammoth.Extensions.DependencyInjection
 			}
 			else
 			{
-				// Class-based: service type == implementation type, use factory creation.
+				// Class-based (service type == implementation type): can't re-register under the
+				// same type (would cause infinite recursion), so create the inner service directly.
 				services.Add(new ServiceDescriptor(
 					typeof(TService),
 					originalServiceDescriptor.ServiceKey,
