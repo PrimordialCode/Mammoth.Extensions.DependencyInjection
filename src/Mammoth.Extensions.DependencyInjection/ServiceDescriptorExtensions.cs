@@ -8,7 +8,14 @@ namespace Mammoth.Extensions.DependencyInjection
 	internal static class ServiceDescriptorExtensions
 	{
 		/// <summary>
+		/// <para>
 		/// Changes the service type of the <paramref name="original"/> <see cref="ServiceDescriptor"/> to the specified <paramref name="newServiceType"/>.
+		/// </para>
+		/// <para>
+		/// This method only handles type-based and instance-based registrations. Factory-based registrations
+		/// are not supported here because they are handled directly in the decorator extension methods
+		/// by capturing the original factory in a closure (see <see cref="ServiceCollectionExtensions.Decorate{TService, TDecorator}"/>).
+		/// </para>
 		/// </summary>
 		/// <param name="original">The original <see cref="ServiceDescriptor"/>.</param>
 		/// <param name="newServiceType">The new service type.</param>
@@ -37,47 +44,6 @@ namespace Mammoth.Extensions.DependencyInjection
 				// If the original descriptor was registered with a type
 				return new ServiceDescriptor(newServiceType, original.ServiceKey, original.KeyedImplementationType!, original.Lifetime);
 			}
-		}
-
-		/// <summary>
-		/// Gets the implementation type of the <paramref name="descriptor"/> <see cref="ServiceDescriptor"/>.
-		/// </summary>
-		/// <param name="descriptor">The <see cref="ServiceDescriptor"/>.</param>
-		/// <returns>
-		/// The implementation type of the <paramref name="descriptor"/> <see cref="ServiceDescriptor"/>,
-		/// or <c>null</c> if the descriptor was registered with a factory function.
-		/// </returns>
-		internal static Type? GetImplementationType(this ServiceDescriptor descriptor)
-		{
-			// see: https://github.com/dotnet/runtime/issues/95789
-			if (!descriptor.IsKeyedService)
-			{
-				// If the descriptor was registered with a type, return it directly
-				if (descriptor.ImplementationType != null)
-				{
-					return descriptor.ImplementationType;
-				}
-				// If the descriptor was registered with a specific instance
-				if (descriptor.ImplementationInstance != null)
-				{
-					return descriptor.ImplementationInstance.GetType();
-				}
-			}
-			else
-			{
-				// If the descriptor was registered with a type, return it directly
-				if (descriptor.KeyedImplementationType != null)
-				{
-					return descriptor.KeyedImplementationType;
-				}
-				// If the descriptor was registered with a specific instance
-				if (descriptor.KeyedImplementationInstance != null)
-				{
-					return descriptor.KeyedImplementationInstance.GetType();
-				}
-			}
-
-			return null;
 		}
 	}
 }
