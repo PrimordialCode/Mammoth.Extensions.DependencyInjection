@@ -1,5 +1,59 @@
+# GitVersion configuration for GitFlow workflow
+# Uses semantic versioning with GitFlow branch conventions
+
 mode: ContinuousDeployment
-branches: {}
+
+# Branch-specific configuration
+branches:
+  main:
+    # Main branch produces stable releases without pre-release labels
+    label: ''
+    increment: Patch
+    prevent-increment:
+      of-merged-branch: true
+
+  develop:
+    # Develop branch produces alpha pre-releases
+    mode: ContinuousDelivery
+    label: alpha
+    increment: Minor
+    tracks-release-branches: true
+
+  release:
+    # Release branches produce beta pre-releases
+    mode: ContinuousDelivery
+    label: beta
+    increment: None
+    prevent-increment:
+      of-merged-branch: true
+
+  feature:
+    # Feature branches use the branch name as label
+    mode: ContinuousDelivery
+    label: '{BranchName}'
+    increment: Inherit
+
+  hotfix:
+    # Hotfix branches produce beta pre-releases
+    mode: ContinuousDelivery
+    label: beta
+    increment: Patch
+
+  support:
+    # Support branches behave like main branches
+    label: ''
+    increment: Patch
+    prevent-increment:
+      of-merged-branch: true
+
+# Commit message patterns for version bumping
+major-version-bump-message: '\+semver:\s?(breaking|major)'
+minor-version-bump-message: '\+semver:\s?(feature|minor)'
+patch-version-bump-message: '\+semver:\s?(fix|patch)'
+no-bump-message: '\+semver:\s?(none|skip)'
+
+# Ignore configuration
 ignore:
   sha: []
+
 merge-message-formats: {}
