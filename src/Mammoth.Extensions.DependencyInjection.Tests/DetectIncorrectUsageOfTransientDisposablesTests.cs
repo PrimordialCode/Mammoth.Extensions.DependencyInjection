@@ -123,6 +123,45 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			}
 		}
 
+		public class TransientAsyncDisposable : IAsyncDisposable
+		{
+			public ValueTask DisposeAsync()
+			{
+				GC.SuppressFinalize(this);
+				return default;
+			}
+		}
+
+		public class AsyncDisposableConsumer : IAsyncDisposable
+		{
+			public TransientAsyncDisposable TransientAsyncDisposable { get; }
+
+			public AsyncDisposableConsumer(TransientAsyncDisposable transientAsyncDisposable)
+			{
+				TransientAsyncDisposable = transientAsyncDisposable;
+			}
+
+			public ValueTask DisposeAsync()
+			{
+				GC.SuppressFinalize(this);
+				return default;
+			}
+		}
+
+		public class AsyncDisposableConsumerFactory
+		{
+#pragma warning disable IDE0079 // Remove unnecessary suppression
+#pragma warning disable CA1822 // Mark members as static
+#pragma warning disable S2325 // Methods and properties that don't access instance data should be static
+			public AsyncDisposableConsumer Build(IServiceProvider sp)
+#pragma warning restore S2325 // Methods and properties that don't access instance data should be static
+#pragma warning restore CA1822 // Mark members as static
+#pragma warning restore IDE0079 // Remove unnecessary suppression
+			{
+				return new AsyncDisposableConsumer(sp.GetRequiredService<TransientAsyncDisposable>());
+			}
+		}
+
 		private static ServiceCollection CreateServiceCollection()
 		{
 			var serviceCollection = new ServiceCollection();
@@ -604,6 +643,109 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			Assert.AreEqual(1, fakeLogger.Collector.Count);
 			Assert.AreEqual(LogLevel.Warning, fakeLogger.LatestRecord.Level);
 			Assert.AreEqual("Open generic transient disposable registration detected, ServiceKey: (null), ServiceType: Mammoth.Extensions.DependencyInjection.Tests.DetectIncorrectUsageOfTransientDisposablesTests+ITransientOpenGeneric`1[T], ImplementationType: Mammoth.Extensions.DependencyInjection.Tests.DetectIncorrectUsageOfTransientDisposablesTests+TransientOpenGeneric`1[T]", fakeLogger.LatestRecord.Message);
+		}
+		[TestMethod]
+		public void Resolve_TransientAsyncDisposable_InRootScope_WithValidation_Throws()
+		{
+			var serviceCollection = new ServiceCollection();
+			serviceCollection.AddTransient<TransientAsyncDisposable>();
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection,
+				new ExtendedServiceProviderOptions
+				{
+					DetectIncorrectUsageOfTransientDisposables = true,
+					ValidateOnBuild = true,
+					ValidateScopes = true
+				});
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.GetService<TransientAsyncDisposable>());
+		}
+
+		[TestMethod]
+		public async Task Resolve_TransientAsyncDisposable_InScope_WithValidation_NoMemoryLeak()
+		{
+			var serviceCollection = new ServiceCollection();
+			serviceCollection.AddTransient<TransientAsyncDisposable>();
+			var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection,
+				new ExtendedServiceProviderOptions
+				{
+					DetectIncorrectUsageOfTransientDisposables = true,
+					ValidateOnBuild = true,
+					ValidateScopes = true
+				});
+			await using (sp)
+			{
+				await using var scope = sp.CreateAsyncScope();
+				var consumer = scope.ServiceProvider.GetService<TransientAsyncDisposable>();
+				Assert.IsNotNull(consumer);
+			}
+		}
+
+		[TestMethod]
+		public void Resolve_AsyncDisposableConsumer_using_factory_InRootScope_WithValidation_Throws()
+		{
+			var serviceCollection = new ServiceCollection();
+			serviceCollection.AddTransient<TransientAsyncDisposable>();
+			serviceCollection.AddSingleton<AsyncDisposableConsumerFactory>();
+			serviceCollection.AddTransient(sp => sp.GetRequiredService<AsyncDisposableConsumerFactory>().Build(sp));
+			using var spProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection,
+				new ExtendedServiceProviderOptions
+				{
+					DetectIncorrectUsageOfTransientDisposables = true,
+					ValidateOnBuild = true,
+					ValidateScopes = true
+				});
+			Assert.ThrowsExactly<InvalidOperationException>(() => spProvider.GetService<AsyncDisposableConsumer>());
+		}
+
+		[TestMethod]
+		public async Task Resolve_AsyncDisposableConsumer_using_factory_InScope_WithValidation_NoMemoryLeak()
+		{
+			var serviceCollection = new ServiceCollection();
+			serviceCollection.AddTransient<TransientAsyncDisposable>();
+			serviceCollection.AddSingleton<AsyncDisposableConsumerFactory>();
+			serviceCollection.AddTransient(sp => sp.GetRequiredService<AsyncDisposableConsumerFactory>().Build(sp));
+			var spProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection,
+				new ExtendedServiceProviderOptions
+				{
+					DetectIncorrectUsageOfTransientDisposables = true,
+					ValidateOnBuild = true,
+					ValidateScopes = true
+				});
+			await using (spProvider)
+			{
+				await using var scope = spProvider.CreateAsyncScope();
+				var consumer = scope.ServiceProvider.GetService<AsyncDisposableConsumer>();
+				Assert.IsNotNull(consumer);
+			}
+		}
+
+		[TestMethod]
+		public void Resolve_KeyedTransientAsyncDisposable_InRootScope_WithValidation_Throws()
+		{
+			var serviceCollection = new ServiceCollection();
+			serviceCollection.AddKeyedTransient<TransientAsyncDisposable>("key");
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection,
+				new ExtendedServiceProviderOptions
+				{
+					DetectIncorrectUsageOfTransientDisposables = true,
+					ValidateOnBuild = true,
+					ValidateScopes = true
+				});
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.GetKeyedService<TransientAsyncDisposable>("key"));
+		}
+
+		[TestMethod]
+		public void Resolve_KeyedTransientAsyncDisposable_using_factory_InRootScope_WithValidation_Throws()
+		{
+			var serviceCollection = new ServiceCollection();
+			serviceCollection.AddKeyedTransient<TransientAsyncDisposable>("key", (sp, key) => new TransientAsyncDisposable());
+			using var spProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection,
+				new ExtendedServiceProviderOptions
+				{
+					DetectIncorrectUsageOfTransientDisposables = true,
+					ValidateOnBuild = true,
+					ValidateScopes = true
+				});
+			Assert.ThrowsExactly<InvalidOperationException>(() => spProvider.GetKeyedService<TransientAsyncDisposable>("key"));
 		}
 	}
 }

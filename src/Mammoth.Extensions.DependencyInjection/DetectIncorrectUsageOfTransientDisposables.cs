@@ -158,8 +158,8 @@ namespace Mammoth.Extensions.DependencyInjection
 					case ServiceLifetime.Transient
 						when (descriptor.IsKeyedService && descriptor.KeyedImplementationType?.IsGenericTypeDefinition == true)
 							|| (!descriptor.IsKeyedService && descriptor.ImplementationType?.IsGenericTypeDefinition == true):
-						if ((descriptor.IsKeyedService && typeof(IDisposable).IsAssignableFrom(descriptor.KeyedImplementationType))
-							|| (!descriptor.IsKeyedService && typeof(IDisposable).IsAssignableFrom(descriptor.ImplementationType)))
+						if ((descriptor.IsKeyedService && IsDisposableType(descriptor.KeyedImplementationType))
+							|| (!descriptor.IsKeyedService && IsDisposableType(descriptor.ImplementationType)))
 						{
 							if (throwOnOpenGenericTransientDisposable)
 							{
@@ -175,9 +175,9 @@ namespace Mammoth.Extensions.DependencyInjection
 						break;
 					case ServiceLifetime.Transient
 						when (descriptor is { IsKeyedService: true, KeyedImplementationType: not null }
-							&& typeof(IDisposable).IsAssignableFrom(descriptor.KeyedImplementationType))
+							&& IsDisposableType(descriptor.KeyedImplementationType))
 							|| (descriptor is { IsKeyedService: false, ImplementationType: not null }
-								&& typeof(IDisposable).IsAssignableFrom(descriptor.ImplementationType)):
+								&& IsDisposableType(descriptor.ImplementationType)):
 						collection.Add(CreatePatchedDescriptor(descriptor, allowSingletonToResolveTransientDisposables));
 						break;
 					case ServiceLifetime.Transient
@@ -214,10 +214,10 @@ namespace Mammoth.Extensions.DependencyInjection
 					//check the ResolutionContext to see if the service is being resolved by a singleton
 					//if it is, then it's safe to resolve the transient disposable service
 					if (sp.GetIsRootScope()
-						&& originalResult is IDisposable d
+						&& (originalResult is IDisposable || originalResult is IAsyncDisposable)
 						&& !IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
 					{
-						ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, d.GetType(), isFactory: true);
+						ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, originalResult.GetType(), isFactory: true);
 					}
 
 					return originalResult;
@@ -243,10 +243,10 @@ namespace Mammoth.Extensions.DependencyInjection
 					//check the ResolutionContext to see if the service is being resolved by a singleton
 					//if it is, then it's safe to resolve the transient disposable service
 					if (sp.GetIsRootScope()
-						&& originalResult is IDisposable d
+						&& (originalResult is IDisposable || originalResult is IAsyncDisposable)
 						&& !IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
 					{
-						ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, d.GetType(), isFactory: true);
+						ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, originalResult.GetType(), isFactory: true);
 					}
 
 					return originalResult;
@@ -389,6 +389,9 @@ namespace Mammoth.Extensions.DependencyInjection
 			throw new InvalidOperationException(sb.ToString());
 		}
 #endif
+
+		private static bool IsDisposableType(Type? type) =>
+			type != null && (typeof(IDisposable).IsAssignableFrom(type) || typeof(IAsyncDisposable).IsAssignableFrom(type));
 
 		private static bool IsResolvedBySingleton(
 			IServiceProvider sp,
