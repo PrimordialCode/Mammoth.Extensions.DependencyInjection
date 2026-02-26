@@ -66,7 +66,7 @@ namespace Mammoth.Extensions.DependencyInjection
 
 			return services.Where(serviceDescriptor =>
 				(isKeyedService == null || serviceDescriptor.IsKeyedService == isKeyedService)
-				&& (serviceType == serviceDescriptor.ServiceType || serviceType.IsAssignableFrom(serviceDescriptor.ServiceType)))
+				&& serviceType.IsAssignableFrom(serviceDescriptor.ServiceType))
 				.ToArray();
 		}
 

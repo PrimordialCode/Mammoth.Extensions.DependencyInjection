@@ -280,20 +280,22 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		{
 			// Arrange: Register object as Singleton and TestService as Transient
 			// With the buggy code, object.IsAssignableFrom(TestService) = true, so GetServiceDescriptors for TestService
-			// would incorrectly include the object registration, causing .Last() to return the wrong descriptor
-			// With the fix, we only match exact types or types the query type can be assigned from
+			// would incorrectly include the object registration, causing .Last() to return the wrong (Singleton) descriptor.
 			var serviceCollection = new ServiceCollection();
 			serviceCollection.AddSingleton(typeof(object));  // Register base type as singleton
 			serviceCollection.AddTransient<TestService>();  // Register specific type as transient
-			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
-			// Act & Assert
-			// object singleton should be found when querying for object
-			Assert.IsTrue(sp.IsSingletonServiceRegistered(typeof(object)));
+			// Act: directly test GetServiceDescriptors - the code path that was fixed
+			var testServiceDescriptors = serviceCollection.GetServiceDescriptors(typeof(TestService));
 
-			// TestService should be transient, NOT singleton (the fix prevents object from matching TestService)
-			Assert.IsFalse(sp.IsSingletonServiceRegistered<TestService>());
-			Assert.IsTrue(sp.IsTransientServiceRegistered<TestService>());
+			// Assert: GetServiceDescriptors for TestService should NOT include the object registration
+			Assert.AreEqual(1, testServiceDescriptors.Length, "Should only return the TestService registration, not the object registration");
+			Assert.AreEqual(typeof(TestService), testServiceDescriptors[0].ServiceType);
+			Assert.AreEqual(ServiceLifetime.Transient, testServiceDescriptors[0].Lifetime);
+
+			// Also verify using IServiceCollection lifetime helpers (which use GetServiceDescriptors internally)
+			Assert.IsTrue(serviceCollection.IsTransientServiceRegistered<TestService>());
+			Assert.IsFalse(serviceCollection.IsSingletonServiceRegistered<TestService>());
 		}
 
 		[TestMethod]
@@ -318,26 +320,28 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		[TestMethod]
 		public void Issue19_LastDescriptorSelection_Multiple_Registrations_Same_Type_Last_Wins()
 		{
-			// Arrange: Register TestService three times with different lifetimes, last one should determine the checks
+			// Arrange: Register base type as singleton, then TestService multiple times with different lifetimes.
+			// With the buggy bidirectional check, querying GetServiceDescriptors(TestService) would also include
+			// the object singleton, causing .Last() to return the wrong (Singleton) lifetime.
 			var serviceCollection = new ServiceCollection();
+			serviceCollection.AddSingleton(typeof(object));  // Base type - previously caused false positive matches
 			serviceCollection.AddSingleton<TestService>();
 			serviceCollection.AddScoped<TestService>();
 			serviceCollection.AddTransient<TestService>();
-			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
 			// Act
 			var descriptors = serviceCollection.GetServiceDescriptors(typeof(TestService));
 
-			// Assert - all three registrations should be present
-			Assert.AreEqual(3, descriptors.Length);
+			// Assert - only the 3 TestService registrations should be present (not the object singleton)
+			Assert.AreEqual(3, descriptors.Length, "Should only return the 3 TestService registrations, not include the object singleton");
 
 			// The last one is transient
 			Assert.AreEqual(ServiceLifetime.Transient, descriptors.Last().Lifetime);
 
-			// When checking, the last registration wins
-			Assert.IsTrue(sp.IsTransientServiceRegistered<TestService>());
-			Assert.IsFalse(sp.IsScopedServiceRegistered<TestService>());  // Last is not scoped
-			Assert.IsFalse(sp.IsSingletonServiceRegistered<TestService>());  // Last is not singleton
+			// When checking using IServiceCollection extension (uses GetServiceDescriptors internally), the last registration wins
+			Assert.IsTrue(serviceCollection.IsTransientServiceRegistered<TestService>());
+			Assert.IsFalse(serviceCollection.IsScopedServiceRegistered<TestService>());  // Last is not scoped
+			Assert.IsFalse(serviceCollection.IsSingletonServiceRegistered<TestService>());  // Last is not singleton
 		}
 
 		[TestMethod]
@@ -382,21 +386,24 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		[TestMethod]
 		public void Issue19_Implementation_Type_Matches_Interface_Registration()
 		{
-			// Arrange: Register interface with implementation and also register implementation directly
+			// Arrange: Register interface with implementation as singleton and implementation directly as transient.
+			// With the buggy bidirectional check, GetServiceDescriptors(TestService) could incorrectly include
+			// the ITestService registration because TestService.IsAssignableFrom(ITestService) would be checked.
 			var serviceCollection = new ServiceCollection();
 			serviceCollection.AddSingleton<ITestService, TestService>();  // Register interface->implementation as singleton
 			serviceCollection.AddTransient<TestService>();  // Register implementation directly as transient
-			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection);
 
-			// Act & Assert
-			// ITestService should be resolvable as singleton from the first registration
-			Assert.IsTrue(sp.IsSingletonServiceRegistered(typeof(ITestService)));
+			// Act: directly test GetServiceDescriptors for TestService - the code path that was fixed
+			var testServiceDescriptors = serviceCollection.GetServiceDescriptors(typeof(TestService));
 
-			// TestService direct registration should be transient
-			Assert.IsTrue(sp.IsTransientServiceRegistered<TestService>());
+			// Assert: GetServiceDescriptors for TestService should NOT include the ITestService registration
+			Assert.AreEqual(1, testServiceDescriptors.Length, "Should only return TestService registration, not ITestService");
+			Assert.AreEqual(typeof(TestService), testServiceDescriptors[0].ServiceType);
+			Assert.AreEqual(ServiceLifetime.Transient, testServiceDescriptors[0].Lifetime);
 
-			// The bug would have caused bidirectional matching to mix these up
-			// With the fix, they are properly isolated
+			// Also verify using IServiceCollection lifetime helpers (which use GetServiceDescriptors internally)
+			Assert.IsTrue(serviceCollection.IsTransientServiceRegistered<TestService>());
+			Assert.IsFalse(serviceCollection.IsSingletonServiceRegistered<TestService>());
 		}
 
 		#endregion
