@@ -4,6 +4,9 @@
 
 ### Bug Fixes
 
+- Fixed bidirectional `IsAssignableFrom` check in `GetServiceDescriptors` method that incorrectly returned unrelated base-type registrations [#19](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/19).
+  - The method now uses unidirectional matching: `serviceType == serviceDescriptor.ServiceType || serviceType.IsAssignableFrom(serviceDescriptor.ServiceType)`.
+  - This fixes incorrect lifetime checks in methods like `IsTransientServiceRegistered`, `IsSingletonServiceRegistered`, etc., which depend on `.Last()` to select the correct registration.
 - Fixed missing `return` statements in `TryAdd*` overload methods with empty `DependsOn` array, which caused unnecessary reflection calls and potential double-registration attempts [#18](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/18).
 
 ## 0.7.0
