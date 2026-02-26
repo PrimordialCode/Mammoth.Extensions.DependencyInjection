@@ -81,6 +81,65 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		}
 
 		[TestMethod]
+		public void TryAddSingleton_EmptyDependsOn_RegistersService()
+		{
+			var serviceCollection = new ServiceCollection();
+			var emptyDependsOn = Array.Empty<Dependency>();
+			serviceCollection.TryAddSingleton(typeof(SimpleService), emptyDependsOn);
+			
+			Assert.AreEqual(1, serviceCollection.Count);
+			Assert.IsTrue(serviceCollection.IsServiceRegistered<SimpleService>());
+			
+			using var serviceProvider = serviceCollection.BuildServiceProvider();
+			var service = serviceProvider.GetRequiredService<SimpleService>();
+			Assert.IsNotNull(service);
+		}
+
+		[TestMethod]
+		public void TryAddScoped_EmptyDependsOn_RegistersService()
+		{
+			var serviceCollection = new ServiceCollection();
+			var emptyDependsOn = Array.Empty<Dependency>();
+			serviceCollection.TryAddScoped<SimpleService>(emptyDependsOn);
+			
+			Assert.AreEqual(1, serviceCollection.Count);
+			Assert.IsTrue(serviceCollection.IsServiceRegistered<SimpleService>());
+			
+			using var serviceProvider = serviceCollection.BuildServiceProvider();
+			var service = serviceProvider.GetRequiredService<SimpleService>();
+			Assert.IsNotNull(service);
+		}
+
+		[TestMethod]
+		public void TryAddTransient_EmptyDependsOn_RegistersService()
+		{
+			var serviceCollection = new ServiceCollection();
+			var emptyDependsOn = Array.Empty<Dependency>();
+			serviceCollection.TryAddTransient<SimpleService>(emptyDependsOn);
+			
+			Assert.AreEqual(1, serviceCollection.Count);
+			Assert.IsTrue(serviceCollection.IsServiceRegistered<SimpleService>());
+			
+			using var serviceProvider = serviceCollection.BuildServiceProvider();
+			var service = serviceProvider.GetRequiredService<SimpleService>();
+			Assert.IsNotNull(service);
+		}
+
+		[TestMethod]
+		public void TryAddKeyedSingleton_EmptyDependsOn_RegistersService()
+		{
+			var serviceCollection = new ServiceCollection();
+			var emptyDependsOn = Array.Empty<Dependency>();
+			serviceCollection.TryAddKeyedSingleton<SimpleService>("key1", emptyDependsOn);
+			
+			Assert.AreEqual(1, serviceCollection.Count);
+			
+			using var serviceProvider = serviceCollection.BuildServiceProvider();
+			var service = serviceProvider.GetRequiredKeyedService<SimpleService>("key1");
+			Assert.IsNotNull(service);
+		}
+
+		[TestMethod]
 		public void Resolve_KeyedService_DependsOn_Parameter()
 		{
 			var serviceCollection = new ServiceCollection();
@@ -294,6 +353,10 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			}
 
 			public IKeyedService KeyedService { get; }
+		}
+
+		public class SimpleService
+		{
 		}
 	}
 }
