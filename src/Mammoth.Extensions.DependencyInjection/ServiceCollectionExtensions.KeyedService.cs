@@ -38,6 +38,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			if (dependsOn.Length == 0)
 			{
 				services.TryAddSingleton(serviceType);
+				return;
 			}
 
 			GetConstructorAndParameters(serviceType, out ConstructorInfo ctor, out ParameterInfo[] parameter);
@@ -69,6 +70,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			if (dependsOn.Length == 0)
 			{
 				services.TryAddSingleton(serviceType, implementationType);
+				return;
 			}
 
 			GetConstructorAndParameters(implementationType, out ConstructorInfo ctor, out ParameterInfo[] parameter);
@@ -102,6 +104,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			if (dependsOn.Length == 0)
 			{
 				services.TryAddSingleton<TService>();
+				return;
 			}
 
 			GetConstructorAndParameters(typeof(TService), out ConstructorInfo ctor, out ParameterInfo[] parameter);
@@ -150,6 +153,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			if (dependsOn.Length == 0)
 			{
 				services.TryAddScoped(serviceType);
+				return;
 			}
 
 			GetConstructorAndParameters(serviceType, out ConstructorInfo ctor, out ParameterInfo[] parameter);
@@ -181,6 +185,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			if (dependsOn.Length == 0)
 			{
 				services.TryAddScoped(serviceType, implementationType);
+				return;
 			}
 
 			GetConstructorAndParameters(implementationType, out ConstructorInfo ctor, out ParameterInfo[] parameter);
@@ -214,6 +219,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			if (dependsOn.Length == 0)
 			{
 				services.TryAddScoped<TService>();
+				return;
 			}
 
 			GetConstructorAndParameters(typeof(TService), out ConstructorInfo ctor, out ParameterInfo[] parameter);
@@ -277,6 +283,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			if (dependsOn.Length == 0)
 			{
 				services.TryAddTransient(serviceType, implementationType);
+				return;
 			}
 
 			GetConstructorAndParameters(implementationType, out ConstructorInfo ctor, out ParameterInfo[] parameter);
@@ -310,6 +317,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			if (dependsOn.Length == 0)
 			{
 				services.TryAddTransient<TService>();
+				return;
 			}
 
 			GetConstructorAndParameters(typeof(TService), out ConstructorInfo ctor, out ParameterInfo[] parameter);
@@ -360,6 +368,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			if (dependsOn.Length == 0)
 			{
 				services.TryAddKeyedSingleton<TService>(serviceKey);
+				return;
 			}
 
 			GetConstructorAndParameters(typeof(TService), out ConstructorInfo ctor, out ParameterInfo[] parameter);
@@ -395,6 +404,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			if (dependsOn.Length == 0)
 			{
 				services.TryAddKeyedSingleton<TService, TImplementation>(serviceKey);
+				return;
 			}
 
 			GetConstructorAndParameters(typeof(TImplementation), out ConstructorInfo ctor, out ParameterInfo[] parameter);
@@ -428,6 +438,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			if (dependsOn.Length == 0)
 			{
 				services.TryAddKeyedScoped<TService>(serviceKey);
+				return;
 			}
 
 			GetConstructorAndParameters(typeof(TService), out ConstructorInfo ctor, out ParameterInfo[] parameter);
@@ -463,6 +474,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			if (dependsOn.Length == 0)
 			{
 				services.TryAddKeyedScoped<TService, TImplementation>(serviceKey);
+				return;
 			}
 
 			GetConstructorAndParameters(typeof(TImplementation), out ConstructorInfo ctor, out ParameterInfo[] parameter);
@@ -496,6 +508,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			if (dependsOn.Length == 0)
 			{
 				services.TryAddKeyedTransient<TService>(serviceKey);
+				return;
 			}
 
 			GetConstructorAndParameters(typeof(TService), out ConstructorInfo ctor, out ParameterInfo[] parameter);
@@ -531,6 +544,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			if (dependsOn.Length == 0)
 			{
 				services.TryAddKeyedTransient<TService, TImplementation>(serviceKey);
+				return;
 			}
 
 			GetConstructorAndParameters(typeof(TImplementation), out ConstructorInfo ctor, out ParameterInfo[] parameter);

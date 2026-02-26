@@ -2,6 +2,10 @@
 
 ## vNext
 
+### Bug Fixes
+
+- Fixed missing `return` statements in `TryAdd*` overload methods with empty `DependsOn` array, which caused unnecessary reflection calls and potential double-registration attempts [#18](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/18).
+
 ## 0.7.0
 
 - Decorators: removed reflection-based proxy creation (`Reflection.Emit`) and allow class decoration [#11](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/11).
