@@ -97,33 +97,36 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		public void IsKeyedTransientServiceRegistered_Returns_True_When_Registered_As_Keyed_Transient()
 		{
 			var serviceCollection = new ServiceCollection();
-			serviceCollection.AddKeyedTransient<TestService>("key");
+			var key = Guid.NewGuid();
+			serviceCollection.AddKeyedTransient<TestService>(key);
 
-			Assert.IsTrue(serviceCollection.IsKeyedTransientServiceRegistered<TestService>("key"));
-			Assert.IsFalse(serviceCollection.IsKeyedScopedServiceRegistered<TestService>("key"));
-			Assert.IsFalse(serviceCollection.IsKeyedSingletonServiceRegistered<TestService>("key"));
+			Assert.IsTrue(serviceCollection.IsKeyedTransientServiceRegistered<TestService>(key));
+			Assert.IsFalse(serviceCollection.IsKeyedScopedServiceRegistered<TestService>(key));
+			Assert.IsFalse(serviceCollection.IsKeyedSingletonServiceRegistered<TestService>(key));
 		}
 
 		[TestMethod]
 		public void IsKeyedScopedServiceRegistered_Returns_True_When_Registered_As_Keyed_Scoped()
 		{
 			var serviceCollection = new ServiceCollection();
-			serviceCollection.AddKeyedScoped<TestService>("key");
+			var key = Guid.NewGuid();
+			serviceCollection.AddKeyedScoped<TestService>(key);
 
-			Assert.IsFalse(serviceCollection.IsKeyedTransientServiceRegistered<TestService>("key"));
-			Assert.IsTrue(serviceCollection.IsKeyedScopedServiceRegistered<TestService>("key"));
-			Assert.IsFalse(serviceCollection.IsKeyedSingletonServiceRegistered<TestService>("key"));
+			Assert.IsFalse(serviceCollection.IsKeyedTransientServiceRegistered<TestService>(key));
+			Assert.IsTrue(serviceCollection.IsKeyedScopedServiceRegistered<TestService>(key));
+			Assert.IsFalse(serviceCollection.IsKeyedSingletonServiceRegistered<TestService>(key));
 		}
 
 		[TestMethod]
 		public void IsKeyedSingletonServiceRegistered_Returns_True_When_Registered_As_Keyed_Singleton()
 		{
 			var serviceCollection = new ServiceCollection();
-			serviceCollection.AddKeyedSingleton<TestService>("key");
+			var key = Guid.NewGuid();
+			serviceCollection.AddKeyedSingleton<TestService>(key);
 
-			Assert.IsFalse(serviceCollection.IsKeyedTransientServiceRegistered<TestService>("key"));
-			Assert.IsFalse(serviceCollection.IsKeyedScopedServiceRegistered<TestService>("key"));
-			Assert.IsTrue(serviceCollection.IsKeyedSingletonServiceRegistered<TestService>("key"));
+			Assert.IsFalse(serviceCollection.IsKeyedTransientServiceRegistered<TestService>(key));
+			Assert.IsFalse(serviceCollection.IsKeyedScopedServiceRegistered<TestService>(key));
+			Assert.IsTrue(serviceCollection.IsKeyedSingletonServiceRegistered<TestService>(key));
 		}
 	}
 }
