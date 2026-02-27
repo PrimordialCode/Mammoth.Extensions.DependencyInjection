@@ -4,6 +4,7 @@
 
 ### Bug Fixes
 
+- `IServiceCollection` lifetime check methods (`IsTransientServiceRegistered`, `IsScopedServiceRegistered`, `IsSingletonServiceRegistered`, and their keyed variants) now return `false` instead of throwing `InvalidOperationException` when the service is not registered.
 - Fixed `ResolutionContext` stack corruption in `PatchForResolutionContextTracking` when a factory delegate throws an exception. Push/Pop calls are now wrapped in `try/finally` for all 4 registration paths (non-keyed/keyed × factory/type).
 - Fixed bidirectional `IsAssignableFrom` check in `GetServiceDescriptors` method that incorrectly returned unrelated base-type registrations [#19](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/19).
   - The method now uses unidirectional matching: `serviceType == serviceDescriptor.ServiceType || serviceType.IsAssignableFrom(serviceDescriptor.ServiceType)`.
