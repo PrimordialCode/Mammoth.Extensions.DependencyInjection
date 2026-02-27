@@ -2,6 +2,8 @@
 
 ## vNext
 
+## 0.7.1
+
 ### Bug Fixes
 
 - `IServiceCollection` lifetime check methods (`IsTransientServiceRegistered`, `IsScopedServiceRegistered`, `IsSingletonServiceRegistered`, and their keyed variants) now return `false` instead of throwing `InvalidOperationException` when the service is not registered.
