@@ -84,7 +84,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			}
 
 			var descriptors = services.GetServiceDescriptors(serviceType, isKeyedService: false);
-			return descriptors.Last().Lifetime == ServiceLifetime.Transient;
+			return descriptors.Length > 0 && descriptors[descriptors.Length - 1].Lifetime == ServiceLifetime.Transient;
 		}
 
 		/// <summary>
@@ -112,7 +112,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			}
 
 			var descriptors = services.GetServiceDescriptors(serviceType, isKeyedService: false);
-			return descriptors.Last().Lifetime == ServiceLifetime.Scoped;
+			return descriptors.Length > 0 && descriptors[descriptors.Length - 1].Lifetime == ServiceLifetime.Scoped;
 		}
 
 		/// <summary>
@@ -140,7 +140,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			}
 
 			var descriptors = services.GetServiceDescriptors(serviceType, isKeyedService: false);
-			return descriptors.Last().Lifetime == ServiceLifetime.Singleton;
+			return descriptors.Length > 0 && descriptors[descriptors.Length - 1].Lifetime == ServiceLifetime.Singleton;
 		}
 
 		/// <summary>
@@ -176,7 +176,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			var descriptors = services.GetServiceDescriptors(serviceType, isKeyedService: true)
 				.Where(d => d.ServiceKey == serviceKey)
 				.ToArray();
-			return descriptors.Last().Lifetime == ServiceLifetime.Singleton;
+			return descriptors.Length > 0 && descriptors[descriptors.Length - 1].Lifetime == ServiceLifetime.Singleton;
 		}
 
 		/// <summary>
@@ -212,7 +212,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			var descriptors = services.GetServiceDescriptors(serviceType, isKeyedService: true)
 				.Where(d => d.ServiceKey == serviceKey)
 				.ToArray();
-			return descriptors.Last().Lifetime == ServiceLifetime.Scoped;
+			return descriptors.Length > 0 && descriptors[descriptors.Length - 1].Lifetime == ServiceLifetime.Scoped;
 		}
 
 		/// <summary>
@@ -248,7 +248,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			var descriptors = services.GetServiceDescriptors(serviceType, isKeyedService: true)
 				.Where(d => d.ServiceKey == serviceKey)
 				.ToArray();
-			return descriptors.Last().Lifetime == ServiceLifetime.Transient;
+			return descriptors.Length > 0 && descriptors[descriptors.Length - 1].Lifetime == ServiceLifetime.Transient;
 		}
 
 		/// <summary>
