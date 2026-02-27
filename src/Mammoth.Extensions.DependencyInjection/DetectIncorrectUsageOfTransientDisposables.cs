@@ -44,9 +44,14 @@ namespace Mammoth.Extensions.DependencyInjection
 							{
 								// track the object we are about to resolve
 								ResolutionContext.CurrentStack.Push(new ServiceIdentifier(descriptor.ServiceKey, descriptor.ServiceType));
-								var instance = originalFactory(sp);
-								ResolutionContext.CurrentStack.Pop();
-								return instance;
+								try
+								{
+									return originalFactory(sp);
+								}
+								finally
+								{
+									ResolutionContext.CurrentStack.Pop();
+								}
 							},
 							descriptor.Lifetime);
 						collection.Add(d);
@@ -61,9 +66,14 @@ namespace Mammoth.Extensions.DependencyInjection
 							sp =>
 							{
 								ResolutionContext.CurrentStack.Push(new ServiceIdentifier(descriptor.ServiceKey, descriptor.ServiceType));
-								var instance = ActivatorUtilities.CreateInstance(sp, implementationType);
-								ResolutionContext.CurrentStack.Pop();
-								return instance;
+								try
+								{
+									return ActivatorUtilities.CreateInstance(sp, implementationType);
+								}
+								finally
+								{
+									ResolutionContext.CurrentStack.Pop();
+								}
 							},
 							descriptor.Lifetime);
 						collection.Add(d);
@@ -91,9 +101,14 @@ namespace Mammoth.Extensions.DependencyInjection
 							{
 								// track the object we are about to resolve
 								ResolutionContext.CurrentStack.Push(new ServiceIdentifier(descriptor.ServiceKey, descriptor.ServiceType));
-								var instance = originalFactory(sp, key);
-								ResolutionContext.CurrentStack.Pop();
-								return instance;
+								try
+								{
+									return originalFactory(sp, key);
+								}
+								finally
+								{
+									ResolutionContext.CurrentStack.Pop();
+								}
 							},
 							descriptor.Lifetime);
 						collection.Add(d);
@@ -109,9 +124,14 @@ namespace Mammoth.Extensions.DependencyInjection
 							(sp, _) =>
 							{
 								ResolutionContext.CurrentStack.Push(new ServiceIdentifier(descriptor.ServiceKey, descriptor.ServiceType));
-								var instance = ActivatorUtilities.CreateInstance(sp, implementationType);
-								ResolutionContext.CurrentStack.Pop();
-								return instance;
+								try
+								{
+									return ActivatorUtilities.CreateInstance(sp, implementationType);
+								}
+								finally
+								{
+									ResolutionContext.CurrentStack.Pop();
+								}
 							},
 							descriptor.Lifetime);
 						collection.Add(d);

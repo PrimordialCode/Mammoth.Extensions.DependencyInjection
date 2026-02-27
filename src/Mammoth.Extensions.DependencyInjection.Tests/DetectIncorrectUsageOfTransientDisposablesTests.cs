@@ -644,6 +644,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			Assert.AreEqual(LogLevel.Warning, fakeLogger.LatestRecord.Level);
 			Assert.AreEqual("Open generic transient disposable registration detected, ServiceKey: (null), ServiceType: Mammoth.Extensions.DependencyInjection.Tests.DetectIncorrectUsageOfTransientDisposablesTests+ITransientOpenGeneric`1[T], ImplementationType: Mammoth.Extensions.DependencyInjection.Tests.DetectIncorrectUsageOfTransientDisposablesTests+TransientOpenGeneric`1[T]", fakeLogger.LatestRecord.Message);
 		}
+
 		[TestMethod]
 		public void Resolve_TransientAsyncDisposable_InRootScope_WithValidation_Throws()
 		{
@@ -754,6 +755,42 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 					ValidateScopes = true
 				});
 			Assert.ThrowsExactly<InvalidOperationException>(() => spProvider.GetKeyedService<TransientAsyncDisposable>("key"));
+		}
+
+		[TestMethod]
+		public void PatchForResolutionContextTracking_FactoryThrows_StackIsClean()
+		{
+			var serviceCollection = new ServiceCollection();
+			serviceCollection.AddTransient<Consumer>(sp => throw new InvalidOperationException("factory error"));
+
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection,
+				new ExtendedServiceProviderOptions
+				{
+					DetectIncorrectUsageOfTransientDisposables = true,
+					ValidateOnBuild = false,
+					ValidateScopes = true
+				});
+
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.GetService<Consumer>());
+			Assert.AreEqual(0, ResolutionContext.CurrentStack.Count);
+		}
+
+		[TestMethod]
+		public void PatchForResolutionContextTracking_KeyedFactoryThrows_StackIsClean()
+		{
+			var serviceCollection = new ServiceCollection();
+			serviceCollection.AddKeyedTransient<Consumer>("key", (sp, key) => throw new InvalidOperationException("keyed factory error"));
+
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection,
+				new ExtendedServiceProviderOptions
+				{
+					DetectIncorrectUsageOfTransientDisposables = true,
+					ValidateOnBuild = false,
+					ValidateScopes = true
+				});
+
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.GetKeyedService<Consumer>("key"));
+			Assert.AreEqual(0, ResolutionContext.CurrentStack.Count);
 		}
 	}
 }
