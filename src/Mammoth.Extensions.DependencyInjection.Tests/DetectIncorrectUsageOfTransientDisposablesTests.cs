@@ -792,6 +792,50 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 			Assert.ThrowsExactly<InvalidOperationException>(() => sp.GetKeyedService<Consumer>("key"));
 			Assert.AreEqual(0, ResolutionContext.CurrentStack.Count);
 		}
+
+		[TestMethod]
+		public void PatchForResolutionContextTracking_TypeCtorThrows_StackIsClean()
+		{
+			var serviceCollection = new ServiceCollection();
+			serviceCollection.AddTransient<ThrowingConstructor>();
+
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection,
+				new ExtendedServiceProviderOptions
+				{
+					DetectIncorrectUsageOfTransientDisposables = true,
+					ValidateOnBuild = false,
+					ValidateScopes = true
+				});
+
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.GetService<ThrowingConstructor>());
+			Assert.AreEqual(0, ResolutionContext.CurrentStack.Count);
+		}
+
+		[TestMethod]
+		public void PatchForResolutionContextTracking_KeyedTypeCtorThrows_StackIsClean()
+		{
+			var serviceCollection = new ServiceCollection();
+			serviceCollection.AddKeyedTransient<ThrowingConstructor>("key");
+
+			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection,
+				new ExtendedServiceProviderOptions
+				{
+					DetectIncorrectUsageOfTransientDisposables = true,
+					ValidateOnBuild = false,
+					ValidateScopes = true
+				});
+
+			Assert.ThrowsExactly<InvalidOperationException>(() => sp.GetKeyedService<ThrowingConstructor>("key"));
+			Assert.AreEqual(0, ResolutionContext.CurrentStack.Count);
+		}
+
+		private sealed class ThrowingConstructor
+		{
+			public ThrowingConstructor()
+			{
+				throw new InvalidOperationException("constructor error");
+			}
+		}
 	}
 }
 
