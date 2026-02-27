@@ -51,7 +51,7 @@ namespace Mammoth.Extensions.DependencyInjection
 		}
 
 		/// <summary>
-		/// Gets an array of <see cref="ServiceDescriptor"/> objects for services that are assignable to or from the specified <paramref name="serviceType"/>.
+		/// Gets an array of <see cref="ServiceDescriptor"/> objects for services that are assignable from the specified <paramref name="serviceType"/>.
 		/// </summary>
 		/// <param name="services">The service collection.</param>
 		/// <param name="serviceType">The type of the service.</param>
