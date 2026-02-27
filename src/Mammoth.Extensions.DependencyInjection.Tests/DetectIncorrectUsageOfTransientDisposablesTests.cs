@@ -676,6 +676,10 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 				await using var scope = sp.CreateAsyncScope();
 				var consumer = scope.ServiceProvider.GetService<TransientAsyncDisposable>();
 				Assert.IsNotNull(consumer);
+				Assert.IsFalse(scope.ServiceProvider.GetIsRootScope());
+				Assert.IsTrue(scope.ServiceProvider.GetDisposables().Contains(consumer));
+				Assert.IsTrue(sp.GetIsRootScope());
+				Assert.IsFalse(sp.GetDisposables().Contains(consumer));
 			}
 		}
 
@@ -715,6 +719,10 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 				await using var scope = spProvider.CreateAsyncScope();
 				var consumer = scope.ServiceProvider.GetService<AsyncDisposableConsumer>();
 				Assert.IsNotNull(consumer);
+				Assert.IsFalse(scope.ServiceProvider.GetIsRootScope());
+				Assert.IsTrue(scope.ServiceProvider.GetDisposables().Contains(consumer));
+				Assert.IsTrue(spProvider.GetIsRootScope());
+				Assert.IsFalse(spProvider.GetDisposables().Contains(consumer));
 			}
 		}
 
