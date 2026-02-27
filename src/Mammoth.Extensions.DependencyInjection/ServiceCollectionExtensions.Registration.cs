@@ -174,7 +174,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			}
 
 			var descriptors = services.GetServiceDescriptors(serviceType, isKeyedService: true)
-				.Where(d => d.ServiceKey == serviceKey)
+				.Where(d => Equals(d.ServiceKey, serviceKey))
 				.ToArray();
 			return descriptors.Length > 0 && descriptors[descriptors.Length - 1].Lifetime == ServiceLifetime.Singleton;
 		}
@@ -210,7 +210,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			}
 
 			var descriptors = services.GetServiceDescriptors(serviceType, isKeyedService: true)
-				.Where(d => d.ServiceKey == serviceKey)
+				.Where(d => Equals(d.ServiceKey, serviceKey))
 				.ToArray();
 			return descriptors.Length > 0 && descriptors[descriptors.Length - 1].Lifetime == ServiceLifetime.Scoped;
 		}
@@ -246,7 +246,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			}
 
 			var descriptors = services.GetServiceDescriptors(serviceType, isKeyedService: true)
-				.Where(d => d.ServiceKey == serviceKey)
+				.Where(d => Equals(d.ServiceKey, serviceKey))
 				.ToArray();
 			return descriptors.Length > 0 && descriptors[descriptors.Length - 1].Lifetime == ServiceLifetime.Transient;
 		}
