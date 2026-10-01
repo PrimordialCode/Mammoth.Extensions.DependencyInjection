@@ -2,6 +2,12 @@
 
 ## vNext
 
+### Breaking Changes
+
+- Raise `Microsoft.Extensions.DependencyInjection` to a minimum of **10.0.0**, including the upstream keyed enumerable/open-generic cache identity fix ([dotnet/runtime#113343](https://github.com/dotnet/runtime/pull/113343), [#46](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/46)). Raise its required `Microsoft.Bcl.AsyncInterfaces` dependency to **10.0.0**. Consumers pinning DI 8.x/9.x must upgrade; all existing library target frameworks remain supported.
+
+### Bug Fixes
+
 - Isolate provider registration, lifetime and key-discovery metadata from external mutation. Preserve public mutable metadata types as compatibility copies while provider helpers and diagnostics use a private snapshot [#28](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/28).
 - Preserve container disposal ownership of decorated factory/type services and intermediate decorators, without disposing caller-owned instances or colliding with implementation registrations [#37](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/37).
 - Support keyed open-generic provider startup and merge closed/generic-definition keys for all-service discovery and registration/lifetime queries [#38](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/38).

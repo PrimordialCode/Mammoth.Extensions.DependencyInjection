@@ -41,6 +41,13 @@ jobs:
       run: dotnet build ./src/Mammoth.Extensions.DependencyInjection.sln --configuration Release --no-restore -p:ContinuousIntegrationBuild=True
     - name: Test
       run: dotnet test ./src/Mammoth.Extensions.DependencyInjection.sln --configuration Release --no-build --verbosity normal
+    - name: Native DI hot-cache regression
+      shell: pwsh
+      run: |
+        foreach ($framework in @("net472", "net8.0", "net9.0", "net10.0")) {
+          dotnet run --project ./repro/Issue46.NativeEnumeration -c Release -f $framework -p:DiVersion=10.0.0
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        }
     - name: Pack
       # only pack if the branch is main, release, or hotfix
       if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')

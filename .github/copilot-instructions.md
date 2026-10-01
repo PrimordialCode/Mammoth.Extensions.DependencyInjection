@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**Mammoth.Extensions.DependencyInjection** is a utility library providing advanced extensions for `Microsoft.Extensions.DependencyInjection` (v9.0.0+).
+**Mammoth.Extensions.DependencyInjection** is a utility library providing advanced extensions for `Microsoft.Extensions.DependencyInjection` (v10.0.0+).
 
 ### Purpose
 
