@@ -1,5 +1,5 @@
 ---
-name: use-mammoth-di
+name: mammoth-di
 description: Use Mammoth.Extensions.DependencyInjection in .NET applications when configuring decorators, named or keyed constructor dependencies, generic discovery, provider metadata queries, or transient-disposable diagnostics.
 ---
 
