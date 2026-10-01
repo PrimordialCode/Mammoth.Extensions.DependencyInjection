@@ -1,7 +1,6 @@
-﻿using Mammoth.Extensions.DependencyInjection.Configuration;
+using Mammoth.Extensions.DependencyInjection.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using System.Reflection;
 
 namespace Mammoth.Extensions.DependencyInjection
 {
@@ -12,6 +11,16 @@ namespace Mammoth.Extensions.DependencyInjection
 	/// </para>
 	/// <para>idea took from: https://github.com/dotnet/runtime/issues/91638</para>
 	/// </summary>
+	/// <remarks>
+	/// DependsOn selects constructors when the service is resolved. A single constructor marked
+	/// with ActivatorUtilitiesConstructorAttribute takes precedence; otherwise the unique longest
+	/// constructor whose parameters can be supplied is used. Parameter-name overrides take priority
+	/// over keyed attributes and ordinary services. Optional defaults apply only when no service is
+	/// registered. Equal-length ambiguity or an unsatisfied preferred constructor throws.
+	/// Unused map entries retain their existing behavior and are ignored.
+	/// Selection requires IServiceProviderIsService and IServiceProviderIsKeyedService probes and
+	/// does not instantiate dependencies belonging to rejected constructors.
+	/// </remarks>
 	public static partial class ServiceCollectionExtensions
 	{
 		/// <summary>
@@ -24,9 +33,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return services.AddSingleton(serviceType);
 			}
 
-			GetConstructorAndParameters(serviceType, out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = serviceType;
 
-			return services.AddSingleton(serviceType, DependsOnResolutionFunc<object>(dependsOn, ctor, parameter));
+			return services.AddSingleton(serviceType, DependsOnResolutionFunc<object>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -41,9 +50,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return;
 			}
 
-			GetConstructorAndParameters(serviceType, out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = serviceType;
 
-			services.TryAddSingleton(serviceType, DependsOnResolutionFunc<object>(dependsOn, ctor, parameter));
+			services.TryAddSingleton(serviceType, DependsOnResolutionFunc<object>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -56,9 +65,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return services.AddSingleton(serviceType, implementationType);
 			}
 
-			GetConstructorAndParameters(implementationType, out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = implementationType;
 
-			return services.AddSingleton(serviceType, DependsOnResolutionFunc<object>(dependsOn, ctor, parameter));
+			return services.AddSingleton(serviceType, DependsOnResolutionFunc<object>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -73,9 +82,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return;
 			}
 
-			GetConstructorAndParameters(implementationType, out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = implementationType;
 
-			services.TryAddSingleton(serviceType, DependsOnResolutionFunc<object>(dependsOn, ctor, parameter));
+			services.TryAddSingleton(serviceType, DependsOnResolutionFunc<object>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -89,9 +98,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return services.AddSingleton<TService>();
 			}
 
-			GetConstructorAndParameters(typeof(TService), out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = typeof(TService);
 
-			return services.AddSingleton(DependsOnResolutionFunc<TService>(dependsOn, ctor, parameter));
+			return services.AddSingleton(DependsOnResolutionFunc<TService>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -107,9 +116,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return;
 			}
 
-			GetConstructorAndParameters(typeof(TService), out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = typeof(TService);
 
-			services.TryAddSingleton(DependsOnResolutionFunc<TService>(dependsOn, ctor, parameter));
+			services.TryAddSingleton(DependsOnResolutionFunc<TService>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -124,9 +133,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return services.AddSingleton<TService, TImplementation>();
 			}
 
-			GetConstructorAndParameters(typeof(TImplementation), out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = typeof(TImplementation);
 
-			return services.AddSingleton<TService, TImplementation>(DependsOnResolutionFunc<TImplementation>(dependsOn, ctor, parameter));
+			return services.AddSingleton<TService, TImplementation>(DependsOnResolutionFunc<TImplementation>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -139,9 +148,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return services.AddScoped(serviceType);
 			}
 
-			GetConstructorAndParameters(serviceType, out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = serviceType;
 
-			return services.AddScoped(serviceType, DependsOnResolutionFunc<object>(dependsOn, ctor, parameter));
+			return services.AddScoped(serviceType, DependsOnResolutionFunc<object>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -156,9 +165,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return;
 			}
 
-			GetConstructorAndParameters(serviceType, out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = serviceType;
 
-			services.TryAddScoped(serviceType, DependsOnResolutionFunc<object>(dependsOn, ctor, parameter));
+			services.TryAddScoped(serviceType, DependsOnResolutionFunc<object>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -171,9 +180,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return services.AddScoped(serviceType, implementationType);
 			}
 
-			GetConstructorAndParameters(implementationType, out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = implementationType;
 
-			return services.AddScoped(serviceType, DependsOnResolutionFunc<object>(dependsOn, ctor, parameter));
+			return services.AddScoped(serviceType, DependsOnResolutionFunc<object>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -188,9 +197,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return;
 			}
 
-			GetConstructorAndParameters(implementationType, out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = implementationType;
 
-			services.TryAddScoped(serviceType, DependsOnResolutionFunc<object>(dependsOn, ctor, parameter));
+			services.TryAddScoped(serviceType, DependsOnResolutionFunc<object>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -204,9 +213,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return services.AddScoped<TService>();
 			}
 
-			GetConstructorAndParameters(typeof(TService), out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = typeof(TService);
 
-			return services.AddScoped(DependsOnResolutionFunc<TService>(dependsOn, ctor, parameter));
+			return services.AddScoped(DependsOnResolutionFunc<TService>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -222,9 +231,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return;
 			}
 
-			GetConstructorAndParameters(typeof(TService), out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = typeof(TService);
 
-			services.TryAddScoped(DependsOnResolutionFunc<TService>(dependsOn, ctor, parameter));
+			services.TryAddScoped(DependsOnResolutionFunc<TService>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -239,9 +248,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return services.AddScoped<TService, TImplementation>();
 			}
 
-			GetConstructorAndParameters(typeof(TImplementation), out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = typeof(TImplementation);
 
-			return services.AddScoped<TService, TImplementation>(DependsOnResolutionFunc<TImplementation>(dependsOn, ctor, parameter));
+			return services.AddScoped<TService, TImplementation>(DependsOnResolutionFunc<TImplementation>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -254,9 +263,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return services.AddTransient(serviceType);
 			}
 
-			GetConstructorAndParameters(serviceType, out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = serviceType;
 
-			return services.AddTransient(serviceType, DependsOnResolutionFunc<object>(dependsOn, ctor, parameter));
+			return services.AddTransient(serviceType, DependsOnResolutionFunc<object>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -269,9 +278,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return services.AddTransient(serviceType, implementationType);
 			}
 
-			GetConstructorAndParameters(implementationType, out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = implementationType;
 
-			return services.AddTransient(serviceType, DependsOnResolutionFunc<object>(dependsOn, ctor, parameter));
+			return services.AddTransient(serviceType, DependsOnResolutionFunc<object>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -286,9 +295,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return;
 			}
 
-			GetConstructorAndParameters(implementationType, out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = implementationType;
 
-			services.TryAddTransient(serviceType, DependsOnResolutionFunc<object>(dependsOn, ctor, parameter));
+			services.TryAddTransient(serviceType, DependsOnResolutionFunc<object>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -302,9 +311,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return services.AddTransient<TService>();
 			}
 
-			GetConstructorAndParameters(typeof(TService), out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = typeof(TService);
 
-			return services.AddTransient(DependsOnResolutionFunc<TService>(dependsOn, ctor, parameter));
+			return services.AddTransient(DependsOnResolutionFunc<TService>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -320,9 +329,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return;
 			}
 
-			GetConstructorAndParameters(typeof(TService), out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = typeof(TService);
 
-			services.TryAddTransient(DependsOnResolutionFunc<TService>(dependsOn, ctor, parameter));
+			services.TryAddTransient(DependsOnResolutionFunc<TService>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -337,9 +346,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return services.AddTransient<TService, TImplementation>();
 			}
 
-			GetConstructorAndParameters(typeof(TImplementation), out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = typeof(TImplementation);
 
-			return services.AddTransient<TService, TImplementation>(DependsOnResolutionFunc<TImplementation>(dependsOn, ctor, parameter));
+			return services.AddTransient<TService, TImplementation>(DependsOnResolutionFunc<TImplementation>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -353,9 +362,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return services.AddKeyedSingleton<TService>(serviceKey);
 			}
 
-			GetConstructorAndParameters(typeof(TService), out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = typeof(TService);
 
-			return services.AddKeyedSingleton<TService>(serviceKey, KeyedDependsOnResolutionFunc<TService>(dependsOn, ctor, parameter));
+			return services.AddKeyedSingleton<TService>(serviceKey, KeyedDependsOnResolutionFunc<TService>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -371,9 +380,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return;
 			}
 
-			GetConstructorAndParameters(typeof(TService), out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = typeof(TService);
 
-			services.TryAddKeyedSingleton<TService>(serviceKey, KeyedDependsOnResolutionFunc<TService>(dependsOn, ctor, parameter));
+			services.TryAddKeyedSingleton<TService>(serviceKey, KeyedDependsOnResolutionFunc<TService>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -388,9 +397,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return services.AddKeyedSingleton<TService, TImplementation>(serviceKey);
 			}
 
-			GetConstructorAndParameters(typeof(TImplementation), out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = typeof(TImplementation);
 
-			return services.AddKeyedSingleton<TService>(serviceKey, KeyedDependsOnResolutionFunc<TImplementation>(dependsOn, ctor, parameter));
+			return services.AddKeyedSingleton<TService>(serviceKey, KeyedDependsOnResolutionFunc<TImplementation>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -407,9 +416,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return;
 			}
 
-			GetConstructorAndParameters(typeof(TImplementation), out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = typeof(TImplementation);
 
-			services.TryAddKeyedSingleton<TService>(serviceKey, KeyedDependsOnResolutionFunc<TImplementation>(dependsOn, ctor, parameter));
+			services.TryAddKeyedSingleton<TService>(serviceKey, KeyedDependsOnResolutionFunc<TImplementation>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -423,9 +432,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return services.AddKeyedScoped<TService>(serviceKey);
 			}
 
-			GetConstructorAndParameters(typeof(TService), out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = typeof(TService);
 
-			return services.AddKeyedScoped<TService>(serviceKey, KeyedDependsOnResolutionFunc<TService>(dependsOn, ctor, parameter));
+			return services.AddKeyedScoped<TService>(serviceKey, KeyedDependsOnResolutionFunc<TService>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -441,9 +450,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return;
 			}
 
-			GetConstructorAndParameters(typeof(TService), out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = typeof(TService);
 
-			services.TryAddKeyedScoped<TService>(serviceKey, KeyedDependsOnResolutionFunc<TService>(dependsOn, ctor, parameter));
+			services.TryAddKeyedScoped<TService>(serviceKey, KeyedDependsOnResolutionFunc<TService>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -458,9 +467,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return services.AddKeyedScoped<TService, TImplementation>(serviceKey);
 			}
 
-			GetConstructorAndParameters(typeof(TImplementation), out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = typeof(TImplementation);
 
-			return services.AddKeyedScoped<TService>(serviceKey, KeyedDependsOnResolutionFunc<TImplementation>(dependsOn, ctor, parameter));
+			return services.AddKeyedScoped<TService>(serviceKey, KeyedDependsOnResolutionFunc<TImplementation>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -477,9 +486,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return;
 			}
 
-			GetConstructorAndParameters(typeof(TImplementation), out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = typeof(TImplementation);
 
-			services.TryAddKeyedScoped<TService>(serviceKey, KeyedDependsOnResolutionFunc<TImplementation>(dependsOn, ctor, parameter));
+			services.TryAddKeyedScoped<TService>(serviceKey, KeyedDependsOnResolutionFunc<TImplementation>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -493,9 +502,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return services.AddKeyedTransient<TService>(serviceKey);
 			}
 
-			GetConstructorAndParameters(typeof(TService), out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = typeof(TService);
 
-			return services.AddKeyedTransient<TService>(serviceKey, KeyedDependsOnResolutionFunc<TService>(dependsOn, ctor, parameter));
+			return services.AddKeyedTransient<TService>(serviceKey, KeyedDependsOnResolutionFunc<TService>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -511,9 +520,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return;
 			}
 
-			GetConstructorAndParameters(typeof(TService), out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = typeof(TService);
 
-			services.TryAddKeyedTransient<TService>(serviceKey, KeyedDependsOnResolutionFunc<TService>(dependsOn, ctor, parameter));
+			services.TryAddKeyedTransient<TService>(serviceKey, KeyedDependsOnResolutionFunc<TService>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -528,9 +537,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return services.AddKeyedTransient<TService, TImplementation>(serviceKey);
 			}
 
-			GetConstructorAndParameters(typeof(TImplementation), out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = typeof(TImplementation);
 
-			return services.AddKeyedTransient<TService>(serviceKey, KeyedDependsOnResolutionFunc<TImplementation>(dependsOn, ctor, parameter));
+			return services.AddKeyedTransient<TService>(serviceKey, KeyedDependsOnResolutionFunc<TImplementation>(dependsOn, constructorTarget));
 		}
 
 		/// <summary>
@@ -547,95 +556,15 @@ namespace Mammoth.Extensions.DependencyInjection
 				return;
 			}
 
-			GetConstructorAndParameters(typeof(TImplementation), out ConstructorInfo ctor, out ParameterInfo[] parameter);
+			var constructorTarget = typeof(TImplementation);
 
-			services.TryAddKeyedTransient<TService>(serviceKey, KeyedDependsOnResolutionFunc<TImplementation>(dependsOn, ctor, parameter));
+			services.TryAddKeyedTransient<TService>(serviceKey, KeyedDependsOnResolutionFunc<TImplementation>(dependsOn, constructorTarget));
 		}
 
-#pragma warning disable RCS1224 // Make method an extension method
-		internal static Func<IServiceProvider, TTarget> DependsOnResolutionFunc<TTarget>(Dependency[] dependsOn, ConstructorInfo ctor, ParameterInfo[] parameter) where TTarget : class
-		{
-			return sp =>
-			{
-				if (sp is IKeyedServiceProvider keyed)
-				{
-					var args = new object[parameter.Length];
+        internal static Func<IServiceProvider, TTarget> DependsOnResolutionFunc<TTarget>(Dependency[] dependsOn, Type target) where TTarget : class
+            => provider => (TTarget)CreateDependsOnInstance(provider, target, dependsOn);
 
-					for (int i = 0; i < args.Length; i++)
-					{
-						var p = parameter[i];
-						// look for the parameter name in the dependsOn map
-						var dep = Array.Find(dependsOn, d => d.ParameterName == p.Name);
-						if (dep != null)
-						{
-							if (dep.T == Dependency.DependencyType.KeyedServices)
-							{
-								// Use the type as the key, or fallback to normal service resolution
-								args[i] = keyed.GetRequiredKeyedService(p.ParameterType, dep.Value);
-							}
-							else
-							{
-								args[i] = dep.Value;
-							}
-						}
-						else
-						{
-							args[i] = sp.GetRequiredService(p.ParameterType);
-						}
-					}
-
-					return (TTarget)ctor.Invoke(args);
-				}
-				throw new NotSupportedException($"ServiceProvider must be an {nameof(IKeyedServiceProvider)}");
-			};
-		}
-
-		internal static Func<IServiceProvider, object?, TTarget> KeyedDependsOnResolutionFunc<TTarget>(Dependency[] dependsOn, ConstructorInfo ctor, ParameterInfo[] parameter) where TTarget : class
-		{
-			return (sp, _) =>
-			{
-				if (sp is IKeyedServiceProvider keyed)
-				{
-					var args = new object[parameter.Length];
-
-					for (int i = 0; i < args.Length; i++)
-					{
-						var p = parameter[i];
-						// look for the parameter name in the dependsOn map
-						var dep = Array.Find(dependsOn, d => d.ParameterName == p.Name);
-						if (dep != null)
-						{
-							if (dep.T == Dependency.DependencyType.KeyedServices)
-							{
-								// Use the type as the key, or fallback to normal service resolution
-								args[i] = keyed.GetRequiredKeyedService(p.ParameterType, dep.Value);
-							}
-							else
-							{
-								args[i] = dep.Value;
-							}
-						}
-						else
-						{
-							args[i] = sp.GetRequiredService(p.ParameterType);
-						}
-					}
-
-					return (TTarget)ctor.Invoke(args);
-				}
-				throw new NotSupportedException($"ServiceProvider must be an {nameof(IKeyedServiceProvider)}");
-			};
-		}
-
-		internal static void GetConstructorAndParameters(Type target, out ConstructorInfo ctor, out ParameterInfo[] parameter)
-		{
-			// Select the constructor with the highest number of parameters
-			// maybe we should use the same strategy of: ActivatorUtilities.CreateInstance
-			ctor = target.GetConstructors()
-				.OrderByDescending(c => c.GetParameters().Length)
-				.First();
-			parameter = ctor.GetParameters();
-		}
-#pragma warning restore RCS1224 // Make method an extension method
-	}
+        internal static Func<IServiceProvider, object?, TTarget> KeyedDependsOnResolutionFunc<TTarget>(Dependency[] dependsOn, Type target) where TTarget : class
+            => (provider, key) => (TTarget)CreateDependsOnInstance(provider, target, dependsOn, key);
+    }
 }

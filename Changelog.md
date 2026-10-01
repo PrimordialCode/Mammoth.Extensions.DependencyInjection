@@ -6,6 +6,7 @@
 - Preserve container disposal ownership of decorated factory/type services and intermediate decorators, without disposing caller-owned instances or colliding with implementation registrations [#37](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/37).
 - Support keyed open-generic provider startup and merge closed/generic-definition keys for all-service discovery and registration/lifetime queries [#38](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/38).
 - Keep keyed and unkeyed provider lifetime queries independent, including singleton exemptions in transient-disposable diagnostics [#39](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/39).
+- Select a satisfiable DependsOn constructor at resolution time, honor preferred constructors, reject ambiguity, and support optional defaults without constructing rejected dependencies [#23](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/23).
 
 ## 0.7.1
 
