@@ -1,238 +1,139 @@
 # Mammoth.Extensions.DependencyInjection
 
-## Build Status
-
 [![.NET](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/actions/workflows/dotnet.yml/badge.svg)](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/actions/workflows/dotnet.yml)
 
-## Introduction
+Extensions for Microsoft DI: service decorators, constructor dependencies selected by parameter name/key, assembly registration, registration/lifetime queries, and optional transient-disposable diagnostics.
 
-This package offers extensions for the `Microsoft.Extensions.DependencyInjection` library. It requires `Microsoft.Extensions.DependencyInjection` version `10.0.0` or later. This minimum includes the upstream fix for keyed enumerable and open-generic resolver cache identities ([dotnet/runtime#113343](https://github.com/dotnet/runtime/pull/113343), [issue #46](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/46)).
+## Version and installation
 
-## Installation
+This README describes **current `develop` / the next release**. As checked on October 1, 2026, the latest GitHub release and listed stable NuGet package is **0.7.1**. The disposal, constructor-selection, snapshot, generic-query and DI-cache fixes below are in `develop` and [the vNext changelog](Changelog.md); installing 0.7.1 does not include them. Select a released version containing these changes when it becomes available, or use a local build of `develop` for evaluation.
 
 ```bash
-dotnet add package Mammoth.Extensions.DependencyInjection
+dotnet add package Mammoth.Extensions.DependencyInjection --version 0.7.1
 ```
 
-### Dependency compatibility
+That command installs the existing release, **not** the unreleased behavior documented here. Check your resolved version in `obj/project.assets.json` and its release notes before relying on the new guarantees.
 
-The next release raises the DI dependency minimum to **10.0.0** and `Microsoft.Bcl.AsyncInterfaces` to **10.0.0**. This is a major package dependency change; applications pinning DI 8.x or 9.x must upgrade their DI package references. NuGet package dependency groups enforce the DI minimum for every library target; a direct reference below the minimum produces a package downgrade conflict. Do not suppress that conflict.
+The next release requires **Microsoft.Extensions.DependencyInjection >=10.0.0** and **Microsoft.Bcl.AsyncInterfaces >=10.0.0**. Consumers pinning DI 8/9 must update their package references; do not suppress a NuGet downgrade conflict. DI 10 contains the [upstream cache identity fix](https://github.com/dotnet/runtime/pull/113343): DI 9.0.0 and 9.0.20 can corrupt reused keyed/unkeyed enumerable accessors after background compilation. Fresh-provider tests cannot establish safety. See the [native reproduction](repro/Issue46.NativeEnumeration/README.md).
 
-Library targets remain `netstandard2.0`, `net8.0`, `net9.0`, and `net10.0`. Tests cover .NET Framework 4.7.2 and .NET 8/9/10; upgrading these package dependencies does not require retargeting those applications. DI 9.0.0 and the latest released 9.x patch checked, 9.0.20, reproduce the native cache corruption. DI 10.0.0 is the first stable release containing the upstream fix. See the [retained native reproduction](repro/Issue46.NativeEnumeration/README.md).
+| Library compile target | Verified test/consumer runtime |
+| --- | --- |
+| `netstandard2.0` | .NET Framework application targeting `net472` on Windows |
+| `net8.0` | .NET 8 |
+| `net9.0` | .NET 9 |
+| `net10.0` | .NET 10 |
 
-## Usage
+`netstandard2.0` is a library compatibility target, not a runtime. The DI package upgrade does not require retargeting the verified applications. An SDK supporting your application's C# syntax is still required; the examples use C# 12 collection expressions and primary constructors.
 
-### Decorator
+## Getting started
 
-Use the `Decorator` extension to wrap an existing service with a new implementation without altering the original.
+Import `Microsoft.Extensions.DependencyInjection`, `Mammoth.Extensions.DependencyInjection`, and, for dependency maps, `Mammoth.Extensions.DependencyInjection.Configuration`.
 
-Both interface-based and class-based services can be decorated. The following examples demonstrate how to decorate services.
-
-#### Interface-based decoration
-
-```csharp
-public interface ITestService { }
-
-public class TestService : ITestService { }
-
-public class DecoratorService1 : ITestService
-{
-    private readonly ITestService _service;
-
-    public DecoratorService1(ITestService service)
-    {
-        _service = service;
-    }
-}
-
-public class DecoratorService2 : ITestService
-{
-    private readonly ITestService _service;
-
-    public DecoratorService2(ITestService service)
-    {
-        _service = service;
-    }
-}
-```
+This complete console example registers a keyed scoped service, adds a decorator, and injects that key plus an explicit constructor value:
 
 ```csharp
-services.AddTransient<ITestService, TestService>();
-services.Decorate<ITestService, DecoratorService1>(); // innermost decorator
-services.Decorate<ITestService, DecoratorService2>(); // outermost decorator
-```
+using Microsoft.Extensions.DependencyInjection;
+using Mammoth.Extensions.DependencyInjection;
+using Mammoth.Extensions.DependencyInjection.Configuration;
 
-#### Class-based decoration
+IServiceCollection services = new ServiceCollection();
+services.AddKeyedScoped<IStore, Store>("primary");
+services.Decorate<IStore, StoreDecorator>();
+services.AddScoped<Worker>([
+    Parameter.ForKey("store").Eq("primary"),
+    Dependency.OnValue("label", "batch")
+]);
+using var provider = ServiceProviderFactory.CreateServiceProvider(services);
+using var scope = provider.CreateScope();
+var worker = scope.ServiceProvider.GetRequiredService<Worker>();
+Console.WriteLine(worker.Label + ":" + worker.Store.Name); // batch:decorated(store)
 
-```csharp
-public class ConcreteService
+public interface IStore { string Name { get; } }
+public sealed class Store : IStore { public string Name => "store"; }
+public sealed class StoreDecorator(IStore inner) : IStore
 {
-    public virtual string GetValue() => "ConcreteService";
+    public string Name => "decorated(" + inner.Name + ")";
 }
-
-public class ConcreteServiceDecorator : ConcreteService
+public sealed class Worker(IStore store, string label)
 {
-    private readonly ConcreteService _inner;
-
-    public ConcreteServiceDecorator(ConcreteService inner)
-    {
-        _inner = inner;
-    }
-
-    public override string GetValue() => $"Decorated({_inner.GetValue()})";
+    public IStore Store { get; } = store;
+    public string Label { get; } = label;
 }
 ```
 
-```csharp
-services.AddTransient<ConcreteService>();
-services.Decorate<ConcreteService, ConcreteServiceDecorator>();
-```
+The factory is required for provider metadata queries and complete keyed `GetAllServices` discovery. Decorators and DependsOn registration can also be used with native DI providers that support the required keyed/probe interfaces. For Generic Host integration, use `UseServiceProviderFactory(new ServiceProviderFactory(options))` on an `IHostBuilder` (with `Microsoft.Extensions.Hosting` in your application); avoid building a second provider during registration.
 
-This extension works with Singleton, Scoped, Transient, Keyed, and other service descriptors. It supports type, instance, and factory registrations.
+## Decorators and ownership
 
-### DependsOn (requires Keyed Services support)
+`services.Decorate<TService, TDecorator>()` wraps the **last registration of exactly `TService`**, preserving its key, lifetime and position. It does not decorate every registration/key at once. Register and decorate each intended service in sequence. Repeated calls nest decorators; the last is outermost. Interfaces and assignable concrete classes work; type, factory and caller-supplied instance registrations are supported.
 
-Use the `DependsOn` extensions to register a service that depends on specific instances of other services. For example:
+DI tracks each container-created inner service and decorator independently. Disposable decorators must dispose **only their own resources**, never their injected inner service. Caller-supplied singleton instances remain caller-owned; wrapping them does not transfer their disposal ownership. Private decorator layers do not appear as additional public service/key registrations. See the [keyed decorator and ownership recipe](.agents/skills/use-mammoth-di/references/usage.md#keyed-decorators-and-caller-owned-instances).
 
-```csharp
-public interface ITestService { }
+Register open generics using native DI descriptors; `Decorate<TService,TDecorator>` is a closed generic API, not a blanket open-generic decorator registration API.
 
-public class TestService : ITestService { }
+## DependsOn constructor selection
 
-public class DependentService
-{
-    private readonly ITestService _service;
+Pass a `Dependency[]` to Mammoth's Add/TryAdd Singleton/Scoped/Transient overloads, including keyed registration variants. `Parameter.ForKey("store").Eq("primary")` maps a **constructor parameter name**, not a service type. `Dependency.OnValue("label", "batch")` injects a value assignable to that parameter; it does not register that value as a global service. The fluent `Eq` overload accepts a string key. For another key type, use native `[FromKeyedServices(key)]` with a valid attribute constant or an explicit keyed factory.
 
-    public DependentService(ITestService service)
-    {
-        _service = service;
-    }
-}
-```
+A non-empty map selects a constructor at **resolution time**:
 
-```csharp
-services.AddTransient<ITestService, TestService>("one");
-services.AddTransient<ITestService, TestService>("two");
-services.AddTransient<DependentService>(dependsOn: new Dependency[] {
-  Parameter.ForKey("service").Eq("one")
-});
-```
+- A single `[ActivatorUtilitiesConstructor]` takes precedence and must be satisfiable. Multiple preferred constructors fail.
+- Otherwise, the unique longest satisfiable public constructor wins. Equally long satisfiable constructors are ambiguous; missing required dependencies fail. Dependencies of rejected constructors are not created.
+- Named map entries override attributes and ordinary injection. Otherwise `[FromKeyedServices("backup")]` resolves its explicit key, `[ServiceKey]` receives the owning registration's key, and unannotated parameters use ordinary services. Optional defaults apply only when the requested dependency is unregistered. Use explicit-key attributes on Mammoth's mapped factory path; do not infer support for newer native attribute lookup modes from the DI package version.
+- Unknown map entries are ignored; incompatible explicit values do not silently fall back to another source. An empty map uses the native DI registration path.
 
-Internally, `DependsOn` creates a factory function to resolve necessary services and build dependent ones.
+Selection requires `IKeyedServiceProvider`, `IServiceProviderIsService` and `IServiceProviderIsKeyedService`. Keep normal scope/lifetime rules: mapping a scoped dependency into a singleton does not make it safe. See the [constructor and attribute recipe](.agents/skills/use-mammoth-di/references/usage.md#constructor-attributes-and-optional-defaults).
 
-The current design is limited to some common use case and it's very similar to the one offered by [Castle.Windsor](https://github.com/castleproject), from which we took inspiration:
+## Queries, generics and snapshots
 
-- Inject a specific instance of a service that will be resolved:
+Before building, `IServiceCollection` offers `GetServiceDescriptors(type, isKeyedService: ...)` (assignable service-type matching; null filter includes both keyed and unkeyed descriptors), `IsServiceRegistered`, a global `IsKeyedServiceRegistered(key)`, and keyed/unkeyed lifetime helpers. Inspect descriptors directly when you need an exact registration identity; do not assume collection matching and provider snapshot lookup are interchangeable.
 
-  ```csharp
-  services.AddTransient<DependentService>(dependsOn: new Dependency[] {
-    Parameter.ForKey("service").Eq("one")
-  });
-  ```
+Use provider helpers after building with `ServiceProviderFactory`:
 
-- Inject a value:
+| Need | Provider API / meaning |
+| --- | --- |
+| Type present under any key | `IsServiceRegistered<T>()` |
+| Key present anywhere | `IsKeyedServiceRegistered(key)`; this is a global key query, **not** a type/key query |
+| Unkeyed selected lifetime | `IsSingletonServiceRegistered<T>()` (also Scoped/Transient) |
+| Selected lifetime for a type/key | `IsKeyedSingletonServiceRegistered<T>(key)` (also Scoped/Transient) |
+| All unkeyed and keyed implementations | `GetAllServices<T>()` or `GetAllServices(typeof(T))` |
 
-  ```csharp
-  services.AddTransient<DependentService>(dependsOn: new Dependency[] {
-    Dependency.OnValue("dep", "val1")
-  });
-  ```
+Lifetime queries return `false` for missing registrations and keep keyed/unkeyed identities independent. Provider lifetime lookup prefers the exact closed registration, then its generic definition, within the requested key. Type discovery recognizes constructed generics from registered definitions. `GetAllServices` merges closed-service and generic-definition keys once per key, then uses native enumeration for each group. Unkeyed services are first; **keyed group order is unspecified**. Within a group, native registration order is retained. Do not treat all-service discovery as a single-service selection rule.
 
-This extension works with Singleton, Scoped, Transient, Keyed, and other service descriptors.
+Provider queries/diagnostics read a private snapshot taken when the factory builds the provider. Public `ServiceTypes`, `ServiceKeys`, `ServiceKeys<T>` and `ServiceLifetimes` remain mutable compatibility copies; modifying them does not change queries, enumeration or diagnostics. Editing the original collection after build does not update the provider. Keys themselves should have stable equality/hash behavior: the snapshot isolates metadata collections, not arbitrary mutable key objects.
 
-### Registration Helpers
+[Runnable generic discovery and snapshot example](.agents/skills/use-mammoth-di/references/usage.md#generic-discovery-and-snapshot-isolation).
 
-A set of extension methods provide ways to verify component registrations and manage assemblies for service registration.
+## Transient-disposable diagnostics
 
-#### ServiceCollection
+Enable `ExtendedServiceProviderOptions.DetectIncorrectUsageOfTransientDisposables` in development when investigating disposable transients resolved from the root. Diagnostics patch registrations and use native-provider reflection; they are not a replacement for correct application scopes or disposal ownership.
 
-- `GetServiceDescriptors`: returns all the ServiceDescriptors (keyed and non keyed) of a given service type.
-- `IsServiceRegistered`: checks whether the specified service type is registered in the service collection (keyed or not).
-- `IsKeyedServiceRegistered`: checks whether the specified service type is registered as keyed in the service collection.
-- `IsTransientServiceRegistered`: checks whether the specified service type is registered as transient in the service collection.
-- `IsScopedServiceRegistered`: checks whether the specified service type is registered as scoped in the service collection.
-- `IsSingletonServiceRegistered`: checks whether the specified service type is registered as singleton in the service collection.
-- `IsKeyedTransientServiceRegistered`: checks whether the specified service type is registered as transient in the service collection (keyed services).
-- `IsKeyedScopedServiceRegistered`: checks whether the specified service type is registered as scoped in the service collection (keyed services).
-- `IsKeyedSingletonServiceRegistered`: checks whether the specified service type is registered as singleton in the service collection (keyed services).
+| Option | Effect |
+| --- | --- |
+| `AllowSingletonToResolveTransientDisposables` | Permits the transient when the tracked resolution chain contains a singleton; default is `false` |
+| `ThrowOnOpenGenericTransientDisposable` | Rejects recognized disposable open-generic type registrations at build time; otherwise warns when a logger is available |
+| `DetectIncorrectUsageOfTransientDisposablesExclusionPatterns` | Regex patterns against service-type full names; matching transient registrations bypass the check |
 
-#### ServiceProvider
+Open-generic runtime construction and resolution chains cannot be patched like closed descriptors. Startup detection/logging is not comprehensive root-resolution protection for these cases. Factories can create disposable objects before the diagnostic throws. Normal scope disposal is still necessary.
 
-To use these extensions, build the `ServiceProvider` with our custom `ServiceProviderFactory`. It injects services that track transient disposables and registered service usage.
+Diagnostic formattable keys use invariant culture on all current-develop targets; this intentionally changes netstandard diagnostic text (for example `1234.5` under `fr-FR`). Keys with only a custom `ToString()` retain that method's formatting. [Runnable diagnostic example](.agents/skills/use-mammoth-di/references/usage.md#root-and-scope-diagnostics).
 
-```csharp
-new HostBuilder().UseServiceProviderFactory(new ServiceProviderFactory(new ExtendedServiceProviderOptions()));
+## Assembly registration
 
-// - or -
+`AssemblyInspector` in `Mammoth.Extensions.DependencyInjection.Inspector` filters an assembly and creates descriptors via `BasedOn`, `WithServiceSelf`/interface selections and lifestyle methods. Assign DependsOn maps via `Configure((registration, type) => registration.DependsOn = ...)` before calling a parameterless lifestyle method; they follow the same constructor rules. Use precise filters; inspect the resulting descriptors before adding them when discovering multiple implementations. [Runnable inspector example](.agents/skills/use-mammoth-di/references/usage.md#assembly-inspection).
 
-var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection, new ExtendedServiceProviderOptions());
-```
+## Skill for coding agents
 
-##### Detect Incorrect Usage of Transient Disposables
+The canonical [use-mammoth-di skill](.agents/skills/use-mammoth-di/SKILL.md) teaches application integration, including version checks, disposal, keyed constructor maps, query semantics and diagnostic limits. It follows the [Agent Skills format](https://agentskills.io/specification), with one entrypoint and optional recipes loaded only when needed.
 
-Enable detection of transient disposable services resolved by the root scope:
+Copy the **whole `use-mammoth-di` folder**, including `references`, from this repository into your **consumer application's repository**. Choose one supported location per agent; don't maintain duplicate copies for the same agent:
 
-```csharp
-new HostBuilder().UseServiceProviderFactory(new ServiceProviderFactory(
-  new ExtendedServiceProviderOptions 
-  {
-    DetectIncorrectUsageOfTransientDisposables = true,
-    AllowSingletonToResolveTransientDisposables = true,
-    ThrowOnOpenGenericTransientDisposable = true,
-    DetectIncorrectUsageOfTransientDisposablesExclusionPatterns = ["service", "service2"]
-  }));
-```
+| Agent | Project destination | Invocation |
+| --- | --- | --- |
+| Codex | `.agents/skills/use-mammoth-di/` | `$use-mammoth-di`, or automatic selection from its description; [official discovery docs](https://learn.chatgpt.com/docs/build-skills) |
+| Claude Code | `.claude/skills/use-mammoth-di/` | `/use-mammoth-di`, or automatic selection; [official skill docs](https://code.claude.com/docs/en/skills) |
+| GitHub Copilot | `.github/skills/use-mammoth-di/`; `.agents/skills` and `.claude/skills` are also supported | Ask to use `use-mammoth-di`; selection depends on the supported client; [official skill docs](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/add-skills) |
 
-Diagnostic messages format service keys that implement `IFormattable` with invariant culture on every library target. This changes culture-sensitive key text in the next release of the `netstandard2.0` library (for example, a decimal key prints `1234.5` even under `fr-FR`). Keys that supply only their own `ToString()` retain that method's formatting. Exception type, message layout, factory markers and resolution-stack order remain unchanged.
+These project discovery conventions were checked on October 1, 2026. Claude Code's documented project directory differs from Codex's; a standard `SKILL.md` does not imply identical search paths in every agent/client. Other agents can read the folder explicitly if they support Agent Skills or local instructions. Copying instructions does not install Mammoth or change package references. Keep the skill aligned with the library version your application actually uses.
 
-WARNING: Use this only in debug/development because it relies on reflection and can affect performance.
-Instead of re-implementing a new ServiceProvider from scratch, this approach modifies each ServiceDescriptor to track resolution context and throw exceptions if required.
-
-**Limitations:**
-
-- _Open generic transient disposable services cannot be checked_, a ServiceDescriptor cannot be created with an Open Generic as ServiceType and an ImplementationFactory (we cannot "rewrite" service registrations), so no error is thrown if they are resolved by the root scope.
-- _Open generic resolution context cannot be tracked_, a ServiceDescriptor cannot be created with an Open Generic as ServiceType and an ImplementationFactory, so no error is thrown if they are transient and disposable but resolved by the root scope.
-
-Options:
-
-- AllowSingletonToResolveTransientDisposables: If false, throws when singleton resolves a transient disposable.
-- ThrowOnOpenGenericTransientDisposable: Throws when an open generic transient disposable is registered.
-- DetectIncorrectUsageOfTransientDisposablesExclusionPatterns: list of Regex patterns to exclude services from detection, transient disposable services that match any entry in this list will behave be captured if resolved by the root scope.
-
-###### IsRegistered extension methods
-
-Additional methods for `IServiceProvider`:
-
-- `GetAllServices`: resolves all keyed and non-keyed services of a given service type.
-- `IsServiceRegistered`: checks whether the specified service type is registered in the service provider (keyed or non-keyed).
-- `IsKeyedServiceRegistered`: checks whether the specified service type is registered as keyed in the service provider.
-- `IsTransientServiceRegistered`: checks whether the specified service type is registered as transient in the service provider (non keyed services).
-- `IsScopedServiceRegistered`: checks whether the specified service type is registered as scoped in the service provider (non keyed services).
-- `IsSingletonServiceRegistered`: checks whether the specified service type is registered as singleton in the service provider (non keyed services).
-- `IsKeyedTransientServiceRegistered`: checks whether the specified service type is registered as transient in the service provider (keyed services).
-- `IsKeyedScopedServiceRegistered`: checks whether the specified service type is registered as scoped in the service provider (keyed services).
-- `IsKeyedSingletonServiceRegistered`: checks whether the specified service type is registered as singleton in the service provider (keyed services).
-
-#### Inspectors
-
-`AssemblyInspector` inspects assemblies for classes to register.
-
-It is once again inspired by the syntax used in [Castle.Windsor](https://github.com/castleproject) to inspect and register services.
-
-It looks for classes and offers a series of methods that are pretty self explanatory to output one or more `ServiceDescriptor` that
-will be registered in the ServiceCollection.
-
-It supports `DependsOn` for keyed services:
-
-```csharp
-serviceCollection.Add(
-  new AssemblyInspector()
-    .FromAssemblyContaining<ServiceWithKeyedDep>()
-    .BasedOn<ServiceWithKeyedDep>()
-    .WithServiceSelf()
-    .LifestyleSingleton(dependsOn: new Dependency[]
-    {
-      Parameter.ForKey("keyedService").Eq("one")
-    })
-);
-```
+The repository includes no global agent configuration changes or automatic system-wide installer.
