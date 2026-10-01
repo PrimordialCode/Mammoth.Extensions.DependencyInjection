@@ -332,18 +332,17 @@ namespace Mammoth.Extensions.DependencyInjection
 			}
 		}
 
-#if NET8_0_OR_GREATER
 		private static void ThrowTransientDisposableException(object? serviceKey, Type? serviceType, Type? implementationType, bool isFactory)
 		{
 			var sb = new StringBuilder();
 			sb.Append("Trying to resolve Transient Disposable service - ");
 			if (serviceKey != null)
 			{
-				sb.Append(CultureInfo.InvariantCulture, $"ServiceKey: {serviceKey}, ");
+				sb.AppendFormat(CultureInfo.InvariantCulture, "ServiceKey: {0}, ", serviceKey);
 			}
 			if (serviceType != null)
 			{
-				sb.Append(CultureInfo.InvariantCulture, $"ServiceType: {serviceType.FullName}, ");
+				sb.Append("ServiceType: ").Append(serviceType.FullName).Append(", ");
 			}
 			if (implementationType != null)
 			{
@@ -351,7 +350,7 @@ namespace Mammoth.Extensions.DependencyInjection
 				{
 					sb.Append("(factory) ");
 				}
-				sb.Append(CultureInfo.InvariantCulture, $"ImplementationType: {implementationType.FullName}.");
+				sb.Append("ImplementationType: ").Append(implementationType.FullName).Append('.');
 			}
 			if (ResolutionContext.CurrentStack.Count > 0)
 			{
@@ -363,52 +362,13 @@ namespace Mammoth.Extensions.DependencyInjection
 					sb.Append("- ");
 					if (entry.ServiceKey != null)
 					{
-						sb.Append(CultureInfo.InvariantCulture, $"ServiceKey: {entry.ServiceKey}, ");
+						sb.AppendFormat(CultureInfo.InvariantCulture, "ServiceKey: {0}, ", entry.ServiceKey);
 					}
-					sb.Append(CultureInfo.InvariantCulture, $"ServiceType: {entry.ServiceType.FullName}");
+					sb.Append("ServiceType: ").Append(entry.ServiceType.FullName);
 				}
 			}
 			throw new InvalidOperationException(sb.ToString());
 		}
-#elif NETSTANDARD2_0_OR_GREATER
-		private static void ThrowTransientDisposableException(object? serviceKey, Type? serviceType, Type? implementationType, bool isFactory)
-		{
-			var sb = new StringBuilder();
-			sb.Append("Trying to resolve Transient Disposable service - ");
-			if (serviceKey != null)
-			{
-				sb.Append($"ServiceKey: {serviceKey}, ");
-			}
-			if (serviceType != null)
-			{
-				sb.Append($"ServiceType: {serviceType.FullName}, ");
-			}
-			if (implementationType != null)
-			{
-				if (isFactory)
-				{
-					sb.Append("(factory) ");
-				}
-				sb.Append($"ImplementationType: {implementationType.FullName}.");
-			}
-			if (ResolutionContext.CurrentStack.Count > 0)
-			{
-				sb.AppendLine();
-				sb.Append("Requested by (Resolution Context Stack):");
-				foreach (var entry in ResolutionContext.CurrentStack)
-				{
-					sb.AppendLine();
-					sb.Append("- ");
-					if (entry.ServiceKey != null)
-					{
-						sb.Append($"ServiceKey: {entry.ServiceKey}, ");
-					}
-					sb.Append($"ServiceType: {entry.ServiceType.FullName}");
-				}
-			}
-			throw new InvalidOperationException(sb.ToString());
-		}
-#endif
 
 		private static bool IsDisposableType(Type? type) =>
 			type != null && (typeof(IDisposable).IsAssignableFrom(type) || typeof(IAsyncDisposable).IsAssignableFrom(type));
