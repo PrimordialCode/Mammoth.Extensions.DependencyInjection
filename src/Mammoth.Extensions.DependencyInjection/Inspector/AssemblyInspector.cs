@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using Mammoth.Extensions.DependencyInjection.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
