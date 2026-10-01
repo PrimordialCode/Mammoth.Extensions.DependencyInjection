@@ -183,6 +183,8 @@ new HostBuilder().UseServiceProviderFactory(new ServiceProviderFactory(
   }));
 ```
 
+Diagnostic messages format service keys that implement `IFormattable` with invariant culture on every library target. This changes culture-sensitive key text in the next release of the `netstandard2.0` library (for example, a decimal key prints `1234.5` even under `fr-FR`). Keys that supply only their own `ToString()` retain that method's formatting. Exception type, message layout, factory markers and resolution-stack order remain unchanged.
+
 WARNING: Use this only in debug/development because it relies on reflection and can affect performance.
 Instead of re-implementing a new ServiceProvider from scratch, this approach modifies each ServiceDescriptor to track resolution context and throw exceptions if required.
 

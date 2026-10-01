@@ -8,6 +8,7 @@
 
 ### Bug Fixes
 
+- Consolidate transient-disposable exception formatting across target frameworks [#24](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/24). Formattable service keys now use invariant culture in the netstandard2.0 library as well as modern targets; preserve message layout, keyed resolution-stack order and factory markers.
 - Isolate provider registration, lifetime and key-discovery metadata from external mutation. Preserve public mutable metadata types as compatibility copies while provider helpers and diagnostics use a private snapshot [#28](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/28).
 - Preserve container disposal ownership of decorated factory/type services and intermediate decorators, without disposing caller-owned instances or colliding with implementation registrations [#37](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/37).
 - Support keyed open-generic provider startup and merge closed/generic-definition keys for all-service discovery and registration/lifetime queries [#38](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/38).
