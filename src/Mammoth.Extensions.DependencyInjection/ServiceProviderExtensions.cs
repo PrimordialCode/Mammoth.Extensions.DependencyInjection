@@ -28,21 +28,15 @@ public static partial class ServiceProviderExtensions
 	/// </remarks>
 	public static IEnumerable<object?> GetAllServices(this IServiceProvider serviceProvider, Type serviceType)
 	{
-		var KeysType = typeof(ServiceKeys<>).MakeGenericType(serviceType);
+		var snapshot = serviceProvider.GetService<ServiceProviderRegistrationSnapshot>();
 		var serviceList = new List<object?>();
-		// add null key to get all non-keyed services
 		serviceList.AddRange(serviceProvider.GetServices(serviceType));
-		if (serviceProvider.GetService(KeysType) is IEnumerable<object> keys)
-		{
-			foreach (var serviceKey in keys!)
-			{
-				var services = serviceProvider.GetKeyedServices(serviceType, serviceKey);
-				if (services?.Any() == true)
-				{
-					serviceList.AddRange(services!);
-				}
-			}
-		}
+		// Factory providers use authoritative metadata. Preserve the legacy behavior for
+		// providers without the factory, including explicitly supplied key metadata.
+		var keys = snapshot?.GetKeys(serviceType) ??
+			(serviceProvider.GetService(typeof(ServiceKeys<>).MakeGenericType(serviceType)) as IEnumerable<object> ?? []);
+		foreach (var serviceKey in keys)
+			serviceList.AddRange(serviceProvider.GetKeyedServices(serviceType, serviceKey));
 		return serviceList;
 	}
 
@@ -58,22 +52,7 @@ public static partial class ServiceProviderExtensions
 	/// </remarks>
 	public static IEnumerable<TServiceType> GetAllServices<TServiceType>(this IServiceProvider serviceProvider)
 	{
-		var keys = serviceProvider.GetService<ServiceKeys<TServiceType>>();
-		var serviceList = new List<TServiceType>();
-		// add null key to get all non-keyed services
-		serviceList.AddRange(serviceProvider.GetServices<TServiceType>());
-		if (keys != null)
-		{
-			foreach (var serviceKey in keys)
-			{
-				var services = serviceProvider.GetKeyedServices<TServiceType>(serviceKey);
-				if (services?.Any() == true)
-				{
-					serviceList.AddRange(services!);
-				}
-			}
-		}
-		return serviceList;
+		return serviceProvider.GetAllServices(typeof(TServiceType)).Cast<TServiceType>();
 	}
 
 	private static InvalidOperationException BuildExceptionBecauseProviderWasNotBuiltUsingTheFactory(Exception? ex = null)
