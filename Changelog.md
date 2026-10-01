@@ -17,7 +17,7 @@
 
 ### Documentation
 
-- Refresh consumer guidance for current provider guarantees and add the portable `use-mammoth-di` Agent Skill with validated application recipes and agent-specific discovery instructions.
+- Refresh consumer guidance for current provider guarantees and add the portable `mammoth-di` Agent Skill with validated application recipes and agent-specific discovery instructions.
 
 ## 0.7.1
 
