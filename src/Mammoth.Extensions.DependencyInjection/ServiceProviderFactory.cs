@@ -125,6 +125,8 @@ namespace Mammoth.Extensions.DependencyInjection
 			// Insert Keys<ServiceType> as a service
 			foreach (var kvp in dict)
 			{
+				if (kvp.Key.ContainsGenericParameters)
+					continue;
 				var type = typeof(ServiceKeys<>).MakeGenericType(kvp.Key);
 				var svc = Activator.CreateInstance(type, kvp.Value);
 				containerBuilder.AddSingleton(type, svc!);
@@ -239,7 +241,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				return lifetime2;
 			}
 
-			return null;
+			return serviceType.IsConstructedGenericType
+				? GetLifetime(serviceType.GetGenericTypeDefinition(), serviceKey)
+				: null;
 		}
 	}
 }

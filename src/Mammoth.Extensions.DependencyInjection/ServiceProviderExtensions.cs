@@ -24,13 +24,16 @@ public static partial class ServiceProviderExtensions
 	///   be resolved in the order of registration)
 	/// </summary>
 	/// <remarks>
+	/// <para>Closed service keys and keys from its generic definition are merged once per key.
+	/// Each key uses the native container's enumeration and closed-registration precedence.</para>
 	/// <para>WARNING: To use these extensions, you need to build the ServiceProvider using <see cref="ServiceProviderFactory"/>.</para>
 	/// </remarks>
 	public static IEnumerable<object?> GetAllServices(this IServiceProvider serviceProvider, Type serviceType)
 	{
 		var snapshot = serviceProvider.GetService<ServiceProviderRegistrationSnapshot>();
 		var serviceList = new List<object?>();
-		serviceList.AddRange(serviceProvider.GetServices(serviceType));
+		if (snapshot == null || snapshot.HasUnkeyed(serviceType))
+			serviceList.AddRange(serviceProvider.GetServices(serviceType));
 		// Factory providers use authoritative metadata. Preserve the legacy behavior for
 		// providers without the factory, including explicitly supplied key metadata.
 		var keys = snapshot?.GetKeys(serviceType) ??
@@ -48,6 +51,8 @@ public static partial class ServiceProviderExtensions
 	///   be resolved in the order of registration)
 	/// </summary>
 	/// <remarks>
+	/// <para>Closed service keys and keys from its generic definition are merged once per key.
+	/// Each key uses the native container's enumeration and closed-registration precedence.</para>
 	/// <para>WARNING: To use these extensions, you need to build the ServiceProvider using <see cref="ServiceProviderFactory"/>.</para>
 	/// </remarks>
 	public static IEnumerable<TServiceType> GetAllServices<TServiceType>(this IServiceProvider serviceProvider)
