@@ -224,14 +224,18 @@ namespace Mammoth.Extensions.DependencyInjection
 		}
 
 		/// <summary>
-		/// Gets the lifetime for a specific service type and optional key.
+		/// Gets the last registered lifetime for the requested service type and key.
+		/// A null key queries only unkeyed registrations; a non-null key queries only that key.
+		/// Missing keys do not fall back to an unkeyed registration.
+		/// Closed generic types fall back to their generic definition for the same key
+		/// only when the exact service type/key identity has no registration.
 		/// </summary>
 		/// <param name="serviceType">The type of the service.</param>
 		/// <param name="serviceKey">The optional key for the service.</param>
 		/// <returns>The lifetime of the service or null if not found.</returns>
 		public ServiceLifetime? GetLifetime(Type serviceType, object? serviceKey = null)
 		{
-			if (_lifetimes.TryGetValue(serviceType, out var lifetime))
+			if (serviceKey == null && _lifetimes.TryGetValue(serviceType, out var lifetime))
 			{
 				return lifetime;
 			}
