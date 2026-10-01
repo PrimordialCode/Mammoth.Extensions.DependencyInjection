@@ -16,6 +16,18 @@ public class GenericLifetimeSnapshotIntegrationTests
         ServiceLifetime openUnkeyed, ServiceLifetime openKeyed, ServiceLifetime closedUnkeyed,
         ServiceLifetime closedKeyed, bool diagnostics)
     {
+        // DI 9.0.0 can replace an unkeyed enumerable accessor with a keyed one
+        // after its second resolution triggers background compilation. Exercise
+        // each path on a fresh provider so the expected count remains explicit.
+        foreach (var enumeration in new[] { "native", "generic", "type" })
+            AssertIndependentSnapshotLifetimes(openUnkeyed, openKeyed, closedUnkeyed,
+                closedKeyed, diagnostics, enumeration);
+    }
+
+    private static void AssertIndependentSnapshotLifetimes(
+        ServiceLifetime openUnkeyed, ServiceLifetime openKeyed, ServiceLifetime closedUnkeyed,
+        ServiceLifetime closedKeyed, bool diagnostics, string enumeration)
+    {
         IServiceCollection services = new ServiceCollection();
         services.Add(new ServiceDescriptor(typeof(IRepository<>), typeof(Repository<>), openUnkeyed));
         services.Add(new ServiceDescriptor(typeof(IRepository<>), "key", typeof(Repository<>), openKeyed));
@@ -61,6 +73,16 @@ public class GenericLifetimeSnapshotIntegrationTests
             Assert.AreNotSame(first, second);
         else
             Assert.AreSame(first, second);
+        var resolved = enumeration switch
+        {
+            "native" => scope.ServiceProvider.GetServices<IRepository<string>>()
+                .Concat(scope.ServiceProvider.GetKeyedServices<IRepository<string>>("key"))
+                .Concat(scope.ServiceProvider.GetKeyedServices<IRepository<string>>("fallback"))
+                .Cast<object?>().ToArray(),
+            "generic" => scope.ServiceProvider.GetAllServices<IRepository<string>>().Cast<object?>().ToArray(),
+            _ => scope.ServiceProvider.GetAllServices(typeof(IRepository<string>)).ToArray()
+        };
+        Assert.HasCount(5, resolved, $"{enumeration} enumeration must retain all five registrations after metadata mutation.");
     }
 
     [TestMethod]
