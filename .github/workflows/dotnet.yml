@@ -7,7 +7,8 @@ on:
   push:
     branches: [ "main", "develop", "feature/*", "release/*", "hotfix/*", "support/*" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "develop" ]
+    types: [ opened, synchronize, reopened, ready_for_review ]
   workflow_dispatch:
 
 jobs:
