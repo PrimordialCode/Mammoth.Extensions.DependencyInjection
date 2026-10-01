@@ -15,6 +15,10 @@
 - Keep keyed and unkeyed provider lifetime queries independent, including singleton exemptions in transient-disposable diagnostics [#39](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/39).
 - Select a satisfiable DependsOn constructor at resolution time, honor preferred constructors, reject ambiguity, and support optional defaults without constructing rejected dependencies [#23](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/23).
 
+### Documentation
+
+- Refresh consumer guidance for current provider guarantees and add the portable `use-mammoth-di` Agent Skill with validated application recipes and agent-specific discovery instructions.
+
 ## 0.7.1
 
 ### Bug Fixes
