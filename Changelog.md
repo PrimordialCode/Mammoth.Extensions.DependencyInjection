@@ -2,6 +2,8 @@
 
 ## vNext
 
+- Preserve container disposal ownership of decorated factory/type services and intermediate decorators, without disposing caller-owned instances or colliding with implementation registrations [#37](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/37).
+
 ## 0.7.1
 
 ### Bug Fixes

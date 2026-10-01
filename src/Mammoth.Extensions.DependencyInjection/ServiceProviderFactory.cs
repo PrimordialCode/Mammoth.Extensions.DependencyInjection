@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Mammoth.Extensions.DependencyInjection
@@ -99,8 +99,11 @@ namespace Mammoth.Extensions.DependencyInjection
 
 			foreach (var service in containerBuilder)
 			{
-				// maybe copying the service descriptors was more effective!
-
+				// Private decorator layers need lifetime metadata for diagnostics, but are not
+				// public registrations and must not contribute discoverable keys or types.
+				serviceLifetimes.Add(service.ServiceType, service.Lifetime, service.ServiceKey);
+				if (ServiceCollectionExtensions.IsDecorationSlot(service.ServiceType))
+					continue;
 				serviceTypes.Add(service.ServiceType);
 
 				if (service.ServiceKey != null)
@@ -115,8 +118,6 @@ namespace Mammoth.Extensions.DependencyInjection
 					list.Add(service.ServiceKey);
 				}
 
-				// Track the lifetime for this service
-				serviceLifetimes.Add(service.ServiceType, service.Lifetime, service.ServiceKey);
 			}
 
 			// Insert Keys<ServiceType> as a service
