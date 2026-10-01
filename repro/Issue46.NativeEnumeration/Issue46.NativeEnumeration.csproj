@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net472;net8.0;net9.0;net10.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings>
+    <DiVersion Condition="'$(DiVersion)' == ''">9.0.0</DiVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="$(DiVersion)" />
+    <Compile Include="../../test-support/NativeResolverCompilation.cs" Link="NativeResolverCompilation.cs" />
+  </ItemGroup>
+</Project>

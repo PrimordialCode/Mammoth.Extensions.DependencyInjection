@@ -6,13 +6,19 @@
 
 ## Introduction
 
-This package offers extensions for the `Microsoft.Extensions.DependencyInjection` library. It is designed for `Microsoft.Extensions.DependencyInjection` version `8.0.0` or later, using keyed services introduced in that release.
+This package offers extensions for the `Microsoft.Extensions.DependencyInjection` library. It requires `Microsoft.Extensions.DependencyInjection` version `10.0.0` or later. This minimum includes the upstream fix for keyed enumerable and open-generic resolver cache identities ([dotnet/runtime#113343](https://github.com/dotnet/runtime/pull/113343), [issue #46](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/46)).
 
 ## Installation
 
 ```bash
 dotnet add package Mammoth.Extensions.DependencyInjection
 ```
+
+### Dependency compatibility
+
+The next release raises the DI dependency minimum to **10.0.0** and `Microsoft.Bcl.AsyncInterfaces` to **10.0.0**. This is a major package dependency change; applications pinning DI 8.x or 9.x must upgrade their DI package references. NuGet package dependency groups enforce the DI minimum for every library target; a direct reference below the minimum produces a package downgrade conflict. Do not suppress that conflict.
+
+Library targets remain `netstandard2.0`, `net8.0`, `net9.0`, and `net10.0`. Tests cover .NET Framework 4.7.2 and .NET 8/9/10; upgrading these package dependencies does not require retargeting those applications. DI 9.0.0 and the latest released 9.x patch checked, 9.0.20, reproduce the native cache corruption. DI 10.0.0 is the first stable release containing the upstream fix. See the [retained native reproduction](repro/Issue46.NativeEnumeration/README.md).
 
 ## Usage
 
