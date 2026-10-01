@@ -120,6 +120,8 @@ namespace Mammoth.Extensions.DependencyInjection
 
 			}
 
+			var snapshot = new ServiceProviderRegistrationSnapshot(containerBuilder, serviceTypes, keys, dict);
+
 			// Insert Keys<ServiceType> as a service
 			foreach (var kvp in dict)
 			{
@@ -127,6 +129,8 @@ namespace Mammoth.Extensions.DependencyInjection
 				var svc = Activator.CreateInstance(type, kvp.Value);
 				containerBuilder.AddSingleton(type, svc!);
 			}
+
+			containerBuilder.AddSingleton(snapshot);
 
 			// Insert ServiceTypes as a service
 			containerBuilder.AddSingleton(serviceTypes);
@@ -142,6 +146,12 @@ namespace Mammoth.Extensions.DependencyInjection
 	/// <summary>
 	/// The list of keys for a given service type.
 	/// </summary>
+	/// <remarks>
+	/// Instances resolved from ServiceProviderFactory are mutable compatibility copies.
+	/// Mutating them does not change provider registration/lifetime queries, diagnostics,
+	/// or GetAllServices. The provider reads a private snapshot of its registrations.
+	/// Standalone instances retain their existing mutable behavior.
+	/// </remarks>
 #pragma warning disable S2326 // Unused type parameters should be removed
 	public class ServiceKeys<T> : HashSet<object>
 #pragma warning restore S2326 // Unused type parameters should be removed
@@ -156,16 +166,34 @@ namespace Mammoth.Extensions.DependencyInjection
 	/// <summary>
 	/// The list of all keys.
 	/// </summary>
+	/// <remarks>
+	/// Instances resolved from ServiceProviderFactory are mutable compatibility copies.
+	/// Mutating them does not change provider registration/lifetime queries, diagnostics,
+	/// or GetAllServices. The provider reads a private snapshot of its registrations.
+	/// Standalone instances retain their existing mutable behavior.
+	/// </remarks>
 	public class ServiceKeys : HashSet<object>;
 
 	/// <summary>
 	/// The list of all registered ServiceType.
 	/// </summary>
+	/// <remarks>
+	/// Instances resolved from ServiceProviderFactory are mutable compatibility copies.
+	/// Mutating them does not change provider registration/lifetime queries, diagnostics,
+	/// or GetAllServices. The provider reads a private snapshot of its registrations.
+	/// Standalone instances retain their existing mutable behavior.
+	/// </remarks>
 	public class ServiceTypes : HashSet<Type>;
 
 	/// <summary>
 	/// Tracks the lifetime of all registered services.
 	/// </summary>
+	/// <remarks>
+	/// Instances resolved from ServiceProviderFactory are mutable compatibility copies.
+	/// Mutating them does not change provider registration/lifetime queries, diagnostics,
+	/// or GetAllServices. The provider reads a private snapshot of its registrations.
+	/// Standalone instances retain their existing mutable behavior.
+	/// </remarks>
 	public class ServiceLifetimes
 	{
 		private readonly Dictionary<Type, ServiceLifetime> _lifetimes = [];

@@ -13,10 +13,10 @@ public static partial class ServiceProviderExtensions
 		{
 			throw new ArgumentNullException(nameof(serviceType));
 		}
-		var serviceTypes = serviceProvider.GetService<ServiceTypes>()
+		var serviceTypes = serviceProvider.GetService<ServiceProviderRegistrationSnapshot>()
 			?? throw BuildExceptionBecauseProviderWasNotBuiltUsingTheFactory();
 
-		return serviceTypes.Any(type => type == serviceType);
+		return serviceTypes.ContainsType(serviceType);
 	}
 
 	/// <summary>
@@ -37,10 +37,10 @@ public static partial class ServiceProviderExtensions
 			throw new ArgumentNullException(nameof(serviceKey));
 		}
 
-		var serviceKeys = serviceProvider.GetService<ServiceKeys>()
+		var serviceKeys = serviceProvider.GetService<ServiceProviderRegistrationSnapshot>()
 			?? throw BuildExceptionBecauseProviderWasNotBuiltUsingTheFactory();
 
-		return serviceKeys.Contains(serviceKey);
+		return serviceKeys.ContainsKey(serviceKey);
 	}
 
 	/// <summary>
@@ -58,7 +58,7 @@ public static partial class ServiceProviderExtensions
 			throw new ArgumentNullException(nameof(serviceType));
 		}
 
-		var lifetimes = serviceProvider.GetService<ServiceLifetimes>()
+		var lifetimes = serviceProvider.GetService<ServiceProviderRegistrationSnapshot>()
 			?? throw BuildExceptionBecauseProviderWasNotBuiltUsingTheFactory();
 
 		return lifetimes.GetLifetime(serviceType) == ServiceLifetime.Transient;
@@ -97,7 +97,7 @@ public static partial class ServiceProviderExtensions
 			throw new ArgumentNullException(nameof(serviceKey));
 		}
 
-		var lifetimes = serviceProvider.GetService<ServiceLifetimes>()
+		var lifetimes = serviceProvider.GetService<ServiceProviderRegistrationSnapshot>()
 			?? throw BuildExceptionBecauseProviderWasNotBuiltUsingTheFactory();
 
 		return lifetimes.GetLifetime(serviceType, serviceKey) == ServiceLifetime.Transient;
@@ -132,7 +132,7 @@ public static partial class ServiceProviderExtensions
 			throw new ArgumentNullException(nameof(serviceType));
 		}
 
-		var lifetimes = serviceProvider.GetService<ServiceLifetimes>()
+		var lifetimes = serviceProvider.GetService<ServiceProviderRegistrationSnapshot>()
 			?? throw BuildExceptionBecauseProviderWasNotBuiltUsingTheFactory();
 
 		return lifetimes.GetLifetime(serviceType) == ServiceLifetime.Singleton;
@@ -171,7 +171,7 @@ public static partial class ServiceProviderExtensions
 			throw new ArgumentNullException(nameof(serviceKey));
 		}
 
-		var lifetimes = serviceProvider.GetService<ServiceLifetimes>()
+		var lifetimes = serviceProvider.GetService<ServiceProviderRegistrationSnapshot>()
 			?? throw BuildExceptionBecauseProviderWasNotBuiltUsingTheFactory();
 
 		return lifetimes.GetLifetime(serviceType, serviceKey) == ServiceLifetime.Singleton;
@@ -206,7 +206,7 @@ public static partial class ServiceProviderExtensions
 			throw new ArgumentNullException(nameof(serviceType));
 		}
 
-		var lifetimes = serviceProvider.GetService<ServiceLifetimes>()
+		var lifetimes = serviceProvider.GetService<ServiceProviderRegistrationSnapshot>()
 			?? throw BuildExceptionBecauseProviderWasNotBuiltUsingTheFactory();
 
 		return lifetimes.GetLifetime(serviceType) == ServiceLifetime.Scoped;
@@ -245,7 +245,7 @@ public static partial class ServiceProviderExtensions
 			throw new ArgumentNullException(nameof(serviceKey));
 		}
 
-		var lifetimes = serviceProvider.GetService<ServiceLifetimes>()
+		var lifetimes = serviceProvider.GetService<ServiceProviderRegistrationSnapshot>()
 			?? throw BuildExceptionBecauseProviderWasNotBuiltUsingTheFactory();
 
 		return lifetimes.GetLifetime(serviceType, serviceKey) == ServiceLifetime.Scoped;
