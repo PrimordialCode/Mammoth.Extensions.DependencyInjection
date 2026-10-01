@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using Mammoth.Extensions.DependencyInjection.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
@@ -188,14 +188,14 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 			}
 			else
 			{
-				ServiceCollectionExtensions.GetConstructorAndParameters(implementationType, out ConstructorInfo ctor, out ParameterInfo[] parameter);
+				var constructorTarget = implementationType;
 				if (serviceKey == null)
 				{
-					descriptors.Add(new ServiceDescriptor(serviceType, ServiceCollectionExtensions.DependsOnResolutionFunc<object>(dependsOn, ctor, parameter), lifetime));
+					descriptors.Add(new ServiceDescriptor(serviceType, ServiceCollectionExtensions.DependsOnResolutionFunc<object>(dependsOn, constructorTarget), lifetime));
 				}
 				else
 				{
-					descriptors.Add(new ServiceDescriptor(serviceType, serviceKey, ServiceCollectionExtensions.KeyedDependsOnResolutionFunc<object>(dependsOn, ctor, parameter), lifetime));
+					descriptors.Add(new ServiceDescriptor(serviceType, serviceKey, ServiceCollectionExtensions.KeyedDependsOnResolutionFunc<object>(dependsOn, constructorTarget), lifetime));
 				}
 			}
 		}
