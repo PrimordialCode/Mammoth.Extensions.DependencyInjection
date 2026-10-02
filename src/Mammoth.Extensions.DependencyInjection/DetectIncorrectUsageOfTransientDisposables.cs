@@ -121,12 +121,12 @@ namespace Mammoth.Extensions.DependencyInjection
 						var d = ServiceDescriptor.DescribeKeyed(
 							descriptor.ServiceType,
 							descriptor.ServiceKey,
-							(sp, _) =>
+							(sp, key) =>
 							{
 								ResolutionContext.CurrentStack.Push(new ServiceIdentifier(descriptor.ServiceKey, descriptor.ServiceType));
 								try
 								{
-									return ActivatorUtilities.CreateInstance(sp, implementationType);
+									return ServiceCollectionExtensions.CreateKeyedInstance(sp, implementationType, key);
 								}
 								finally
 								{
@@ -309,7 +309,7 @@ namespace Mammoth.Extensions.DependencyInjection
 				return new ServiceDescriptor(
 					original.ServiceType,
 					original.ServiceKey,
-					(sp, _) =>
+					(sp, key) =>
 					{
 						//check the ResolutionContext to see if the service is being resolved by a singleton
 						//if it is, then it's safe to resolve the transient disposable service
@@ -325,8 +325,8 @@ namespace Mammoth.Extensions.DependencyInjection
 								"KeyedImplementationType is null.");
 						}
 
-						return ActivatorUtilities.CreateInstance(sp,
-							original.KeyedImplementationType);
+						return ServiceCollectionExtensions.CreateKeyedInstance(sp,
+							original.KeyedImplementationType, key);
 					},
 					ServiceLifetime.Transient);
 			}

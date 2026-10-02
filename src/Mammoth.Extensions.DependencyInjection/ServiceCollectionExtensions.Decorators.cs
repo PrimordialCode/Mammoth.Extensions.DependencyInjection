@@ -32,15 +32,14 @@ public static partial class ServiceCollectionExtensions
         var slotType = typeof(DecorationSlot<TService>);
         var keyed = original.IsKeyedService;
         var instance = keyed ? original.KeyedImplementationInstance : original.ImplementationInstance;
-        var anyKey = keyed && ReferenceEquals(original.ServiceKey, KeyedService.AnyKey);
-        if (anyKey && instance == null)
+        if (keyed && instance == null)
         {
-            // Give each wildcard layer its own service type, so native DI can cache it
+            // Give each keyed layer its own service type, so native DI can cache it
             // by the actual requested key without colliding with another layer.
             while (services.Any(d => d.ServiceType == slotType))
                 slotType = typeof(DecorationSlot<>).MakeGenericType(slotType);
         }
-        var slotKey = anyKey ? KeyedService.AnyKey : identity;
+        var slotKey = keyed ? KeyedService.AnyKey : identity;
         if (instance == null)
         {
             // Factory results are tracked directly by DI, even though the private service type
@@ -48,17 +47,19 @@ public static partial class ServiceCollectionExtensions
             services.Add(ServiceDescriptor.DescribeKeyed(slotType, slotKey, (provider, requestedKey) =>
             {
                 if (keyed && original.KeyedImplementationFactory != null)
-                    return original.KeyedImplementationFactory(provider, anyKey ? requestedKey : original.ServiceKey);
+                    return original.KeyedImplementationFactory(provider, requestedKey);
                 if (!keyed && original.ImplementationFactory != null)
                     return original.ImplementationFactory(provider);
                 var implementation = keyed ? original.KeyedImplementationType! : original.ImplementationType!;
-                return ActivatorUtilities.CreateInstance(provider, implementation);
+                return keyed ? CreateKeyedInstance(provider, implementation, requestedKey)
+                    : ActivatorUtilities.CreateInstance(provider, implementation);
             }, original.Lifetime));
         }
         object CreateDecorator(IServiceProvider provider, object? requestedKey)
         {
-            var inner = instance ?? provider.GetRequiredKeyedService(slotType, anyKey ? requestedKey : identity);
-            return ActivatorUtilities.CreateInstance<TDecorator>(provider, inner);
+            var inner = instance ?? provider.GetRequiredKeyedService(slotType, keyed ? requestedKey : identity);
+            return keyed ? CreateKeyedInstance(provider, typeof(TDecorator), requestedKey, inner)
+                : ActivatorUtilities.CreateInstance<TDecorator>(provider, inner);
         }
         // Replace in place so IEnumerable<TService> retains registration order.
         services[services.IndexOf(original)] = keyed
