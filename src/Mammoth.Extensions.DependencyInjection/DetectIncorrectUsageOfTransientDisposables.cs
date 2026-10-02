@@ -126,7 +126,7 @@ namespace Mammoth.Extensions.DependencyInjection
 								ResolutionContext.CurrentStack.Push(new ServiceIdentifier(descriptor.ServiceKey, descriptor.ServiceType));
 								try
 								{
-									return ServiceCollectionExtensions.CreateKeyedInstance(sp, implementationType, key);
+									return ConstructorActivator.CreateKeyed(sp, implementationType, key);
 								}
 								finally
 								{
@@ -325,7 +325,7 @@ namespace Mammoth.Extensions.DependencyInjection
 								"KeyedImplementationType is null.");
 						}
 
-						return ServiceCollectionExtensions.CreateKeyedInstance(sp,
+						return ConstructorActivator.CreateKeyed(sp,
 							original.KeyedImplementationType, key);
 					},
 					ServiceLifetime.Transient);

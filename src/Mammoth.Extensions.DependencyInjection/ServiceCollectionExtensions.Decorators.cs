@@ -28,11 +28,29 @@ public static partial class ServiceCollectionExtensions
     {
         var original = services.LastOrDefault(d => d.ServiceType == typeof(TService))
             ?? throw new InvalidOperationException($"Service type {typeof(TService).Name} not registered.");
-        var identity = new object();
-        var slotType = typeof(DecorationSlot<TService>);
+        var resolveInner = RegisterInnerLayer<TService>(services, original);
+        object CreateDecorator(IServiceProvider provider, object? requestedKey)
+        {
+            var inner = resolveInner(provider, requestedKey);
+            return original.IsKeyedService ? ConstructorActivator.CreateKeyed(provider, typeof(TDecorator), requestedKey, inner)
+                : ActivatorUtilities.CreateInstance<TDecorator>(provider, inner);
+        }
+        // Replace in place so IEnumerable<TService> retains registration order.
+        services[services.IndexOf(original)] = original.IsKeyedService
+            ? ServiceDescriptor.DescribeKeyed(typeof(TService), original.ServiceKey,
+                (provider, requestedKey) => CreateDecorator(provider, requestedKey), original.Lifetime)
+            : ServiceDescriptor.Describe(typeof(TService), provider => CreateDecorator(provider, null), original.Lifetime);
+    }
+
+    private static Func<IServiceProvider, object?, object> RegisterInnerLayer<TService>(IServiceCollection services, ServiceDescriptor original)
+        where TService : class
+    {
         var keyed = original.IsKeyedService;
         var instance = keyed ? original.KeyedImplementationInstance : original.ImplementationInstance;
-        if (keyed && instance == null)
+        if (instance != null) return (_, _) => instance;
+        var identity = new object();
+        var slotType = typeof(DecorationSlot<TService>);
+        if (keyed)
         {
             // Give each keyed layer its own service type, so native DI can cache it
             // by the actual requested key without colliding with another layer.
@@ -40,32 +58,23 @@ public static partial class ServiceCollectionExtensions
                 slotType = typeof(DecorationSlot<>).MakeGenericType(slotType);
         }
         var slotKey = keyed ? KeyedService.AnyKey : identity;
-        if (instance == null)
-        {
-            // Factory results are tracked directly by DI, even though the private service type
-            // is only a resolution identity. Resolve by Type to avoid casting to the marker.
-            services.Add(ServiceDescriptor.DescribeKeyed(slotType, slotKey, (provider, requestedKey) =>
-            {
-                if (keyed && original.KeyedImplementationFactory != null)
-                    return original.KeyedImplementationFactory(provider, requestedKey);
-                if (!keyed && original.ImplementationFactory != null)
-                    return original.ImplementationFactory(provider);
-                var implementation = keyed ? original.KeyedImplementationType! : original.ImplementationType!;
-                return keyed ? CreateKeyedInstance(provider, implementation, requestedKey)
-                    : ActivatorUtilities.CreateInstance(provider, implementation);
-            }, original.Lifetime));
-        }
-        object CreateDecorator(IServiceProvider provider, object? requestedKey)
-        {
-            var inner = instance ?? provider.GetRequiredKeyedService(slotType, keyed ? requestedKey : identity);
-            return keyed ? CreateKeyedInstance(provider, typeof(TDecorator), requestedKey, inner)
-                : ActivatorUtilities.CreateInstance<TDecorator>(provider, inner);
-        }
-        // Replace in place so IEnumerable<TService> retains registration order.
-        services[services.IndexOf(original)] = keyed
-            ? ServiceDescriptor.DescribeKeyed(typeof(TService), original.ServiceKey,
-                (provider, requestedKey) => CreateDecorator(provider, requestedKey), original.Lifetime)
-            : ServiceDescriptor.Describe(typeof(TService), provider => CreateDecorator(provider, null), original.Lifetime);
+        // Factory results are tracked directly by DI, even though the private service type
+        // is only a resolution identity. Resolve by Type to avoid casting to the marker.
+        services.Add(ServiceDescriptor.DescribeKeyed(slotType, slotKey,
+            (provider, requestedKey) => CreateRegisteredInstance(provider, original, requestedKey), original.Lifetime));
+        return (provider, requestedKey) => provider.GetRequiredKeyedService(slotType, keyed ? requestedKey : identity);
+    }
+
+    private static object CreateRegisteredInstance(IServiceProvider provider, ServiceDescriptor descriptor, object? requestedKey)
+    {
+        var keyed = descriptor.IsKeyedService;
+        if (keyed && descriptor.KeyedImplementationFactory != null)
+            return descriptor.KeyedImplementationFactory(provider, requestedKey);
+        if (!keyed && descriptor.ImplementationFactory != null)
+            return descriptor.ImplementationFactory(provider);
+        var implementation = keyed ? descriptor.KeyedImplementationType! : descriptor.ImplementationType!;
+        return keyed ? ConstructorActivator.CreateKeyed(provider, implementation, requestedKey)
+            : ActivatorUtilities.CreateInstance(provider, implementation);
     }
 
     internal static bool IsDecorationSlot(Type type) =>

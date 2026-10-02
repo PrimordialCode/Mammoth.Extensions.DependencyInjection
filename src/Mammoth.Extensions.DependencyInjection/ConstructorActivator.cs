@@ -5,18 +5,19 @@ using System.Runtime.ExceptionServices;
 
 namespace Mammoth.Extensions.DependencyInjection;
 
-public static partial class ServiceCollectionExtensions
+internal static class ConstructorActivator
 {
-    internal static object CreateKeyedInstance(IServiceProvider provider, Type target, object? serviceKey, params object[] arguments)
+    internal static object CreateKeyed(IServiceProvider provider, Type target, object? serviceKey, object? inner = null)
     {
         // Keep ActivatorUtilities behavior for constructors without contextual parameters.
         if (!target.GetConstructors().Any(c => c.GetParameters().Any(p =>
             p.IsDefined(typeof(ServiceKeyAttribute), false) ||
             p.GetCustomAttribute<FromKeyedServicesAttribute>()?.LookupMode == ServiceKeyLookupMode.InheritKey)))
-            return ActivatorUtilities.CreateInstance(provider, target, arguments);
+            return inner == null ? ActivatorUtilities.CreateInstance(provider, target)
+                : ActivatorUtilities.CreateInstance(provider, target, inner);
         try
         {
-            return CreateDependsOnInstance(provider, target, [], serviceKey, arguments);
+            return CreateInstance(provider, target, [], serviceKey, inner);
         }
         catch (TargetInvocationException error) when (error.InnerException != null)
         {
@@ -25,7 +26,10 @@ public static partial class ServiceCollectionExtensions
         }
     }
 
-    private static object CreateDependsOnInstance(IServiceProvider provider, Type target, Dependency[] map, object? serviceKey = null, params object[] arguments)
+    internal static object CreateDependsOn(IServiceProvider provider, Type target, Dependency[] map, object? serviceKey = null)
+        => CreateInstance(provider, target, map, serviceKey);
+
+    private static object CreateInstance(IServiceProvider provider, Type target, Dependency[] map, object? serviceKey, object? inner = null)
     {
         if (provider is not IKeyedServiceProvider keyed)
             throw new NotSupportedException($"ServiceProvider must be an {nameof(IKeyedServiceProvider)}");
@@ -39,24 +43,21 @@ public static partial class ServiceCollectionExtensions
             throw new InvalidOperationException($"Multiple preferred constructors on {target}.");
         var candidates = preferred.Length == 1 ? preferred : constructors;
         ConstructorInfo? selected = null;
-        Dictionary<string, object>? selectedArguments = null;
+        int selectedInnerIndex = -1;
         bool ambiguous = false;
         foreach (var candidate in candidates)
         {
             var parameters = candidate.GetParameters();
-            var supplied = new Dictionary<string, object>();
-            foreach (var argument in arguments)
-            {
-                var parameter = parameters.FirstOrDefault(p => !supplied.ContainsKey(p.Name!) &&
-                    !p.IsDefined(typeof(ServiceKeyAttribute), false) && AcceptsValue(p.ParameterType, argument));
-                if (parameter == null) break;
-                supplied.Add(parameter.Name!, argument);
-            }
-            if (supplied.Count != arguments.Length || !parameters.All(p => supplied.ContainsKey(p.Name!) || CanSupply(p))) continue;
+            // Only decorators supply an inner service. ServiceKey belongs to the key context,
+            // even when an object-typed key parameter appears before the inner parameter.
+            var innerIndex = inner == null ? -1 : Array.FindIndex(parameters, p =>
+                !p.IsDefined(typeof(ServiceKeyAttribute), false) && AcceptsValue(p.ParameterType, inner));
+            if (inner != null && innerIndex < 0) continue;
+            if (!parameters.Where((_, index) => index != innerIndex).All(CanSupply)) continue;
             if (selected == null || parameters.Length > selected.GetParameters().Length)
             {
                 selected = candidate;
-                selectedArguments = supplied;
+                selectedInnerIndex = innerIndex;
                 ambiguous = false;
             }
             else if (parameters.Length == selected.GetParameters().Length)
@@ -66,8 +67,8 @@ public static partial class ServiceCollectionExtensions
             throw new InvalidOperationException($"No satisfiable public constructor on {target}.");
         if (ambiguous)
             throw new InvalidOperationException($"Multiple equally long satisfiable constructors on {target}.");
-        return selected.Invoke(selected.GetParameters().Select(p =>
-            selectedArguments!.TryGetValue(p.Name!, out var value) ? value : Resolve(p)).ToArray());
+        return selected.Invoke(selected.GetParameters().Select((parameter, index) =>
+            index == selectedInnerIndex ? inner : Resolve(parameter)).ToArray());
 
         bool CanSupply(ParameterInfo parameter)
         {
