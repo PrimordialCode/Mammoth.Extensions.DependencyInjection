@@ -211,16 +211,20 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 			}
 
 			// Apply InSameNamespaceAs filter if specified
-			if (_inSameNamespaceAsType != null && !string.IsNullOrEmpty(_inSameNamespaceAsType.Namespace))
+			if (_inSameNamespaceAsType != null)
 			{
-				if (_includeSubNamespaces)
+				var targetNamespace = _inSameNamespaceAsType.Namespace;
+				if (_includeSubNamespaces && !string.IsNullOrEmpty(targetNamespace))
 				{
-					filteredTypes = filteredTypes.Where(t => t.Namespace?.StartsWith(_inSameNamespaceAsType.Namespace, StringComparison.InvariantCulture) == true);
+					var childNamespacePrefix = targetNamespace + ".";
+					filteredTypes = filteredTypes.Where(t => t.Namespace == targetNamespace
+						|| t.Namespace?.StartsWith(childNamespacePrefix, StringComparison.Ordinal) == true);
 				}
-				else
+				else if (!_includeSubNamespaces)
 				{
-					filteredTypes = filteredTypes.Where(t => t.Namespace == _inSameNamespaceAsType.Namespace);
+					filteredTypes = filteredTypes.Where(t => t.Namespace == targetNamespace);
 				}
+				// Including children of the global namespace includes every named namespace.
 			}
 
 			// Apply If filter if specified
