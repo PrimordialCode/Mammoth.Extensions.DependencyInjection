@@ -31,12 +31,17 @@
 		/// <summary>
 		/// Specifies that the selected types should be in the same exact namespace as the specified type.
 		/// </summary>
+		/// <remarks>Namespace matching is ordinal and case-sensitive. A global-namespace type selects only global-namespace types.</remarks>
 		IServiceSelector InSameNamespaceAs<T>();
 
 		/// <summary>
 		/// Specifies that the selected types should be in the same namespace as the specified type.
 		/// </summary>
 		/// <param name="includeSubNamespaces">If set to true, will also include types from sub-namespaces.</param>
+		/// <remarks>
+		/// Namespace matching is ordinal and case-sensitive, with a dot separating child namespaces.
+		/// For a global-namespace type, false selects only global-namespace types and true includes all namespaces.
+		/// </remarks>
 		IServiceSelector InSameNamespaceAs<T>(bool includeSubNamespaces);
 	}
 }
