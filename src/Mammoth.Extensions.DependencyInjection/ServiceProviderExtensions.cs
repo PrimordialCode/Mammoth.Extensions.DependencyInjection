@@ -26,6 +26,7 @@ public static partial class ServiceProviderExtensions
 	/// <remarks>
 	/// <para>Closed service keys and keys from its generic definition are merged once per key.
 	/// Each key uses the native container's enumeration and closed-registration precedence.</para>
+	/// <para>The AnyKey sentinel remains wildcard metadata and is not enumerated as a concrete key.</para>
 	/// <para>WARNING: To use these extensions, you need to build the ServiceProvider using <see cref="ServiceProviderFactory"/>.</para>
 	/// </remarks>
 	public static IEnumerable<object?> GetAllServices(this IServiceProvider serviceProvider, Type serviceType)
@@ -39,7 +40,8 @@ public static partial class ServiceProviderExtensions
 		var keys = snapshot?.GetKeys(serviceType) ??
 			(serviceProvider.GetService(typeof(ServiceKeys<>).MakeGenericType(serviceType)) as IEnumerable<object> ?? []);
 		foreach (var serviceKey in keys)
-			serviceList.AddRange(serviceProvider.GetKeyedServices(serviceType, serviceKey));
+			if (!ReferenceEquals(serviceKey, KeyedService.AnyKey))
+				serviceList.AddRange(serviceProvider.GetKeyedServices(serviceType, serviceKey));
 		return serviceList;
 	}
 
@@ -53,6 +55,7 @@ public static partial class ServiceProviderExtensions
 	/// <remarks>
 	/// <para>Closed service keys and keys from its generic definition are merged once per key.
 	/// Each key uses the native container's enumeration and closed-registration precedence.</para>
+	/// <para>The AnyKey sentinel remains wildcard metadata and is not enumerated as a concrete key.</para>
 	/// <para>WARNING: To use these extensions, you need to build the ServiceProvider using <see cref="ServiceProviderFactory"/>.</para>
 	/// </remarks>
 	public static IEnumerable<TServiceType> GetAllServices<TServiceType>(this IServiceProvider serviceProvider)
