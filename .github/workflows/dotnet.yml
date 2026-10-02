@@ -30,7 +30,10 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v5
       with:
-        dotnet-version: 10.0.x
+        dotnet-version: |
+          8.0.x
+          9.0.x
+          10.0.x
     - name: Install GitVersion
       run: dotnet tool restore
     - name: Restore dependencies
@@ -39,8 +42,15 @@ jobs:
       run: dotnet tool run dotnet-gitversion /updateprojectfiles
     - name: Build
       run: dotnet build ./src/Mammoth.Extensions.DependencyInjection.sln --configuration Release --no-restore -p:ContinuousIntegrationBuild=True
-    - name: Test
-      run: dotnet test ./src/Mammoth.Extensions.DependencyInjection.sln --configuration Release --no-build --verbosity normal
+    - name: Test all supported frameworks
+      shell: pwsh
+      run: |
+        $failed = $false
+        foreach ($framework in @("net472", "net8.0", "net9.0", "net10.0")) {
+          dotnet test ./src/Mammoth.Extensions.DependencyInjection.Tests/Mammoth.Extensions.DependencyInjection.Tests.csproj --configuration Release --no-build --framework $framework --verbosity normal --logger "trx;LogFileName=$framework.trx" --results-directory ./TestResults
+          if ($LASTEXITCODE -ne 0) { $failed = $true }
+        }
+        if ($failed) { exit 1 }
     - name: Native DI hot-cache regression
       shell: pwsh
       run: |
