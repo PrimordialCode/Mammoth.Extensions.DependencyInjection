@@ -8,6 +8,7 @@
 
 ### Bug Fixes
 
+- Use value equality for collection key-only registration queries, matching typed helpers for boxed values, equal strings and custom keys [#52](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/52).
 - Preserve ServiceKey injection and inherited/explicit/null dependency lookup through keyed decorators, diagnostics and DependsOn activation, retaining named overrides and disposal ownership [#51](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/51).
 - Preserve actual requested keys and per-key inner lifetime caches through AnyKey decorator layers, retaining container disposal ownership [#50](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/50).
 - Consolidate transient-disposable exception formatting across target frameworks [#24](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/24). Formattable service keys now use invariant culture in the netstandard2.0 library as well as modern targets; preserve message layout, keyed resolution-stack order and factory markers.

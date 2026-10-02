@@ -47,7 +47,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			{
 				throw new ArgumentNullException(nameof(serviceKey));
 			}
-			return services.Any(s => s.IsKeyedService && s.ServiceKey == serviceKey);
+			return services.Any(s => s.IsKeyedService && Equals(s.ServiceKey, serviceKey));
 		}
 
 		/// <summary>
