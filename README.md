@@ -6,19 +6,17 @@
 
 ## Introduction
 
-This package offers extensions for the `Microsoft.Extensions.DependencyInjection` library. Current `develop` / the next release requires `Microsoft.Extensions.DependencyInjection` version `10.0.0` or later. This minimum includes the upstream fix for keyed enumerable and open-generic resolver cache identities ([dotnet/runtime#113343](https://github.com/dotnet/runtime/pull/113343), [issue #46](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/46)).
+This package offers extensions for the `Microsoft.Extensions.DependencyInjection` library. It requires `Microsoft.Extensions.DependencyInjection` version `10.0.0` or later. This minimum includes the upstream fix for keyed enumerable and open-generic resolver cache identities ([dotnet/runtime#113343](https://github.com/dotnet/runtime/pull/113343), [issue #46](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/46)).
 
 ## Installation
 
-This README describes **current `develop` / the next release**. As checked on October 1, 2026, the latest GitHub release and listed stable NuGet package is **0.7.1**. The disposal, constructor-selection, snapshot, generic-query and DI-cache fixes below are in `develop` and [the vNext changelog](Changelog.md); installing 0.7.1 does not include them. Select a released version containing these changes when it becomes available, or use a local build of `develop` for evaluation.
+Install the package from NuGet:
 
 ```bash
-dotnet add package Mammoth.Extensions.DependencyInjection --version 0.7.1
+dotnet add package Mammoth.Extensions.DependencyInjection
 ```
 
-That command installs the existing release, **not** the unreleased behavior documented here. Check your resolved version in `obj/project.assets.json` and its release notes before relying on the new guarantees.
-
-The next release requires **Microsoft.Extensions.DependencyInjection >=10.0.0** and **Microsoft.Bcl.AsyncInterfaces >=10.0.0**. Consumers pinning DI 8/9 must update their package references; do not suppress a NuGet downgrade conflict. DI 10 contains the [upstream cache identity fix](https://github.com/dotnet/runtime/pull/113343): DI 9.0.0 and 9.0.20 can corrupt reused keyed/unkeyed enumerable accessors after background compilation. Fresh-provider tests cannot establish safety. See the [native reproduction](repro/Issue46.NativeEnumeration/README.md).
+The library requires **Microsoft.Extensions.DependencyInjection >=10.0.0** and **Microsoft.Bcl.AsyncInterfaces >=10.0.0**. Consumers pinning DI 8/9 must update their package references; do not suppress a NuGet downgrade conflict. DI 10 contains the [upstream cache identity fix](https://github.com/dotnet/runtime/pull/113343): DI 9.0.0 and 9.0.20 can corrupt reused keyed/unkeyed enumerable accessors after background compilation. Fresh-provider tests cannot establish safety. See the [native reproduction](repro/Issue46.NativeEnumeration/README.md).
 
 | Library compile target | Verified test/consumer runtime |
 | --- | --- |
@@ -253,7 +251,7 @@ new HostBuilder().UseServiceProviderFactory(new ServiceProviderFactory(
   }));
 ```
 
-Diagnostic messages format service keys that implement `IFormattable` with invariant culture on every library target. This changes culture-sensitive key text in the next release of the `netstandard2.0` library (for example, a decimal key prints `1234.5` even under `fr-FR`). Keys that supply only their own `ToString()` retain that method's formatting. Exception type, message layout, factory markers and resolution-stack order remain unchanged.
+Diagnostic messages format service keys that implement `IFormattable` with invariant culture on every library target. For example, a decimal key prints `1234.5` even under `fr-FR`, including when using the `netstandard2.0` library. Keys that supply only their own `ToString()` retain that method's formatting.
 
 WARNING: Use this only in debug/development because it relies on reflection and can affect performance.
 Instead of re-implementing a new ServiceProvider from scratch, this approach modifies each ServiceDescriptor to track resolution context and throw exceptions if required.
