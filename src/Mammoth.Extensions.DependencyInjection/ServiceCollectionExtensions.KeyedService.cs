@@ -562,9 +562,9 @@ namespace Mammoth.Extensions.DependencyInjection
 		}
 
         internal static Func<IServiceProvider, TTarget> DependsOnResolutionFunc<TTarget>(Dependency[] dependsOn, Type target) where TTarget : class
-            => provider => (TTarget)CreateDependsOnInstance(provider, target, dependsOn);
+            => provider => (TTarget)ConstructorActivator.CreateDependsOn(provider, target, dependsOn);
 
         internal static Func<IServiceProvider, object?, TTarget> KeyedDependsOnResolutionFunc<TTarget>(Dependency[] dependsOn, Type target) where TTarget : class
-            => (provider, key) => (TTarget)CreateDependsOnInstance(provider, target, dependsOn, key);
+            => (provider, key) => (TTarget)ConstructorActivator.CreateDependsOn(provider, target, dependsOn, key);
     }
 }
