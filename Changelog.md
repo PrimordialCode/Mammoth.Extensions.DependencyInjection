@@ -8,6 +8,7 @@
 
 ### Bug Fixes
 
+- Exclude the AnyKey sentinel from GetAllServices per-key enumeration, avoiding duplicate concrete results and transient activations while preserving wildcard metadata, fallback resolution and registration multiplicity [#54](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/54).
 - Respect namespace boundaries and exact global-namespace selection in AssemblyInspector; explicitly include all namespaces when children of the global namespace are requested [#53](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/53).
 - Use value equality for collection key-only registration queries, matching typed helpers for boxed values, equal strings and custom keys [#52](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/52).
 - Preserve ServiceKey injection and inherited/explicit/null dependency lookup through keyed decorators, diagnostics and DependsOn activation, retaining named overrides and disposal ownership [#51](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/51).
