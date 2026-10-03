@@ -6,7 +6,6 @@ namespace Mammoth.Extensions.DependencyInjection;
 internal sealed class ServiceProviderRegistrationSnapshot
 {
     private readonly HashSet<Type> _types = [];
-    private readonly HashSet<Type> _unkeyedTypes = [];
     private readonly HashSet<object> _keys = [];
     private readonly Dictionary<Type, IReadOnlyCollection<object>> _keysByType = [];
     private readonly ServiceLifetimes _lifetimes = new();
@@ -21,8 +20,6 @@ internal sealed class ServiceProviderRegistrationSnapshot
         foreach (var descriptor in descriptors)
         {
             _lifetimes.Add(descriptor.ServiceType, descriptor.Lifetime, descriptor.ServiceKey);
-            if (!descriptor.IsKeyedService && _types.Contains(descriptor.ServiceType))
-                _unkeyedTypes.Add(descriptor.ServiceType);
         }
         foreach (var entry in keysByType)
             _keysByType.Add(entry.Key, Array.AsReadOnly(entry.Value.ToArray()));
@@ -30,8 +27,6 @@ internal sealed class ServiceProviderRegistrationSnapshot
 
     internal bool ContainsType(Type type) => _types.Contains(type) ||
         (type.IsConstructedGenericType && _types.Contains(type.GetGenericTypeDefinition()));
-    internal bool HasUnkeyed(Type type) => _unkeyedTypes.Contains(type) ||
-        (type.IsConstructedGenericType && _unkeyedTypes.Contains(type.GetGenericTypeDefinition()));
     internal bool ContainsKey(object key) => _keys.Contains(key);
     internal ServiceLifetime? GetLifetime(Type type, object? key = null) => _lifetimes.GetLifetime(type, key);
     internal IEnumerable<object> GetKeys(Type type)

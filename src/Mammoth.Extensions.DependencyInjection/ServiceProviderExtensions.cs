@@ -26,6 +26,7 @@ public static partial class ServiceProviderExtensions
 	/// <remarks>
 	/// <para>Closed service keys and keys from its generic definition are merged once per key.
 	/// Each key uses the native container's enumeration and closed-registration precedence.</para>
+	/// <para>Unkeyed results use native IEnumerable resolution, including explicit enumerable registrations.</para>
 	/// <para>The AnyKey sentinel remains wildcard metadata and is not enumerated as a concrete key.</para>
 	/// <para>WARNING: To use these extensions, you need to build the ServiceProvider using <see cref="ServiceProviderFactory"/>.</para>
 	/// </remarks>
@@ -33,7 +34,7 @@ public static partial class ServiceProviderExtensions
 	{
 		var snapshot = serviceProvider.GetService<ServiceProviderRegistrationSnapshot>();
 		var serviceList = new List<object?>();
-		if (snapshot == null || snapshot.HasUnkeyed(serviceType))
+		if (snapshot == null || !ServiceCollectionExtensions.IsDecorationSlot(serviceType))
 			serviceList.AddRange(serviceProvider.GetServices(serviceType));
 		// Factory providers use authoritative metadata. Preserve the legacy behavior for
 		// providers without the factory, including explicitly supplied key metadata.
@@ -55,6 +56,7 @@ public static partial class ServiceProviderExtensions
 	/// <remarks>
 	/// <para>Closed service keys and keys from its generic definition are merged once per key.
 	/// Each key uses the native container's enumeration and closed-registration precedence.</para>
+	/// <para>Unkeyed results use native IEnumerable resolution, including explicit enumerable registrations.</para>
 	/// <para>The AnyKey sentinel remains wildcard metadata and is not enumerated as a concrete key.</para>
 	/// <para>WARNING: To use these extensions, you need to build the ServiceProvider using <see cref="ServiceProviderFactory"/>.</para>
 	/// </remarks>
