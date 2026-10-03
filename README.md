@@ -253,6 +253,8 @@ new HostBuilder().UseServiceProviderFactory(new ServiceProviderFactory(
 
 Diagnostic messages format service keys that implement `IFormattable` with invariant culture on every library target. For example, a decimal key prints `1234.5` even under `fr-FR`, including when using the `netstandard2.0` library. Keys that supply only their own `ToString()` retain that method's formatting.
 
+Rejected transient factory results remain owned by the root provider until it is disposed. Results already captured by that root are not captured again. Dispose the provider even after a diagnostic failure; use `DisposeAsync` for async-only resources.
+
 WARNING: Use this only in debug/development because it relies on reflection and can affect performance.
 Instead of re-implementing a new ServiceProvider from scratch, this approach modifies each ServiceDescriptor to track resolution context and throw exceptions if required.
 
