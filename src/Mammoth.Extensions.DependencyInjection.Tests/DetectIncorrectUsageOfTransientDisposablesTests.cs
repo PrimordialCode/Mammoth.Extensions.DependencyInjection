@@ -743,11 +743,11 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		}
 
 		[TestMethod]
-		public void Resolve_KeyedTransientAsyncDisposable_using_factory_InRootScope_WithValidation_Throws()
+		public async Task Resolve_KeyedTransientAsyncDisposable_using_factory_InRootScope_WithValidation_Throws()
 		{
 			var serviceCollection = new ServiceCollection();
 			serviceCollection.AddKeyedTransient<TransientAsyncDisposable>("key", (sp, key) => new TransientAsyncDisposable());
-			using var spProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection,
+			await using var spProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection,
 				new ExtendedServiceProviderOptions
 				{
 					DetectIncorrectUsageOfTransientDisposables = true,

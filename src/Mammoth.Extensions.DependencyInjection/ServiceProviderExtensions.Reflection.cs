@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Runtime.ExceptionServices;
 
 namespace Mammoth.Extensions.DependencyInjection
 {
@@ -8,6 +9,49 @@ namespace Mammoth.Extensions.DependencyInjection
 	/// </summary>
 	public static partial class ServiceProviderExtensions
 	{
+		// Diagnostic factory rejection happens before native DI can capture the result.
+		// Use the native scope's ownership and disposal behavior, including async-only results.
+		internal static void CaptureRejectedFactoryResult(this IServiceProvider serviceProvider, object result)
+		{
+			var scope = GetServiceProviderEngineScope(serviceProvider);
+			var scopeType = scope.GetType();
+			const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
+			var sync = scopeType.GetProperty("Sync", flags)?.GetValue(scope)
+				?? throw new InvalidOperationException("Internal implementation of ServiceProvider changed: cannot access Sync property.");
+			var disposed = scopeType.GetProperty("Disposed", flags)
+				?? throw new InvalidOperationException("Internal implementation of ServiceProvider changed: cannot access Disposed property.");
+			var capture = scopeType.GetMethod("CaptureDisposable", flags)
+				?? throw new InvalidOperationException("Internal implementation of ServiceProvider changed: cannot access CaptureDisposable method.");
+
+			void Capture()
+			{
+				try
+				{
+					capture.Invoke(scope, new[] { result });
+				}
+				catch (TargetInvocationException exception) when (exception.InnerException != null)
+				{
+					ExceptionDispatchInfo.Capture(exception.InnerException).Throw();
+				}
+			}
+
+			// Synchronize the identity check and capture with native scope capture/disposal.
+			// A factory can return a dependency DI already owns, or repeat a rejected result.
+			lock (sync)
+			{
+				if (scope.GetDisposables().Any(owned => ReferenceEquals(owned, result)))
+					return;
+				if (disposed.GetValue(scope) is false)
+				{
+					Capture();
+					return;
+				}
+			}
+			// If disposal raced activation, native CaptureDisposable cleans up and throws.
+			// It can run customer disposal code, so invoke it outside the scope lock.
+			Capture();
+		}
+
 		/// <summary>
 		/// Retrieves the service provider from a given instance, potentially accessing a private 'Root' property.
 		/// This is a very fragile way to obtain internal service provider implementation detail for testing purposes.
