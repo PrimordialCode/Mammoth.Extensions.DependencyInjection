@@ -237,6 +237,7 @@ namespace Mammoth.Extensions.DependencyInjection
 						&& (originalResult is IDisposable || originalResult is IAsyncDisposable)
 						&& !IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
 					{
+						sp.CaptureRejectedFactoryResult(originalResult);
 						ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, originalResult.GetType(), isFactory: true);
 					}
 
@@ -266,6 +267,7 @@ namespace Mammoth.Extensions.DependencyInjection
 						&& (originalResult is IDisposable || originalResult is IAsyncDisposable)
 						&& !IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
 					{
+						sp.CaptureRejectedFactoryResult(originalResult);
 						ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, originalResult.GetType(), isFactory: true);
 					}
 
