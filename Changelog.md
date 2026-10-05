@@ -8,6 +8,8 @@
 
 ### Bug Fixes
 
+- Update the private SourceLink build dependency to 10.0.111, resolving patched Microsoft.Build.Tasks.Git for CVE-2026-62900; fail CI restore on vulnerable direct or transitive packages [#65](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/65).
+
 - Preserve native ValidateOnBuild graph validation when transient-disposable diagnostics are enabled, without activating user services during validation [#59](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/59).
 
 - Isolate transient-disposable diagnostic resolution frames across execution-context branches, preserving inherited ancestry and nested exception cleanup [#58](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/58).

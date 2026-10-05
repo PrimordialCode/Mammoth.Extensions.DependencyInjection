@@ -34,7 +34,8 @@ jobs:
     - name: Install GitVersion
       run: dotnet tool restore
     - name: Restore dependencies
-      run: dotnet restore ./src/Mammoth.Extensions.DependencyInjection.sln
+      # Audit transitive build dependencies too, and reject vulnerable package regressions.
+      run: dotnet restore ./src/Mammoth.Extensions.DependencyInjection.sln -p:NuGetAudit=true -p:NuGetAuditMode=all -p:NuGetAuditLevel=low "-warnaserror:NU1900,NU1901,NU1902,NU1903,NU1904,NU1905"
     - name: Determine version
       run: dotnet tool run dotnet-gitversion /updateprojectfiles
     - name: Build
