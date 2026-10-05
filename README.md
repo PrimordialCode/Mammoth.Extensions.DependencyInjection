@@ -250,6 +250,20 @@ new HostBuilder().UseServiceProviderFactory(new ServiceProviderFactory(new Exten
 var serviceProvider = ServiceProviderFactory.CreateServiceProvider(serviceCollection, new ExtendedServiceProviderOptions());
 ```
 
+Each build enriches a private copy of the collection. Building repeatedly leaves the caller's descriptors unchanged, and each provider keeps its own registration snapshot. Later registration changes apply only to providers built afterward. Normal DI ownership still applies: caller-supplied singleton instances are shared, and the caller owns their disposal.
+
+```csharp
+var services = new ServiceCollection();
+services.AddSingleton<ITestService, TestService>();
+using var first = ServiceProviderFactory.CreateServiceProvider(services);
+// services.Count is still 1; no internal support registrations were appended.
+
+services.AddKeyedSingleton<ITestService, TestService>("later");
+using var second = ServiceProviderFactory.CreateServiceProvider(services);
+bool firstHasLater = first.IsKeyedServiceRegistered("later");   // false
+bool secondHasLater = second.IsKeyedServiceRegistered("later"); // true
+```
+
 ##### Detect Incorrect Usage of Transient Disposables
 
 Enable detection of transient disposable services resolved by the root scope:

@@ -8,6 +8,8 @@
 
 ### Bug Fixes
 
+- Build provider metadata on a private collection copy so repeated or failed builds leave caller registrations unchanged, avoid accumulating support services, and keep each provider's discovery and compatibility metadata independent [#64](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/64).
+
 - Decorate the last registration occurrence when the same ServiceDescriptor instance is added more than once, preserving keyed and unkeyed registration order, repeated decorator layers, lifetimes and disposal ownership [#63](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/63).
 
 - Preserve implementation-specific rejection messages for unkeyed open-generic transient disposable registrations, including IDisposable and IAsyncDisposable implementations [#62](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/62).
