@@ -8,6 +8,8 @@
 
 ### Bug Fixes
 
+- Use the active descriptor lifetime for diagnostic singleton exemptions when duplicate registrations have different lifetimes, preserving last-registration-wins metadata queries [#57](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/57).
+
 - Retain root disposal ownership of rejected transient factory results in diagnostic mode, including async-only disposables, without recapturing results already owned by the root [#56](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/56).
 - Preserve native explicit IEnumerable registrations in GetAllServices, including instance/factory precedence and keyed mixtures, while retaining private decorator filtering and AnyKey exclusion [#55](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/55).
 - Exclude the AnyKey sentinel from GetAllServices per-key enumeration, avoiding duplicate concrete results and transient activations while preserving wildcard metadata, fallback resolution and registration multiplicity [#54](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/54).
