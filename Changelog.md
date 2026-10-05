@@ -8,6 +8,8 @@
 
 ### Bug Fixes
 
+- Preserve implementation-specific rejection messages for unkeyed open-generic transient disposable registrations, including IDisposable and IAsyncDisposable implementations [#62](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/62).
+
 - Stop local package builds immediately after a failed native command and preserve its exit code, preventing stale-output packaging after failed validation [#61](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/61).
 
 - Apply precise System namespace boundaries and the exact mscorlib assembly name when selecting framework interfaces, preserving application contracts from Systematic assemblies and excluding IAsyncDisposable consistently across runtimes [#60](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/60).
