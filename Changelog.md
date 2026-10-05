@@ -8,6 +8,8 @@
 
 ### Bug Fixes
 
+- Preserve native ValidateOnBuild graph validation when transient-disposable diagnostics are enabled, without activating user services during validation [#59](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/59).
+
 - Isolate transient-disposable diagnostic resolution frames across execution-context branches, preserving inherited ancestry and nested exception cleanup [#58](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/58).
 
 - Use the active descriptor lifetime for diagnostic singleton exemptions when duplicate registrations have different lifetimes, preserving last-registration-wins metadata queries [#57](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/57).
