@@ -19,8 +19,8 @@
 		/// </summary>
 		/// <returns>The lifestyle selector.</returns>
 		/// <remarks>
-		/// Some interfaces will be excluded:
-		/// - all those from the System namespace.
+		/// Interfaces in System or its child namespaces, and interfaces from the assembly named exactly mscorlib,
+		/// are excluded. Comparisons are ordinal and case-sensitive; application assembly name prefixes do not affect selection.
 		/// </remarks>
 		ILifestyleSelector WithServiceAllInterfaces();
 
