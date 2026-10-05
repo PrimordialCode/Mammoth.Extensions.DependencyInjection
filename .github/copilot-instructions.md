@@ -40,7 +40,7 @@ dotnet pack ./src/Mammoth.Extensions.DependencyInjection.sln --configuration Rel
 
 ### Build Script
 
-Use `build.ps1` for local packaging (restore tools, versioning, build, pack). Testing is separate; run the full test suite on Windows before distributing packages. CI runs tests before its independently gated pack/publish stages. See `CONTRIBUTING.md` for script regression commands.
+Use `build.ps1` for local packaging (restore tools, versioning, build, pack). Testing is separate; run the full test suite on Windows before distributing packages. CI runs tests before its independently gated pack/publish stages. See `CONTRIBUTING.md` for local packaging and test commands.
 
 ### Development Workflow
 
