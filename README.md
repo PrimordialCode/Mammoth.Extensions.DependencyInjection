@@ -265,7 +265,7 @@ Instead of re-implementing a new ServiceProvider from scratch, this approach mod
 
 Options:
 
-- AllowSingletonToResolveTransientDisposables: Defaults to false. If true, permits the transient when the tracked ancestor chain contains a singleton.
+- AllowSingletonToResolveTransientDisposables: Defaults to false. If true, permits the transient when the tracked ancestor chain contains a singleton. Resolution frames are isolated between execution-context branches. A task inherits the ancestry captured when it is scheduled, even if it outlives the originating factory; that inherited singleton ancestor still grants this exemption.
 - ThrowOnOpenGenericTransientDisposable: Rejects recognized disposable open-generic type registrations at build time; otherwise warns when a logger is available.
 - DetectIncorrectUsageOfTransientDisposablesExclusionPatterns: list of Regex patterns to exclude services from detection, matching registrations bypass the diagnostic check. All diagnostic flags default to false. Factory-created disposable objects can exist before a diagnostic throws; normal scope disposal remains necessary.
 
