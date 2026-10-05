@@ -43,18 +43,23 @@ namespace Mammoth.Extensions.DependencyInjection
 		}
 
 		/// <summary>
-		/// Enrich the <paramref name="containerBuilder"/> with the necessary services to be able to resolve the keys
-		/// and other useful services; then build the <see cref="IServiceProvider"/>.
+		/// Build a <see cref="IServiceProvider"/> from a private copy of <paramref name="containerBuilder"/>,
+		/// enriched with registration metadata and support services. The caller's collection is not modified;
+		/// each build captures its current registrations independently.
 		/// </summary>
 		public static ServiceProvider CreateServiceProvider(IServiceCollection containerBuilder, ExtendedServiceProviderOptions? options = null)
 		{
-			AddIsRegisteredSupportServices(containerBuilder);
+			// Preserve every caller registration and its order without retaining support
+			// descriptors from earlier builds in the caller's collection.
+			IServiceCollection sc = new ServiceCollection();
+			foreach (var descriptor in containerBuilder)
+				sc.Add(descriptor);
+			AddIsRegisteredSupportServices(sc);
 
 			if (options == null)
 			{
-				return containerBuilder.BuildServiceProvider();
+				return sc.BuildServiceProvider();
 			}
-			var sc = containerBuilder;
 			if (options.DetectIncorrectUsageOfTransientDisposables)
 			{
 				if (options.ValidateOnBuild)
@@ -62,11 +67,11 @@ namespace Mammoth.Extensions.DependencyInjection
 					// Instrumentation turns implementation types into opaque factories. Validate
 					// the original enriched graph first, while native DI can still see its edges.
 					// Building alone does not activate services or capture caller-owned instances.
-					using var validationProvider = containerBuilder.BuildServiceProvider(options);
+					using var validationProvider = sc.BuildServiceProvider(options);
 				}
 
 				var (patchedSc, openGenerics) = DetectIncorrectUsageOfTransientDisposables.PatchForDetectIncorrectUsageOfTransientDisposables(
-					containerBuilder,
+					sc,
 					options.AllowSingletonToResolveTransientDisposables,
 					options.ThrowOnOpenGenericTransientDisposable,
 					options.DetectIncorrectUsageOfTransientDisposablesExclusionPatterns
