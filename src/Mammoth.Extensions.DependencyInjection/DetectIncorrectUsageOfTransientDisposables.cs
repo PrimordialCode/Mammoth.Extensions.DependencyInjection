@@ -43,7 +43,7 @@ namespace Mammoth.Extensions.DependencyInjection
 							sp =>
 							{
 								// track the object we are about to resolve
-								ResolutionContext.CurrentStack.Push(new ServiceIdentifier(descriptor.ServiceKey, descriptor.ServiceType));
+								ResolutionContext.CurrentStack.Push(descriptor);
 								try
 								{
 									return originalFactory(sp);
@@ -65,7 +65,7 @@ namespace Mammoth.Extensions.DependencyInjection
 							descriptor.ServiceType,
 							sp =>
 							{
-								ResolutionContext.CurrentStack.Push(new ServiceIdentifier(descriptor.ServiceKey, descriptor.ServiceType));
+								ResolutionContext.CurrentStack.Push(descriptor);
 								try
 								{
 									return ActivatorUtilities.CreateInstance(sp, implementationType);
@@ -100,7 +100,7 @@ namespace Mammoth.Extensions.DependencyInjection
 							(sp, key) =>
 							{
 								// track the object we are about to resolve
-								ResolutionContext.CurrentStack.Push(new ServiceIdentifier(descriptor.ServiceKey, descriptor.ServiceType));
+								ResolutionContext.CurrentStack.Push(descriptor);
 								try
 								{
 									return originalFactory(sp, key);
@@ -123,7 +123,7 @@ namespace Mammoth.Extensions.DependencyInjection
 							descriptor.ServiceKey,
 							(sp, key) =>
 							{
-								ResolutionContext.CurrentStack.Push(new ServiceIdentifier(descriptor.ServiceKey, descriptor.ServiceType));
+								ResolutionContext.CurrentStack.Push(descriptor);
 								try
 								{
 									return ConstructorActivator.CreateKeyed(sp, implementationType, key);
@@ -235,7 +235,7 @@ namespace Mammoth.Extensions.DependencyInjection
 					//if it is, then it's safe to resolve the transient disposable service
 					if (sp.GetIsRootScope()
 						&& (originalResult is IDisposable || originalResult is IAsyncDisposable)
-						&& !IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
+						&& !IsResolvedBySingleton(allowSingletonToResolveTransientDisposables))
 					{
 						sp.CaptureRejectedFactoryResult(originalResult);
 						ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, originalResult.GetType(), isFactory: true);
@@ -265,7 +265,7 @@ namespace Mammoth.Extensions.DependencyInjection
 					//if it is, then it's safe to resolve the transient disposable service
 					if (sp.GetIsRootScope()
 						&& (originalResult is IDisposable || originalResult is IAsyncDisposable)
-						&& !IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
+						&& !IsResolvedBySingleton(allowSingletonToResolveTransientDisposables))
 					{
 						sp.CaptureRejectedFactoryResult(originalResult);
 						ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, originalResult.GetType(), isFactory: true);
@@ -290,7 +290,7 @@ namespace Mammoth.Extensions.DependencyInjection
 						//check the ResolutionContext to see if the service is being resolved by a singleton
 						//if it is, then it's safe to resolve the transient disposable service
 						if (sp.GetIsRootScope()
-							&& !IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
+							&& !IsResolvedBySingleton(allowSingletonToResolveTransientDisposables))
 						{
 							ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, original.ImplementationType, isFactory: false);
 						}
@@ -316,7 +316,7 @@ namespace Mammoth.Extensions.DependencyInjection
 						//check the ResolutionContext to see if the service is being resolved by a singleton
 						//if it is, then it's safe to resolve the transient disposable service
 						if (sp.GetIsRootScope()
-							&& !IsResolvedBySingleton(sp, allowSingletonToResolveTransientDisposables))
+							&& !IsResolvedBySingleton(allowSingletonToResolveTransientDisposables))
 						{
 							ThrowTransientDisposableException(original.ServiceKey, original.ServiceType, original.KeyedImplementationType, isFactory: false);
 						}
@@ -376,7 +376,6 @@ namespace Mammoth.Extensions.DependencyInjection
 			type != null && (typeof(IDisposable).IsAssignableFrom(type) || typeof(IAsyncDisposable).IsAssignableFrom(type));
 
 		private static bool IsResolvedBySingleton(
-			IServiceProvider sp,
 			bool allowSingletonToResolveTransientDisposables
 			)
 		{
@@ -385,17 +384,9 @@ namespace Mammoth.Extensions.DependencyInjection
 				var stack = ResolutionContext.CurrentStack;
 				foreach (var entry in stack)
 				{
-					// If we used our tracking, each entry is either a Type or a KeyedResolution.
-					bool isSingleton;
-					if (entry.ServiceKey == null)
-					{
-						isSingleton = sp.IsSingletonServiceRegistered(entry.ServiceType);
-					}
-					else
-					{
-						isSingleton = sp.IsKeyedSingletonServiceRegistered(entry.ServiceType, entry.ServiceKey);
-					}
-					if (isSingleton)
+					// Enumeration can activate an earlier registration with a different lifetime.
+					// Use the active descriptor, not last-registration-wins public metadata.
+					if (entry.Lifetime == ServiceLifetime.Singleton)
 					{
 						return true;
 					}
