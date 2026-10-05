@@ -311,6 +311,8 @@ It is once again inspired by the syntax used in [Castle.Windsor](https://github.
 It looks for classes and offers a series of methods that are pretty self explanatory to output one or more `ServiceDescriptor` that
 will be registered in the ServiceCollection.
 
+`WithServiceAllInterfaces()` excludes interfaces in `System` and its child namespaces (such as `System.Collections.Generic`), plus interfaces from the assembly named exactly `mscorlib`. Comparisons are ordinal and case-sensitive. `IDisposable` and `IAsyncDisposable` are excluded on every supported runtime, regardless of their defining assembly. Application assembly names such as `Systematic.Contracts` do not affect selection; namespaces such as `Systematic` and `Systems` are not children of `System`. Use `BasedOn<T>().WithServiceBase()` to explicitly register a framework interface.
+
 It supports `DependsOn` for keyed services:
 
 ```csharp

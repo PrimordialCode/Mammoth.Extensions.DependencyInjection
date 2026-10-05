@@ -8,6 +8,8 @@
 
 ### Bug Fixes
 
+- Apply precise System namespace boundaries and the exact mscorlib assembly name when selecting framework interfaces, preserving application contracts from Systematic assemblies and excluding IAsyncDisposable consistently across runtimes [#60](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/60).
+
 - Update the private SourceLink build dependency to 10.0.401, resolving patched Microsoft.Build.Tasks.Git for CVE-2026-62900 [#65](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/65).
 
 - Preserve native ValidateOnBuild graph validation when transient-disposable diagnostics are enabled, without activating user services during validation [#59](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/59).
