@@ -183,8 +183,11 @@ namespace Mammoth.Extensions.DependencyInjection
 						{
 							if (throwOnOpenGenericTransientDisposable)
 							{
+								var implementationType = descriptor.IsKeyedService
+									? descriptor.KeyedImplementationType
+									: descriptor.ImplementationType;
 								throw new InvalidOperationException(
-									$"Trying to register an open generic transient disposable service {descriptor.KeyedImplementationType?.Name}.");
+									$"Trying to register an open generic transient disposable service {implementationType?.Name}.");
 							}
 							else
 							{
