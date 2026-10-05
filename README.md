@@ -99,6 +99,20 @@ services.Decorate<ConcreteService, ConcreteServiceDecorator>();
 
 Decorators preserve Singleton, Scoped and Transient lifetimes and native keys for type, instance and factory registrations. `Decorate<TService, TDecorator>()` wraps only the **last exact service-type registration**, retaining its position. Repeated calls add outer layers; this API does not register open-generic decorators.
 
+Each occurrence in the collection is a separate registration, even when the same `ServiceDescriptor` instance is added more than once. Only the last occurrence is decorated:
+
+```csharp
+IServiceCollection services = new ServiceCollection();
+var descriptor = ServiceDescriptor.Transient<ITestService, TestService>();
+services.Add(descriptor);
+services.Add(descriptor);
+services.Decorate<ITestService, DecoratorService1>();
+
+using var provider = services.BuildServiceProvider();
+var all = provider.GetServices<ITestService>().ToArray(); // TestService, DecoratorService1
+var last = provider.GetRequiredService<ITestService>(); // DecoratorService1
+```
+
 The same interface example can decorate a keyed registration:
 
 ```csharp
