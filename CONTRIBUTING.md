@@ -64,6 +64,20 @@ Thank you for your interest in contributing! This guide provides a quick overvie
 - **With coverage**: `dotnet test --collect:"XPlat Code Coverage"`
 - **Test files follow naming**: `ServiceCollectionExtensions.Decorators.Tests.cs` matches `ServiceCollectionExtensions.Decorators.cs`
 
+### Local packaging script
+
+Run `./build.ps1` from the repository root using Windows PowerShell 5.1 or PowerShell 7. It restores tools/dependencies, versions, builds and packs; it stops at the first failed native command and returns that command's exit code. It does not publish packages.
+
+Testing is intentionally separate: run `dotnet test ./src/Mammoth.Extensions.DependencyInjection.sln --configuration Release --no-build` after the Release build and before distributing local packages. The full test suite includes `net472`, requiring Windows. CI already runs the tests before its separately gated packaging/publishing stages.
+
+The script-control-flow regression uses Python 3 (standard library only) and a native `dotnet` stub. It runs the real script without restoring tools, modifying versions or producing packages:
+
+```powershell
+python test-support/test_build_script.py --powershell pwsh
+# On Windows, also verify Windows PowerShell 5.1:
+python test-support/test_build_script.py --powershell powershell
+```
+
 ## Documentation & Changelog
 
 Every feature or fix should update **`Changelog.md`**:

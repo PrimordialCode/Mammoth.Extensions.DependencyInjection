@@ -8,6 +8,8 @@
 
 ### Bug Fixes
 
+- Stop local package builds immediately after a failed native command and preserve its exit code, preventing stale-output packaging after failed validation [#61](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/61).
+
 - Apply precise System namespace boundaries and the exact mscorlib assembly name when selecting framework interfaces, preserving application contracts from Systematic assemblies and excluding IAsyncDisposable consistently across runtimes [#60](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/60).
 
 - Update the private SourceLink build dependency to 10.0.401, resolving patched Microsoft.Build.Tasks.Git for CVE-2026-62900 [#65](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/65).
