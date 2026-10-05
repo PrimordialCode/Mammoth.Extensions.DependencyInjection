@@ -43,14 +43,14 @@ namespace Mammoth.Extensions.DependencyInjection
 							sp =>
 							{
 								// track the object we are about to resolve
-								ResolutionContext.CurrentStack.Push(descriptor);
+								var previous = ResolutionContext.Push(descriptor);
 								try
 								{
 									return originalFactory(sp);
 								}
 								finally
 								{
-									ResolutionContext.CurrentStack.Pop();
+									ResolutionContext.Restore(previous);
 								}
 							},
 							descriptor.Lifetime);
@@ -65,14 +65,14 @@ namespace Mammoth.Extensions.DependencyInjection
 							descriptor.ServiceType,
 							sp =>
 							{
-								ResolutionContext.CurrentStack.Push(descriptor);
+								var previous = ResolutionContext.Push(descriptor);
 								try
 								{
 									return ActivatorUtilities.CreateInstance(sp, implementationType);
 								}
 								finally
 								{
-									ResolutionContext.CurrentStack.Pop();
+									ResolutionContext.Restore(previous);
 								}
 							},
 							descriptor.Lifetime);
@@ -100,14 +100,14 @@ namespace Mammoth.Extensions.DependencyInjection
 							(sp, key) =>
 							{
 								// track the object we are about to resolve
-								ResolutionContext.CurrentStack.Push(descriptor);
+								var previous = ResolutionContext.Push(descriptor);
 								try
 								{
 									return originalFactory(sp, key);
 								}
 								finally
 								{
-									ResolutionContext.CurrentStack.Pop();
+									ResolutionContext.Restore(previous);
 								}
 							},
 							descriptor.Lifetime);
@@ -123,14 +123,14 @@ namespace Mammoth.Extensions.DependencyInjection
 							descriptor.ServiceKey,
 							(sp, key) =>
 							{
-								ResolutionContext.CurrentStack.Push(descriptor);
+								var previous = ResolutionContext.Push(descriptor);
 								try
 								{
 									return ConstructorActivator.CreateKeyed(sp, implementationType, key);
 								}
 								finally
 								{
-									ResolutionContext.CurrentStack.Pop();
+									ResolutionContext.Restore(previous);
 								}
 							},
 							descriptor.Lifetime);
@@ -354,7 +354,7 @@ namespace Mammoth.Extensions.DependencyInjection
 				}
 				sb.Append("ImplementationType: ").Append(implementationType.FullName).Append('.');
 			}
-			if (ResolutionContext.CurrentStack.Count > 0)
+			if (ResolutionContext.Current != null)
 			{
 				sb.AppendLine();
 				sb.Append("Requested by (Resolution Context Stack):");

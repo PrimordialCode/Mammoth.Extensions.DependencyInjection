@@ -8,6 +8,8 @@
 
 ### Bug Fixes
 
+- Isolate transient-disposable diagnostic resolution frames across execution-context branches, preserving inherited ancestry and nested exception cleanup [#58](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/58).
+
 - Use the active descriptor lifetime for diagnostic singleton exemptions when duplicate registrations have different lifetimes, preserving last-registration-wins metadata queries [#57](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/57).
 
 - Retain root disposal ownership of rejected transient factory results in diagnostic mode, including async-only disposables, without recapturing results already owned by the root [#56](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/56).
