@@ -21,13 +21,20 @@ public static partial class ServiceCollectionExtensions
     /// <typeparam name="TService">The service interface or class.</typeparam>
     /// <typeparam name="TDecorator">The decorator implementation.</typeparam>
     /// <param name="services">The service collection.</param>
+    /// <exception cref="ArgumentNullException">The service collection is null.</exception>
     /// <exception cref="InvalidOperationException">The service is not registered.</exception>
     public static void Decorate<TService, TDecorator>(this IServiceCollection services)
         where TService : class
         where TDecorator : class, TService
     {
-        var original = services.LastOrDefault(d => d.ServiceType == typeof(TService))
-            ?? throw new InvalidOperationException($"Service type {typeof(TService).Name} not registered.");
+        if (services == null) throw new ArgumentNullException(nameof(services));
+        // Keep the occurrence index: the same descriptor reference can appear more than once.
+        var index = services.Count - 1;
+        while (index >= 0 && services[index].ServiceType != typeof(TService))
+            index--;
+        if (index < 0)
+            throw new InvalidOperationException($"Service type {typeof(TService).Name} not registered.");
+        var original = services[index];
         var resolveInner = RegisterInnerLayer<TService>(services, original);
         object CreateDecorator(IServiceProvider provider, object? requestedKey)
         {
@@ -36,7 +43,7 @@ public static partial class ServiceCollectionExtensions
                 : ActivatorUtilities.CreateInstance<TDecorator>(provider, inner);
         }
         // Replace in place so IEnumerable<TService> retains registration order.
-        services[services.IndexOf(original)] = original.IsKeyedService
+        services[index] = original.IsKeyedService
             ? ServiceDescriptor.DescribeKeyed(typeof(TService), original.ServiceKey,
                 (provider, requestedKey) => CreateDecorator(provider, requestedKey), original.Lifetime)
             : ServiceDescriptor.Describe(typeof(TService), provider => CreateDecorator(provider, null), original.Lifetime);
