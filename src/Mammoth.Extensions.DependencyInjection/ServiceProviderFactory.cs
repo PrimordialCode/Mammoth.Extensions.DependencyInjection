@@ -57,6 +57,14 @@ namespace Mammoth.Extensions.DependencyInjection
 			var sc = containerBuilder;
 			if (options.DetectIncorrectUsageOfTransientDisposables)
 			{
+				if (options.ValidateOnBuild)
+				{
+					// Instrumentation turns implementation types into opaque factories. Validate
+					// the original enriched graph first, while native DI can still see its edges.
+					// Building alone does not activate services or capture caller-owned instances.
+					using var validationProvider = containerBuilder.BuildServiceProvider(options);
+				}
+
 				var (patchedSc, openGenerics) = DetectIncorrectUsageOfTransientDisposables.PatchForDetectIncorrectUsageOfTransientDisposables(
 					containerBuilder,
 					options.AllowSingletonToResolveTransientDisposables,
