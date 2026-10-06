@@ -173,6 +173,12 @@ namespace Mammoth.Extensions.DependencyInjection.Inspector
 
 		private void AddServiceDescriptorToDescriptors(ServiceLifetime lifetime, List<ServiceDescriptor> descriptors, Type implementationType, Type serviceType)
 		{
+			// Only a generic service definition can supply an open implementation's type arguments.
+			if (implementationType.ContainsGenericParameters && !serviceType.IsGenericTypeDefinition)
+			{
+				return;
+			}
+
 			object? serviceKey = null;
 			Dependency[]? dependsOn = null;
 			if (_serviceRegistrationConfigureAction != null)
