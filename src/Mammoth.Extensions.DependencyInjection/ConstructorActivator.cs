@@ -103,7 +103,13 @@ internal static class ConstructorActivator
                     ? keyed.GetRequiredKeyedService(parameter.ParameterType, dependency.Value)
                     : dependency.Value;
             if (parameter.IsDefined(typeof(ServiceKeyAttribute), false)) return serviceKey;
-            if (!IsRegistered(parameter) && parameter.HasDefaultValue) return parameter.DefaultValue;
+            if (!IsRegistered(parameter) && parameter.HasDefaultValue)
+            {
+                var value = parameter.DefaultValue;
+                // Reflection boxes nullable-enum constants as their numeric underlying type.
+                var underlying = Nullable.GetUnderlyingType(parameter.ParameterType);
+                return value != null && underlying?.IsEnum == true ? Enum.ToObject(underlying, value) : value;
+            }
             var key = EffectiveKey(parameter.GetCustomAttribute<FromKeyedServicesAttribute>(), serviceKey);
             return key != null
                 ? keyed.GetRequiredKeyedService(parameter.ParameterType, key)
