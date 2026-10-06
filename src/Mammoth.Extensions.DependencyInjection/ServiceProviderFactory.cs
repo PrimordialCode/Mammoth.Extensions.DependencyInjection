@@ -162,6 +162,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			containerBuilder.AddSingleton(typeof(ServiceKeys<>), typeof(EmptyServiceKeys<>));
 			// Insert ServiceLifetimes as a service
 			containerBuilder.AddSingleton(serviceLifetimes);
+			snapshot.CaptureActivationRegistrations(containerBuilder);
 		}
 	}
 

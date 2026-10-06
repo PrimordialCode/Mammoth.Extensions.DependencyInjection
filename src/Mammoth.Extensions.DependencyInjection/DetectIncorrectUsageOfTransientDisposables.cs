@@ -23,6 +23,10 @@ namespace Mammoth.Extensions.DependencyInjection
 			for (int i = 0; i < services.Count; i++)
 			{
 				var descriptor = services[i];
+				// One identity per registration occurrence, even when a descriptor is reused.
+				var registration = new object();
+				var occurrence = i;
+
 
 				if (!descriptor.IsKeyedService)
 				{
@@ -43,6 +47,8 @@ namespace Mammoth.Extensions.DependencyInjection
 							sp =>
 							{
 								// track the object we are about to resolve
+								using var activation = ResolutionActivationContext.Enter(registration, descriptor, sp,
+									null, occurrence);
 								var previous = ResolutionContext.Push(descriptor);
 								try
 								{
@@ -65,6 +71,8 @@ namespace Mammoth.Extensions.DependencyInjection
 							descriptor.ServiceType,
 							sp =>
 							{
+								using var activation = ResolutionActivationContext.Enter(registration, descriptor, sp,
+									null, occurrence);
 								var previous = ResolutionContext.Push(descriptor);
 								try
 								{
@@ -100,6 +108,8 @@ namespace Mammoth.Extensions.DependencyInjection
 							(sp, key) =>
 							{
 								// track the object we are about to resolve
+								using var activation = ResolutionActivationContext.Enter(registration, descriptor, sp,
+									key, occurrence);
 								var previous = ResolutionContext.Push(descriptor);
 								try
 								{
@@ -123,6 +133,8 @@ namespace Mammoth.Extensions.DependencyInjection
 							descriptor.ServiceKey,
 							(sp, key) =>
 							{
+								using var activation = ResolutionActivationContext.Enter(registration, descriptor, sp,
+									key, occurrence);
 								var previous = ResolutionContext.Push(descriptor);
 								try
 								{

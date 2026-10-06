@@ -283,6 +283,33 @@ new HostBuilder().UseServiceProviderFactory(new ServiceProviderFactory(
 
 Ordinary implementation-type registrations retain native DI constructor preference and ambiguity rules when diagnostics are enabled, including keyed attributes and optional defaults. The `[ActivatorUtilitiesConstructor]` attribute does not override native type-registration selection; non-empty `DependsOn` maps retain their separate preferred-constructor rules.
 
+With `ValidateOnBuild = false`, ordinary constructor cycles such as `CycleA -> CycleB -> CycleA` fail at resolution with a catchable `InvalidOperationException` and a dependency chain. The guard distinguishes registration occurrences, requested keys and scopes, so repeated sibling resolutions, decorator layers and valid nested scopes remain independent:
+
+```csharp
+var services = new ServiceCollection();
+services.AddTransient<CycleA>();
+services.AddTransient<CycleB>();
+
+using var provider = ServiceProviderFactory.CreateServiceProvider(services,
+    new ExtendedServiceProviderOptions
+    {
+        DetectIncorrectUsageOfTransientDisposables = true,
+        ValidateOnBuild = false
+    }); // Construction succeeds; validation is deferred to resolution.
+
+try
+{
+    provider.GetRequiredService<CycleA>();
+}
+catch (InvalidOperationException error)
+{
+    Console.WriteLine(error.Message); // Circular dependency: CycleA -> CycleB -> CycleA
+}
+
+public sealed class CycleA(CycleB dependency) { }
+public sealed class CycleB(CycleA dependency) { }
+```
+
 Diagnostic messages format service keys that implement `IFormattable` with invariant culture on every library target. For example, a decimal key prints `1234.5` even under `fr-FR`, including when using the `netstandard2.0` library. Keys that supply only their own `ToString()` retain that method's formatting.
 
 Rejected transient factory results remain owned by the root provider until it is disposed. Results already captured by that root are not captured again. Dispose the provider even after a diagnostic failure; use `DisposeAsync` for async-only resources.
@@ -294,6 +321,8 @@ Instead of re-implementing a new ServiceProvider from scratch, this approach mod
 
 - _Open generic transient disposable services cannot be checked_, a ServiceDescriptor cannot be created with an Open Generic as ServiceType and an ImplementationFactory (we cannot "rewrite" service registrations), so no error is thrown if they are resolved by the root scope.
 - _Open generic resolution context cannot be tracked_, a ServiceDescriptor cannot be created with an Open Generic as ServiceType and an ImplementationFactory, so no error is thrown if they are transient and disposable but resolved by the root scope.
+- Before activating an instrumented implementation type, diagnostics inspect its selected constructor graph without resolving services. This iterative check rejects deep constructor cycles before nested native resolutions can block on scoped or singleton cache locks. It includes requested keys, registration occurrences, implicit enumerables and closed bindings of open-generic dependencies, using the same constructor selection as activation.
+- Factories and supplied instances are opaque leaves during constructor-graph validation. A separate synchronous re-entry guard also covers user factories and constructor bodies; background tasks remain independent. Arbitrary cross-thread waits inside user code are outside this guard. Open-generic registrations retain native runtime checks and the runtime-tracking limitations above; the graph check begins at an instrumented type.
 
 Options:
 

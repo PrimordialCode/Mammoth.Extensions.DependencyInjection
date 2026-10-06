@@ -24,6 +24,8 @@
 
 - Remove the temporary startup-warning scope and return the provider even when optional warning delivery fails, preserving ownership of logging dependencies until provider disposal and avoiding forced synchronous disposal of async-only scoped loggers [#90](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/90).
 
+- Reject runtime dependency cycles with actionable, catchable errors when transient-disposable diagnostics are enabled and `ValidateOnBuild` is false. Validate selected constructor graphs iteratively before activating dependencies, including deep scoped and singleton cycles; preserve registration/key identity, valid background work and synchronous factory re-entry checks [#89](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/89).
+
 - Preserve native DI constructor preference and parameter-type ambiguity rules when transient-disposable diagnostics instrument ordinary type registrations, including keyed context, optional defaults, null factory results and disposal ownership [#88](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/88).
 
 - Build provider metadata on a private collection copy so repeated or failed builds leave caller registrations unchanged, avoid accumulating support services, and keep each provider's discovery and compatibility metadata independent [#64](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/64).
