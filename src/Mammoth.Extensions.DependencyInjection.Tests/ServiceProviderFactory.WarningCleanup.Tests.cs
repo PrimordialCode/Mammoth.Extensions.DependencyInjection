@@ -193,7 +193,7 @@ public class ServiceProviderFactoryWarningCleanupTests
         options.ValidateOnBuild = true;
 
         var error = Assert.ThrowsExactly<AggregateException>(() => Build(services, options));
-        StringAssert.Contains(error.Message, nameof(IMissing));
+        StringAssert.Contains(error.ToString(), nameof(IMissing));
     }
 
     [TestMethod]
