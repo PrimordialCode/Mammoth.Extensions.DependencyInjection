@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Testing;
 using System.Text.RegularExpressions;
 
 namespace Mammoth.Extensions.DependencyInjection.Tests;
@@ -35,19 +34,19 @@ public class OpenGenericTransientDisposableDiagnosticTests
     public async Task WarningModeNamesTheImplementationAndAllowsResolution(bool keyed, Type implementationType)
     {
         var services = CreateServices(keyed, implementationType, ServiceLifetime.Transient);
-        var logger = new FakeLogger<ServiceProviderFactory>();
-        services.AddSingleton<ILogger<ServiceProviderFactory>>(logger);
+        services.AddLogging(builder => builder.AddFakeLogging());
         var options = CreateOptions();
         options.ThrowOnOpenGenericTransientDisposable = false;
 
         await using var provider = ServiceProviderFactory.CreateServiceProvider(services, options);
 
-        Assert.AreEqual(1, logger.Collector.Count);
-        Assert.AreEqual(LogLevel.Warning, logger.LatestRecord.Level);
+        var collector = provider.GetFakeLogCollector();
+        Assert.AreEqual(1, collector.Count);
+        Assert.AreEqual(LogLevel.Warning, collector.LatestRecord.Level);
         Assert.AreEqual(
             $"Open generic transient disposable registration detected, ServiceKey: {(keyed ? "resource" : "(null)")}, " +
             $"ServiceType: {typeof(IResource<>)}, ImplementationType: {implementationType}",
-            logger.LatestRecord.Message);
+            collector.LatestRecord.Message);
         await AssertResolution(provider, keyed, implementationType, ServiceLifetime.Transient);
     }
 

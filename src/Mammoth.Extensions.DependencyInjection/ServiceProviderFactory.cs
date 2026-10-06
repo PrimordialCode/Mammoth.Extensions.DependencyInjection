@@ -77,22 +77,29 @@ namespace Mammoth.Extensions.DependencyInjection
 					options.DetectIncorrectUsageOfTransientDisposablesExclusionPatterns
 					);
 				sc = DetectIncorrectUsageOfTransientDisposables.PatchForResolutionContextTracking(patchedSc);
-				//// return new ResolutionContextTrackingServiceProviderDecorator(sc.BuildServiceProvider(options));
 				var sp = sc.BuildServiceProvider(options);
 				if (openGenerics.Count > 0 && !options.ThrowOnOpenGenericTransientDisposable)
 				{
-					// log warning for open generic registration
-					using var score = sp.CreateScope();
-					var logger = score.ServiceProvider.GetService<ILogger<ServiceProviderFactory>>();
-					if (logger != null)
+					try
 					{
-						foreach (var openGeneric in openGenerics)
+						// Use standard logging without creating a temporary scope. Any services
+						// activated here remain owned by the provider returned to the caller.
+						var logger = sp.GetService<ILoggerFactory>()?.CreateLogger(typeof(ServiceProviderFactory).FullName!);
+						if (logger != null)
 						{
-							if (!openGeneric.IsKeyedService)
-								_logOpenGenericWarning.Invoke(logger, openGeneric.ServiceKey, openGeneric.ServiceType, openGeneric.ImplementationType!, null);
-							else
-								_logOpenGenericWarning.Invoke(logger, openGeneric.ServiceKey, openGeneric.ServiceType, openGeneric.KeyedImplementationType!, null);
+							foreach (var openGeneric in openGenerics)
+							{
+								var implementationType = openGeneric.IsKeyedService
+									? openGeneric.KeyedImplementationType
+									: openGeneric.ImplementationType;
+								_logOpenGenericWarning.Invoke(logger, openGeneric.ServiceKey, openGeneric.ServiceType, implementationType!, null);
+							}
 						}
+					}
+					catch (Exception)
+					{
+						// Optional warning delivery must not prevent ownership from reaching
+						// the caller, even if logger activation or logging fails.
 					}
 				}
 				return sp;

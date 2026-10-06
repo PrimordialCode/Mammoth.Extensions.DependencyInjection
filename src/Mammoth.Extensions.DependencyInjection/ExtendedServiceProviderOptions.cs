@@ -30,6 +30,9 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <summary>
 		/// Throw an exception if a open generic transient disposable is registered.
 		/// Open Generic cannot be tracked, so it's better to use only closed type registrations.
+		/// When false, warnings use the root ILoggerFactory, if registered. Warning delivery is best-effort:
+		/// logger activation or logging failures do not prevent returning the provider.
+		/// Direct ILogger&lt;ServiceProviderFactory&gt; registrations are not used for these warnings.
 		/// This setting is only relevant if <see cref="DetectIncorrectUsageOfTransientDisposables"/> is set to true.
 		/// </summary>
 		public bool ThrowOnOpenGenericTransientDisposable { get; set; }
