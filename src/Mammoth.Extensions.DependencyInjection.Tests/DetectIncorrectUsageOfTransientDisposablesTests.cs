@@ -4,7 +4,6 @@ using Mammoth.Extensions.DependencyInjection;
 using Mammoth.Extensions.DependencyInjection.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Testing;
 
 namespace Mammoth.Extensions.DependencyInjection.Tests
 {
@@ -629,9 +628,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 		public void Register_OpenGeneric_TransientDisposable_WithoutValidation_LogsError()
 		{
 			var serviceCollection = CreateServiceCollection();
-			// register a fake logger
-			var fakeLogger = new FakeLogger<ServiceProviderFactory>();
-			serviceCollection.AddSingleton<ILogger<ServiceProviderFactory>>(fakeLogger);
+			serviceCollection.AddLogging(builder => builder.AddFakeLogging());
 			using var sp = ServiceProviderFactory.CreateServiceProvider(serviceCollection,
 				new ExtendedServiceProviderOptions
 				{
@@ -640,9 +637,10 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 					ValidateOnBuild = true,
 					ValidateScopes = true
 				});
-			Assert.AreEqual(1, fakeLogger.Collector.Count);
-			Assert.AreEqual(LogLevel.Warning, fakeLogger.LatestRecord.Level);
-			Assert.AreEqual("Open generic transient disposable registration detected, ServiceKey: (null), ServiceType: Mammoth.Extensions.DependencyInjection.Tests.DetectIncorrectUsageOfTransientDisposablesTests+ITransientOpenGeneric`1[T], ImplementationType: Mammoth.Extensions.DependencyInjection.Tests.DetectIncorrectUsageOfTransientDisposablesTests+TransientOpenGeneric`1[T]", fakeLogger.LatestRecord.Message);
+			var collector = sp.GetFakeLogCollector();
+			Assert.AreEqual(1, collector.Count);
+			Assert.AreEqual(LogLevel.Warning, collector.LatestRecord.Level);
+			Assert.AreEqual("Open generic transient disposable registration detected, ServiceKey: (null), ServiceType: Mammoth.Extensions.DependencyInjection.Tests.DetectIncorrectUsageOfTransientDisposablesTests+ITransientOpenGeneric`1[T], ImplementationType: Mammoth.Extensions.DependencyInjection.Tests.DetectIncorrectUsageOfTransientDisposablesTests+TransientOpenGeneric`1[T]", collector.LatestRecord.Message);
 		}
 
 		[TestMethod]

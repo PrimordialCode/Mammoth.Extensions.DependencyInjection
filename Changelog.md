@@ -4,9 +4,13 @@
 
 ### Breaking Changes
 
+- Open-generic startup warnings now use the root `ILoggerFactory` rather than a directly registered `ILogger<ServiceProviderFactory>`. Configure standard logging (for example, `AddLogging`) to receive them. Warning-delivery failures no longer fail provider creation; warnings are best-effort [#90](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/90).
+
 - Raise `Microsoft.Extensions.DependencyInjection` to a minimum of **10.0.0**, including the upstream keyed enumerable/open-generic cache identity fix ([dotnet/runtime#113343](https://github.com/dotnet/runtime/pull/113343), [#46](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/46)). Raise its required `Microsoft.Bcl.AsyncInterfaces` dependency to **10.0.0**. Consumers pinning DI 8.x/9.x must upgrade; all existing library target frameworks remain supported.
 
 ### Bug Fixes
+
+- Remove the temporary startup-warning scope and return the provider even when optional warning delivery fails, preserving ownership of logging dependencies until provider disposal and avoiding forced synchronous disposal of async-only scoped loggers [#90](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/90).
 
 - Preserve native DI constructor preference and parameter-type ambiguity rules when transient-disposable diagnostics instrument ordinary type registrations, including keyed context, optional defaults, null factory results and disposal ownership [#88](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/88).
 
