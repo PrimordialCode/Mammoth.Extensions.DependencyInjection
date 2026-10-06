@@ -70,12 +70,18 @@ public class DetectIncorrectUsageOfTransientDisposablesCycleTests
                 RedirectStandardError = true
             }
         };
+        var exited = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        process.EnableRaisingEvents = true;
+        process.Exited += (_, _) => exited.TrySetResult(true);
         Assert.IsTrue(process.Start());
+        if (process.HasExited) exited.TrySetResult(true);
         var output = process.StandardOutput.ReadToEndAsync();
         var errors = process.StandardError.ReadToEndAsync();
         try
         {
-            Assert.IsTrue(process.WaitForExit(15000), $"{mode}/{scenario}: child exceeded the 15-second cycle bound.");
+            // Do not block a test-host worker while other concurrency tests need the pool.
+            var completed = await Task.WhenAny(exited.Task, Task.Delay(TimeSpan.FromSeconds(15)));
+            Assert.AreSame(exited.Task, completed, $"{mode}/{scenario}: child exceeded the 15-second cycle bound.");
             Assert.AreEqual(0, process.ExitCode, await errors);
             StringAssert.Contains(await output, "PASS " + mode + " " + scenario);
         }

@@ -211,7 +211,10 @@ internal static class Program
         {
             try { scope.ServiceProvider.GetRequiredService(types[0]); }
             catch (Exception error) { failure = error; }
-        }, mode == "diagnostics" ? 256 * 1024 : 0);
+        // Native call-site construction also holds locks while walking this graph.
+        // Give controls enough stack on Windows; only the diagnostic check is the
+        // deliberately small-stack stress subject.
+        }, mode == "diagnostics" ? 256 * 1024 : 16 * 1024 * 1024);
         resolver.Start();
         if (!resolver.Join(TimeSpan.FromSeconds(10))) throw new TimeoutException("Deep cycle did not return.");
         if (valid && failure == null)
