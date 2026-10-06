@@ -159,7 +159,7 @@ namespace Mammoth.Extensions.DependencyInjection
 			// Insert Keys as a service
 			containerBuilder.AddSingleton(keys);
 			// Insert Keys<> so it's always resolvable
-			containerBuilder.AddSingleton(typeof(ServiceKeys<>));
+			containerBuilder.AddSingleton(typeof(ServiceKeys<>), typeof(EmptyServiceKeys<>));
 			// Insert ServiceLifetimes as a service
 			containerBuilder.AddSingleton(serviceLifetimes);
 		}
@@ -182,6 +182,13 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// Constructor
 		/// </summary>
 		public ServiceKeys(IEnumerable<object> collection) : base(collection)
+		{ }
+	}
+
+	// Keep fallback activation independent of application IEnumerable<object> services.
+	internal sealed class EmptyServiceKeys<T> : ServiceKeys<T>
+	{
+		public EmptyServiceKeys() : base(Array.Empty<object>())
 		{ }
 	}
 

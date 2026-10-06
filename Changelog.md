@@ -10,6 +10,8 @@
 
 ### Bug Fixes
 
+- Keep fallback `ServiceKeys<T>` metadata empty without activating unrelated application `object` services or creating scoped-to-singleton dependencies, while preserving mutable compatibility collections and snapshot-backed discovery [#86](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/86).
+
 - Remove the temporary startup-warning scope and return the provider even when optional warning delivery fails, preserving ownership of logging dependencies until provider disposal and avoiding forced synchronous disposal of async-only scoped loggers [#90](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/90).
 
 - Preserve native DI constructor preference and parameter-type ambiguity rules when transient-disposable diagnostics instrument ordinary type registrations, including keyed context, optional defaults, null factory results and disposal ownership [#88](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/88).
