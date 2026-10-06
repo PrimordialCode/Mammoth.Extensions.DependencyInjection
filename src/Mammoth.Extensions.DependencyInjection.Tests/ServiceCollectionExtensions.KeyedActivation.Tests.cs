@@ -141,7 +141,7 @@ public class KeyedActivationRegressionTests
     [TestMethod]
     [DataRow(false)]
     [DataRow(true)]
-    public void KeyAwareConstructorSelectionPreservesDefaultsAndPreferredConstructor(bool diagnostic)
+    public void KeyAwareConstructorSelectionPreservesDefaultsAndNativePreference(bool diagnostic)
     {
         var services = new ServiceCollection();
         services.AddKeyedTransient<OptionalWork>("blue");
@@ -152,7 +152,7 @@ public class KeyedActivationRegressionTests
         var optional = scope.ServiceProvider.GetRequiredKeyedService<OptionalWork>("blue");
         Assert.AreEqual("blue", optional.Key); Assert.AreEqual(7, optional.Count); Assert.IsNull(optional.Part);
         var preferred = scope.ServiceProvider.GetRequiredKeyedService<PreferredWork>("blue");
-        Assert.AreEqual("blue", preferred.Key); Assert.AreEqual(diagnostic ? "preferred" : "long", preferred.Selected);
+        Assert.AreEqual("blue", preferred.Key); Assert.AreEqual("long", preferred.Selected);
         var alternative = scope.ServiceProvider.GetRequiredKeyedService<AlternativeWork>("blue");
         Assert.AreEqual("blue", alternative.Key); Assert.AreEqual("short", alternative.Selected);
     }

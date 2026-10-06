@@ -279,6 +279,8 @@ new HostBuilder().UseServiceProviderFactory(new ServiceProviderFactory(
   }));
 ```
 
+Ordinary implementation-type registrations retain native DI constructor preference and ambiguity rules when diagnostics are enabled, including keyed attributes and optional defaults. The `[ActivatorUtilitiesConstructor]` attribute does not override native type-registration selection; non-empty `DependsOn` maps retain their separate preferred-constructor rules.
+
 Diagnostic messages format service keys that implement `IFormattable` with invariant culture on every library target. For example, a decimal key prints `1234.5` even under `fr-FR`, including when using the `netstandard2.0` library. Keys that supply only their own `ToString()` retain that method's formatting.
 
 Rejected transient factory results remain owned by the root provider until it is disposed. Results already captured by that root are not captured again. Dispose the provider even after a diagnostic failure; use `DisposeAsync` for async-only resources.
