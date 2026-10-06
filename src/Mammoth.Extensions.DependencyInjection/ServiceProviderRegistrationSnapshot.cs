@@ -9,6 +9,7 @@ internal sealed class ServiceProviderRegistrationSnapshot
     private readonly HashSet<object> _keys = [];
     private readonly Dictionary<Type, IReadOnlyCollection<object>> _keysByType = [];
     private readonly ServiceLifetimes _lifetimes = new();
+    private readonly Dictionary<ServiceIdentifier, ServiceDescriptor> _descriptors = [];
 
     internal ServiceProviderRegistrationSnapshot(IEnumerable<ServiceDescriptor> descriptors,
         IEnumerable<Type> types, IEnumerable<object> keys, Dictionary<Type, HashSet<object>> keysByType)
@@ -20,9 +21,30 @@ internal sealed class ServiceProviderRegistrationSnapshot
         foreach (var descriptor in descriptors)
         {
             _lifetimes.Add(descriptor.ServiceType, descriptor.Lifetime, descriptor.ServiceKey);
+            _descriptors[ServiceIdentifier.FromDescriptor(descriptor)] = descriptor;
         }
         foreach (var entry in keysByType)
             _keysByType.Add(entry.Key, Array.AsReadOnly(entry.Value.ToArray()));
+    }
+
+    internal void ValidateGenericConstraints(Type type, object? key)
+    {
+        if (!type.IsConstructedGenericType) return;
+        // Exact registrations (including wildcard keys) win over open generics.
+        if (Find(type, key) != null) return;
+        var descriptor = Find(type.GetGenericTypeDefinition(), key);
+        var implementation = descriptor?.IsKeyedService == true
+            ? descriptor.KeyedImplementationType : descriptor?.ImplementationType;
+        // Closing a candidate binding can throw even when another constructor is
+        // selected. Native DI checks this before activating any dependencies.
+        implementation?.MakeGenericType(type.GenericTypeArguments);
+    }
+
+    private ServiceDescriptor? Find(Type type, object? key)
+    {
+        if (_descriptors.TryGetValue(new ServiceIdentifier(key, type), out var descriptor)) return descriptor;
+        return key != null && _descriptors.TryGetValue(new ServiceIdentifier(KeyedService.AnyKey, type), out descriptor)
+            ? descriptor : null;
     }
 
     internal bool ContainsType(Type type) => _types.Contains(type) ||

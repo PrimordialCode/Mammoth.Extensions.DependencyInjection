@@ -68,7 +68,7 @@ namespace Mammoth.Extensions.DependencyInjection
 								var previous = ResolutionContext.Push(descriptor);
 								try
 								{
-									return ActivatorUtilities.CreateInstance(sp, implementationType);
+									return NativeConstructorActivator.CreateInstance(sp, implementationType);
 								}
 								finally
 								{
@@ -126,7 +126,7 @@ namespace Mammoth.Extensions.DependencyInjection
 								var previous = ResolutionContext.Push(descriptor);
 								try
 								{
-									return ConstructorActivator.CreateKeyed(sp, implementationType, key);
+									return NativeConstructorActivator.CreateInstance(sp, implementationType, key);
 								}
 								finally
 								{
@@ -304,7 +304,7 @@ namespace Mammoth.Extensions.DependencyInjection
 								"ImplementationType is null.");
 						}
 
-						return ActivatorUtilities.CreateInstance(sp,
+						return NativeConstructorActivator.CreateInstance(sp,
 							original.ImplementationType);
 					},
 					ServiceLifetime.Transient);
@@ -330,7 +330,7 @@ namespace Mammoth.Extensions.DependencyInjection
 								"KeyedImplementationType is null.");
 						}
 
-						return ConstructorActivator.CreateKeyed(sp,
+						return NativeConstructorActivator.CreateInstance(sp,
 							original.KeyedImplementationType, key);
 					},
 					ServiceLifetime.Transient);
