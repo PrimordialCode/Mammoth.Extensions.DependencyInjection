@@ -10,6 +10,8 @@
 
 ### Bug Fixes
 
+- Normalize optional nullable-enum defaults in mapped activation and contextual keyed decorators, preserving null defaults, named overrides and registered-service precedence [#82](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/82).
+
 - Skip incompatible open-generic implementations in ordinary assembly scans before configuration, preventing invalid marker/interface descriptors while preserving closed implementations and native open-generic self type registrations [#87](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/87).
 
 - Keep fallback `ServiceKeys<T>` metadata empty without activating unrelated application `object` services or creating scoped-to-singleton dependencies, while preserving mutable compatibility collections and snapshot-backed discovery [#86](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/86).
