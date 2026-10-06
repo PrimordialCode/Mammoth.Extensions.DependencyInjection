@@ -169,8 +169,11 @@ public class ResolutionActivationContextTests
             return new Leaf();
         });
         using var provider = Build(services);
-        var first = Task.Run(() => provider.GetRequiredService<Leaf>());
-        var second = Task.Run(() => provider.GetRequiredService<Leaf>());
+        // Dedicated workers keep this gate test independent of test-host pool capacity.
+        var first = Task.Factory.StartNew(() => provider.GetRequiredService<Leaf>(),
+            CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+        var second = Task.Factory.StartNew(() => provider.GetRequiredService<Leaf>(),
+            CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         try { Assert.IsTrue(entered.Wait(TimeSpan.FromSeconds(10))); }
         finally { release.Set(); }
         Assert.AreNotSame(await first, await second);
