@@ -19,6 +19,7 @@
 		/// </summary>
 		/// <returns>The lifestyle selector.</returns>
 		/// <remarks>
+		/// Implementations with unbound generic parameters are skipped before configuration; generic interface mappings are not inferred.
 		/// Interfaces in System or its child namespaces, and interfaces from the assembly named exactly mscorlib,
 		/// are excluded. Comparisons are ordinal and case-sensitive; application assembly name prefixes do not affect selection.
 		/// </remarks>
@@ -28,6 +29,9 @@
 		/// Specifies that the base type should be used as service interface.
 		/// </summary>
 		/// <returns>The lifestyle selector.</returns>
+		/// <remarks>
+		/// Implementations with unbound generic parameters are skipped before configuration unless the base service is a generic type definition.
+		/// </remarks>
 		ILifestyleSelector WithServiceBase();
 
 		/// <summary>

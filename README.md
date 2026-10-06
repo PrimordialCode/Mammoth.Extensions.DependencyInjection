@@ -345,6 +345,33 @@ will be registered in the ServiceCollection.
 
 `WithServiceAllInterfaces()` excludes interfaces in `System` and its child namespaces (such as `System.Collections.Generic`), plus interfaces from the assembly named exactly `mscorlib`. Comparisons are ordinal and case-sensitive. `IDisposable` and `IAsyncDisposable` are excluded on every supported runtime, regardless of their defining assembly. Application assembly names such as `Systematic.Contracts` do not affect selection; namespaces such as `Systematic` and `Systems` are not children of `System`. Use `BasedOn<T>().WithServiceBase()` to explicitly register a framework interface.
 
+Implementations with unbound generic parameters are skipped when the selected service is not a generic type definition. This happens before `Configure` is called, so an ordinary marker scan can safely share an assembly with generic implementations:
+
+```csharp
+using Mammoth.Extensions.DependencyInjection.Inspector;
+using Microsoft.Extensions.DependencyInjection;
+
+IServiceCollection services = new ServiceCollection();
+var descriptors = new AssemblyInspector()
+    .FromAssemblyContaining<Marker>()
+    .BasedOn<IMarker>()
+    .WithServiceAllInterfaces() // WithServiceBase() has the same marker-scan behavior.
+    .LifestyleTransient();
+foreach (var descriptor in descriptors)
+{
+    services.Add(descriptor);
+}
+
+using var provider = services.BuildServiceProvider();
+var marker = provider.GetRequiredService<IMarker>(); // Marker
+
+public interface IMarker { }
+public class Marker : IMarker { }
+public class MarkerGeneric<T> : IMarker { } // Skipped: IMarker cannot supply T.
+```
+
+Closed implementations and their closed generic interfaces still register normally. Native open-generic self type registrations are preserved, including `BasedOn(typeof(Repository<>)).WithServiceSelf()` and `WithServiceBase()` for that same concrete definition. The inspector does not infer open-generic interface mappings or extend `BasedOn` assignability. Open-generic registrations require type-based construction; nonempty `DependsOn` maps use factories and remain unsupported for open-generic services.
+
 It supports `DependsOn` for keyed services:
 
 ```csharp
