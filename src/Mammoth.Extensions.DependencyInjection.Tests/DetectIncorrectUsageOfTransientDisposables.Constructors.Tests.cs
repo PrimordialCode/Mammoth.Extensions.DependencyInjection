@@ -61,7 +61,7 @@ public class DiagnosticConstructorParityTests
             var counts = new Counts();
             var services = Services(counts);
             Add(services, type, lifetime, keyed);
-            if (validate)
+            if (validate || mode == "enabled")
             {
                 var error = Assert.ThrowsExactly<AggregateException>(() => Build(services, mode, validate));
                 StringAssert.Contains(error.ToString(), "ambiguous");
@@ -85,7 +85,6 @@ public class DiagnosticConstructorParityTests
     [DataRow(true, true)]
     public void ContextualAttributesPreserveNativeSelectionAndRequestedKey(bool wildcard, bool validate)
     {
-        bool? nativeUsesRequestedKey = null;
         foreach (var mode in new[] { "native", "disabled", "enabled" })
         {
             var services = new ServiceCollection();
@@ -96,12 +95,13 @@ public class DiagnosticConstructorParityTests
             services.AddKeyedSingleton("blue", inherited);
             services.AddKeyedSingleton("fixed", explicitKey);
             services.AddKeyedTransient<Contextual>(wildcard ? KeyedService.AnyKey : "blue");
-            using var provider = Build(services, mode, validate);
             var requestedKey = new string("blue".ToCharArray());
+            using var native = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = validate || mode == "enabled" });
+            var nativeKey = native.GetRequiredKeyedService<Contextual>(requestedKey).Key;
+            using var provider = Build(services, mode, validate);
             var result = provider.GetRequiredKeyedService<Contextual>(requestedKey);
-            nativeUsesRequestedKey ??= ReferenceEquals(requestedKey, result.Key);
             Assert.AreEqual(requestedKey, result.Key, mode);
-            Assert.AreEqual(nativeUsesRequestedKey.Value, ReferenceEquals(requestedKey, result.Key), mode);
+            Assert.AreSame(nativeKey, result.Key, mode);
             Assert.AreSame(inherited, result.Inherited, mode);
             Assert.AreSame(explicitKey, result.Explicit, mode);
             Assert.AreSame(ordinary, result.Ordinary, mode);
@@ -232,6 +232,14 @@ public class DiagnosticConstructorParityTests
             services.AddKeyedTransient(typeof(IOpen<>), wildcard ? KeyedService.AnyKey : "bad", typeof(ReferenceOnly<>));
             if (closedOverride) services.AddKeyedTransient<IOpen<int>, Open<int>>("bad");
             services.AddTransient<ConstrainedCandidate>();
+            if (!closedOverride && mode == "enabled")
+            {
+                var error = Assert.ThrowsExactly<AggregateException>(() => Build(services, mode, validate: true));
+                StringAssert.Contains(error.ToString(), nameof(ReferenceOnly<object>));
+                Assert.AreEqual(0, counts.Dependencies, mode);
+                Assert.AreEqual(0, counts.Constructors, mode);
+                continue;
+            }
             using var provider = Build(services, mode, validate: false);
             if (closedOverride)
                 Assert.AreEqual("long", provider.GetRequiredService<ConstrainedCandidate>().Selected, mode);
@@ -291,7 +299,7 @@ public class DiagnosticConstructorParityTests
     private static ServiceProvider Build(IServiceCollection services, string mode, bool validate)
         => mode == "native" ? services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = validate })
             : ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
-            { DetectIncorrectUsageOfTransientDisposables = mode == "enabled", ValidateOnBuild = validate });
+            { DetectIncorrectUsageOfTransientDisposables = mode == "enabled", ValidateOnBuild = validate || mode == "enabled" });
 
     public interface IChoice { string Selected { get; } }
     public sealed class Counts { public int Dependencies; public int Rejected; public int Constructors; }

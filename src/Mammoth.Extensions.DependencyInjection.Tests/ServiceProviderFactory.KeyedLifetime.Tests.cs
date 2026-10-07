@@ -83,6 +83,7 @@ public class KeyedLifetimeRegressionTests
             keyedSingleton ? ServiceLifetime.Singleton : ServiceLifetime.Scoped));
         using var provider = ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
         {
+            ValidateOnBuild = true,
             DetectIncorrectUsageOfTransientDisposables = true,
             AllowSingletonToResolveTransientDisposables = true
         });

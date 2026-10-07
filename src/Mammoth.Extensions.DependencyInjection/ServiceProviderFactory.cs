@@ -49,6 +49,9 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// </summary>
 		public static ServiceProvider CreateServiceProvider(IServiceCollection containerBuilder, ExtendedServiceProviderOptions? options = null)
 		{
+			if (options is { DetectIncorrectUsageOfTransientDisposables: true, ValidateOnBuild: false })
+				throw new ArgumentException("Transient-disposable diagnostics require ValidateOnBuild to be true.", nameof(options));
+
 			// Preserve every caller registration and its order without retaining support
 			// descriptors from earlier builds in the caller's collection.
 			IServiceCollection sc = new ServiceCollection();
@@ -162,7 +165,6 @@ namespace Mammoth.Extensions.DependencyInjection
 			containerBuilder.AddSingleton(typeof(ServiceKeys<>), typeof(EmptyServiceKeys<>));
 			// Insert ServiceLifetimes as a service
 			containerBuilder.AddSingleton(serviceLifetimes);
-			snapshot.CaptureActivationRegistrations(containerBuilder);
 		}
 	}
 

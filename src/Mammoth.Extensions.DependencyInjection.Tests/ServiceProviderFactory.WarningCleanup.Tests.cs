@@ -84,9 +84,7 @@ public class ServiceProviderFactoryWarningCleanupTests
     }
 
     [TestMethod]
-    [DataRow(false)]
-    [DataRow(true)]
-    public async Task StandardLoggingEmitsKeyedAndUnkeyedWarningsWithoutActivatingScopedLogger(bool validateOnBuild)
+    public async Task StandardLoggingEmitsKeyedAndUnkeyedWarningsWithoutActivatingScopedLogger()
     {
         var services = CreateServices();
         services.AddKeyedTransient(typeof(OpenResource<>), "key");
@@ -99,7 +97,6 @@ public class ServiceProviderFactoryWarningCleanupTests
             return logger;
         });
         var options = CreateOptions();
-        options.ValidateOnBuild = validateOnBuild;
 
         await using var provider = Build(services, options);
         var records = provider.GetFakeLogCollector().GetSnapshot();
@@ -242,7 +239,7 @@ public class ServiceProviderFactoryWarningCleanupTests
     {
         DetectIncorrectUsageOfTransientDisposables = true,
         ThrowOnOpenGenericTransientDisposable = false,
-        ValidateOnBuild = false,
+        ValidateOnBuild = true,
         ValidateScopes = true
     };
 

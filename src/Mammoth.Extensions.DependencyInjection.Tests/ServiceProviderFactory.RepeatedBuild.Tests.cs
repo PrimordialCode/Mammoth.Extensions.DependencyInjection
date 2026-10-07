@@ -250,6 +250,7 @@ public class ServiceProviderFactoryRepeatedBuildTests
         Assert.ThrowsExactly<InvalidOperationException>(() => ServiceProviderFactory.CreateServiceProvider(services,
             new ExtendedServiceProviderOptions
             {
+                ValidateOnBuild = true,
                 DetectIncorrectUsageOfTransientDisposables = true,
                 ThrowOnOpenGenericTransientDisposable = true
             }));
@@ -265,7 +266,7 @@ public class ServiceProviderFactoryRepeatedBuildTests
         var options = mode == "default" ? null : new ExtendedServiceProviderOptions
         {
             DetectIncorrectUsageOfTransientDisposables = mode.Contains("diagnostics"),
-            ValidateOnBuild = mode.Contains("validated"),
+            ValidateOnBuild = mode.Contains("validated") || mode.Contains("diagnostics"),
             ValidateScopes = true
         };
         var factory = options == null ? new ServiceProviderFactory() : new ServiceProviderFactory(options);

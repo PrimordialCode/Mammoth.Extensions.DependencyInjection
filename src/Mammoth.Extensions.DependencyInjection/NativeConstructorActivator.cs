@@ -10,37 +10,14 @@ internal static class NativeConstructorActivator
 {
     internal static object CreateInstance(IServiceProvider provider, Type implementationType, object? serviceKey = null)
     {
-        var snapshot = provider.GetRequiredService<ServiceProviderRegistrationSnapshot>();
-        var identity = new ServiceIdentifier(serviceKey, implementationType);
-        if (!ResolutionActivationContext.TryGetPlan(snapshot, identity, out var plan))
-        {
-            plan = Plan(provider, implementationType, serviceKey);
-            var plans = NativeConstructorGraphValidator.Validate(provider, implementationType, serviceKey, plan);
-            ResolutionActivationContext.SetPlans(snapshot, plans);
-        }
-        // Graph planning does not know a dependency's effective native cached key.
-        // Recheck injected key types here using the actual key passed to activation.
-        plan.ValidateServiceKeyTypes(serviceKey);
-        var values = plan.Arguments.Select(argument => argument.Resolve(provider)).ToArray();
-        try { return plan.Constructor.Invoke(values); }
-        catch (TargetInvocationException error) when (error.InnerException != null)
-        {
-            ExceptionDispatchInfo.Capture(error.InnerException).Throw();
-            throw;
-        }
-    }
-
-    internal static ConstructorPlan Plan(IServiceProvider provider, Type implementationType, object? serviceKey, bool graphOnly = false)
-    {
         var probe = provider.GetRequiredService<IServiceProviderIsService>();
         var keyedProbe = provider.GetRequiredService<IServiceProviderIsKeyedService>();
         var constructors = implementationType.GetConstructors();
         // Use the same arity ordering as native DI, including its tie ordering.
         Array.Sort(constructors, (left, right) => right.GetParameters().Length.CompareTo(left.GetParameters().Length));
         ConstructorInfo? selected = null;
-        ConstructorArgument[]? arguments = null;
+        Func<object?>[]? arguments = null;
         HashSet<Type>? selectedTypes = null;
-        var injectedKeyTypes = new List<Type>();
         foreach (var constructor in constructors)
         {
             var parameters = constructor.GetParameters();
@@ -63,11 +40,21 @@ internal static class NativeConstructorActivator
         if (selected == null)
             throw new InvalidOperationException($"No satisfiable public constructor on {implementationType}.");
 
-        return new ConstructorPlan(selected, arguments!, serviceKey, injectedKeyTypes.ToArray());
-
-        ConstructorArgument[]? PlanArguments(ParameterInfo[] parameters)
+        // No service is activated until all constructor candidates have been checked.
+        var values = arguments!.Select(resolve => resolve()).ToArray();
+        try
         {
-            var result = new ConstructorArgument[parameters.Length];
+            return selected.Invoke(values);
+        }
+        catch (TargetInvocationException error) when (error.InnerException != null)
+        {
+            ExceptionDispatchInfo.Capture(error.InnerException).Throw();
+            throw;
+        }
+
+        Func<object?>[]? PlanArguments(ParameterInfo[] parameters)
+        {
+            var result = new Func<object?>[parameters.Length];
             for (var index = 0; index < parameters.Length; index++)
             {
                 var parameter = parameters[index];
@@ -77,8 +64,9 @@ internal static class NativeConstructorActivator
                 {
                     if (serviceKey != null && attribute is ServiceKeyAttribute)
                     {
-                        injectedKeyTypes.Add(parameter.ParameterType);
-                        if (!graphOnly) ValidateServiceKeyType(parameter.ParameterType, serviceKey);
+                        if (serviceKey != KeyedService.AnyKey && parameter.ParameterType != typeof(object)
+                            && parameter.ParameterType != serviceKey.GetType())
+                            throw new InvalidOperationException("The ServiceKey parameter type must match the service key type or be object.");
                         injectKey = true;
                         break;
                     }
@@ -94,15 +82,17 @@ internal static class NativeConstructorActivator
                     }
                 }
                 if (injectKey)
-                    result[index] = ConstructorArgument.Constant(serviceKey);
+                    result[index] = () => serviceKey;
                 else if (IsRegistered(parameter.ParameterType, dependencyKey))
                 {
                     // A registered factory may return null. Defaults apply to missing
                     // registrations, never to the value returned by a registered service.
-                    result[index] = ConstructorArgument.Service(parameter.ParameterType, dependencyKey);
+                    result[index] = dependencyKey == null
+                        ? () => provider.GetService(parameter.ParameterType)
+                        : () => ((IKeyedServiceProvider)provider).GetKeyedService(parameter.ParameterType, dependencyKey);
                 }
                 else if (TryGetDefaultValue(parameter, out var value))
-                    result[index] = ConstructorArgument.Constant(value);
+                    result[index] = () => value;
                 else
                 {
                     if (constructors.Length == 1)
@@ -130,43 +120,6 @@ internal static class NativeConstructorActivator
             return keyedProbe.IsKeyedService(type, key)
                 || (type.IsConstructedGenericType && keyedProbe.IsKeyedService(type, KeyedService.AnyKey));
         }
-    }
-
-    internal sealed class ConstructorPlan(ConstructorInfo constructor, ConstructorArgument[] arguments, object? serviceKey, Type[] injectedKeyTypes)
-    {
-        internal object? ServiceKey { get; } = serviceKey;
-        internal ConstructorInfo Constructor { get; } = constructor;
-        internal ConstructorArgument[] Arguments { get; } = arguments;
-        internal void ValidateServiceKeyTypes(object? key)
-        {
-            foreach (var type in injectedKeyTypes) ValidateServiceKeyType(type, key);
-        }
-    }
-
-    internal readonly struct ConstructorArgument
-    {
-        internal Type? ServiceType { get; }
-        internal object? Key { get; }
-        private object? Value { get; }
-
-        private ConstructorArgument(Type? serviceType, object? key, object? value)
-        {
-            ServiceType = serviceType;
-            Key = key;
-            Value = value;
-        }
-
-        internal static ConstructorArgument Service(Type type, object? key) => new(type, key, null);
-        internal static ConstructorArgument Constant(object? value) => new(null, null, value);
-        internal object? Resolve(IServiceProvider provider) => ServiceType == null ? Value
-            : Key == null ? provider.GetService(ServiceType)
-            : ((IKeyedServiceProvider)provider).GetKeyedService(ServiceType, Key);
-    }
-
-    private static void ValidateServiceKeyType(Type type, object? key)
-    {
-        if (key != null && key != KeyedService.AnyKey && type != typeof(object) && type != key.GetType())
-            throw new InvalidOperationException("The ServiceKey parameter type must match the service key type or be object.");
     }
 
     private static bool TryGetDefaultValue(ParameterInfo parameter, out object? value)

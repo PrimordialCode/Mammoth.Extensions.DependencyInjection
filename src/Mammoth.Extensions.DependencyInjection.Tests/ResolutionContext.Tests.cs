@@ -181,6 +181,7 @@ public class ResolutionContextTests
 	private static ServiceProvider Build(IServiceCollection services) =>
 		ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
 		{
+			ValidateOnBuild = true,
 			DetectIncorrectUsageOfTransientDisposables = true,
 			AllowSingletonToResolveTransientDisposables = true
 		});

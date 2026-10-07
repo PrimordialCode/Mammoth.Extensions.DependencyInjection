@@ -151,7 +151,7 @@ public class ServiceKeysFallbackTests
         {
             DetectIncorrectUsageOfTransientDisposables = diagnostics,
             ValidateScopes = true,
-            ValidateOnBuild = validateOnBuild
+            ValidateOnBuild = validateOnBuild || diagnostics
         });
     }
 

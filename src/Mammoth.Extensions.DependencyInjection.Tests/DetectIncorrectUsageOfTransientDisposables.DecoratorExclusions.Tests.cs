@@ -155,6 +155,7 @@ public class DecoratorDiagnosticExclusionTests
         services.Decorate<IWork, NonDisposableDecorator>();
         using var provider = ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
         {
+            ValidateOnBuild = true,
             DetectIncorrectUsageOfTransientDisposables = true
         });
         Assert.ThrowsExactly<InvalidOperationException>(() => provider.GetRequiredKeyedService<IWork>(key));
@@ -179,6 +180,7 @@ public class DecoratorDiagnosticExclusionTests
     private static ServiceProvider Build(IServiceCollection services, Type excludedType) =>
         ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
         {
+            ValidateOnBuild = true,
             DetectIncorrectUsageOfTransientDisposables = true,
             DetectIncorrectUsageOfTransientDisposablesExclusionPatterns = [$"^{Regex.Escape(excludedType.FullName!)}$"]
         });

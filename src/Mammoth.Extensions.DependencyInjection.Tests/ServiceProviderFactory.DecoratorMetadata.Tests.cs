@@ -24,6 +24,7 @@ public class DecoratorMetadataSnapshotTests
         Assert.HasCount(2, privateLayers);
         using var provider = ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
         {
+            ValidateOnBuild = diagnostics,
             DetectIncorrectUsageOfTransientDisposables = diagnostics
         });
         var types = provider.GetRequiredService<ServiceTypes>();
@@ -80,6 +81,7 @@ public class DecoratorMetadataSnapshotTests
         var privateLayer = services.Single(d => d.ServiceType != typeof(Consumer) && d.ServiceType != typeof(DisposableDependency));
         using var provider = ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
         {
+            ValidateOnBuild = true,
             DetectIncorrectUsageOfTransientDisposables = true,
             AllowSingletonToResolveTransientDisposables = true
         });

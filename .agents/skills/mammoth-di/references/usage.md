@@ -104,7 +104,7 @@ CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("fr-FR");
 IServiceCollection services = new ServiceCollection();
 services.AddKeyedTransient<Disposable>(1234.5m);
 using var provider = ServiceProviderFactory.CreateServiceProvider(services,
-    new ExtendedServiceProviderOptions { DetectIncorrectUsageOfTransientDisposables = true });
+    new ExtendedServiceProviderOptions { DetectIncorrectUsageOfTransientDisposables = true, ValidateOnBuild = true });
 bool rejected = false;
 try { provider.GetRequiredKeyedService<Disposable>(1234.5m); }
 catch (InvalidOperationException error)

@@ -128,6 +128,7 @@ public class TransientDisposableDuplicateLifetimeTests
     private static ServiceProvider Build(IServiceCollection services, bool allowSingleton = true) =>
         ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
         {
+            ValidateOnBuild = true,
             DetectIncorrectUsageOfTransientDisposables = true,
             AllowSingletonToResolveTransientDisposables = allowSingleton
         });

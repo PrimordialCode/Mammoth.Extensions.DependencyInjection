@@ -26,6 +26,16 @@ public class KeyedActivationRegressionTests
         using (var scope = native.CreateScope())
             Check(scope.ServiceProvider.GetRequiredKeyedService<IWork>("blue"), "blue", 0);
         for (var i = 0; i < layers; i++) services.Decorate<IWork, Wrapper>();
+        if (diagnostic && wildcard && layers == 0)
+        {
+            // Native build validation inspects inherited dependencies under AnyKey.
+            var native = Assert.ThrowsExactly<AggregateException>(() => services.BuildServiceProvider(
+                new ServiceProviderOptions { ValidateOnBuild = true }));
+            var error = Assert.ThrowsExactly<AggregateException>(() => Build(services, diagnostic));
+            StringAssert.Contains(native.ToString(), nameof(Part));
+            StringAssert.Contains(error.ToString(), nameof(Part));
+            return;
+        }
         var owned = new HashSet<Snapshot>();
         var provider = Build(services, diagnostic);
         try
@@ -203,7 +213,7 @@ public class KeyedActivationRegressionTests
     [DataRow(false, true)]
     [DataRow(true, false)]
     [DataRow(true, true)]
-    public void EqualKeyObjectsPreserveTheActualRequestObject(bool decorate, bool diagnostic)
+    public void EqualKeyObjectsPreserveNativeEffectiveKeyIdentity(bool decorate, bool diagnostic)
     {
         var registeredKey = new EqualKey(42);
         var requestedKey = new EqualKey(42);
@@ -211,12 +221,14 @@ public class KeyedActivationRegressionTests
         services.AddKeyedSingleton(registeredKey, new Part("equal"));
         services.AddKeyedScoped<IWork, Work>(registeredKey);
         if (decorate) { services.Decorate<IWork, Wrapper>(); services.Decorate<IWork, Wrapper>(); }
+        // Native build validation caches explicit-key call sites before the request.
+        var expectedKey = diagnostic ? registeredKey : requestedKey;
         using var provider = Build(services, diagnostic);
         using var scope = provider.CreateScope();
         IWork work = scope.ServiceProvider.GetRequiredKeyedService<IWork>(requestedKey);
         while (true)
         {
-            Assert.AreSame(requestedKey, ((Snapshot)work).Key);
+            Assert.AreSame(expectedKey, ((Snapshot)work).Key);
             Assert.AreEqual("equal", ((Snapshot)work).Inherited.Name);
             if (work is not Wrapper wrapper) break;
             work = wrapper.Inner;
@@ -231,6 +243,15 @@ public class KeyedActivationRegressionTests
         var services = Services();
         services.AddKeyedTransient<IStrongWork, StrongWork>(42);
         if (!diagnostic) services.Decorate<IStrongWork, StrongWrapper>();
+        if (diagnostic)
+        {
+            var native = Assert.ThrowsExactly<AggregateException>(() => services.BuildServiceProvider(
+                new ServiceProviderOptions { ValidateOnBuild = true }));
+            var error = Assert.ThrowsExactly<AggregateException>(() => Build(services, diagnostic));
+            StringAssert.Contains(native.ToString(), "ServiceKey");
+            StringAssert.Contains(error.ToString(), "ServiceKey");
+            return;
+        }
         using var provider = Build(services, diagnostic);
         using var scope = provider.CreateScope();
         Assert.ThrowsExactly<InvalidOperationException>(() => scope.ServiceProvider.GetRequiredKeyedService<IStrongWork>(42));
@@ -288,7 +309,7 @@ public class KeyedActivationRegressionTests
         return services;
     }
     private static ServiceProvider Build(IServiceCollection services, bool diagnostic) => ServiceProviderFactory.CreateServiceProvider(services,
-        new ExtendedServiceProviderOptions { DetectIncorrectUsageOfTransientDisposables = diagnostic });
+        new ExtendedServiceProviderOptions { ValidateOnBuild = diagnostic, DetectIncorrectUsageOfTransientDisposables = diagnostic });
     private static void AddType(IServiceCollection services, ServiceLifetime lifetime, bool wildcard)
     {
         foreach (object key in wildcard ? new object[] { KeyedService.AnyKey } : new object[] { "red", "blue" })

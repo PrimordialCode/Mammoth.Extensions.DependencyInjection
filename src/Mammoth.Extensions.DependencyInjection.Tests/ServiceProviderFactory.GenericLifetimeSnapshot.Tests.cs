@@ -36,6 +36,7 @@ public class GenericLifetimeSnapshotIntegrationTests
         services.Add(new ServiceDescriptor(typeof(IRepository<string>), "key", typeof(Repository<string>), closedKeyed));
         using var provider = ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
         {
+            ValidateOnBuild = diagnostics,
             DetectIncorrectUsageOfTransientDisposables = diagnostics
         });
         var metadata = provider.GetRequiredService<ServiceLifetimes>();
@@ -111,6 +112,7 @@ public class GenericLifetimeSnapshotIntegrationTests
         }
         using var provider = ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
         {
+            ValidateOnBuild = true,
             DetectIncorrectUsageOfTransientDisposables = true,
             AllowSingletonToResolveTransientDisposables = true
         });

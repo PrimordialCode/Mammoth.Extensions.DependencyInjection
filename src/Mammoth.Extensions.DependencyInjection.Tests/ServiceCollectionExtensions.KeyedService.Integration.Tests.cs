@@ -126,6 +126,7 @@ public class DependsOnMergedFeatureIntegrationTests
         if (decorated) services.Decorate<DiagnosticCandidate, DiagnosticDecorator>();
         using var provider = ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
         {
+            ValidateOnBuild = true,
             DetectIncorrectUsageOfTransientDisposables = true,
             AllowSingletonToResolveTransientDisposables = true
         });
@@ -189,6 +190,7 @@ public class DependsOnMergedFeatureIntegrationTests
     private static ServiceProvider Build(IServiceCollection services, bool diagnostics) =>
         ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
         {
+            ValidateOnBuild = diagnostics,
             DetectIncorrectUsageOfTransientDisposables = diagnostics
         });
 
