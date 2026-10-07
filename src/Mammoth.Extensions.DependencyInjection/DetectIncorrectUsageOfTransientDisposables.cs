@@ -161,11 +161,15 @@ namespace Mammoth.Extensions.DependencyInjection
 
 			foreach (var descriptor in containerBuilder)
 			{
-				// if the ServiceType matches any of the exclusion patterns (sing regex), skip patching
+				// If the public service type matches an exclusion pattern, skip patching.
 				if (descriptor.Lifetime == ServiceLifetime.Transient && exclusionPatterns?.Any() == true)
 				{
-					var serviceType = descriptor.ServiceType.FullName;
-					if (serviceType != null && exclusionPatterns.Any(pattern => Regex.IsMatch(serviceType, pattern)))
+					var serviceType = descriptor.ServiceType;
+					// Keyed decoration can nest private slots; exclusions belong to the public service.
+					while (ServiceCollectionExtensions.IsDecorationSlot(serviceType))
+						serviceType = serviceType.GetGenericArguments()[0];
+					var serviceName = serviceType.FullName;
+					if (serviceName != null && exclusionPatterns.Any(pattern => Regex.IsMatch(serviceName, pattern)))
 					{
 						collection.Add(descriptor);
 						continue;
