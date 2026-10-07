@@ -53,14 +53,18 @@ internal sealed class ServiceProviderRegistrationSnapshot
     internal ServiceLifetime? GetLifetime(Type type, object? key = null) => _lifetimes.GetLifetime(type, key);
     internal IEnumerable<object> GetKeys(Type type)
     {
-        // Merge into a fresh set so neither repeated enumeration nor public metadata
-        // mutation can alter the snapshot's exact or generic-definition keys.
-        var keys = new HashSet<object>();
-        if (_keysByType.TryGetValue(type, out var exact))
-            keys.UnionWith(exact);
-        if (type.IsConstructedGenericType &&
-            _keysByType.TryGetValue(type.GetGenericTypeDefinition(), out var generic))
-            keys.UnionWith(generic);
+        _keysByType.TryGetValue(type, out var exact);
+        IReadOnlyCollection<object>? generic = null;
+        if (type.IsConstructedGenericType)
+            _keysByType.TryGetValue(type.GetGenericTypeDefinition(), out generic);
+        // The stored collections are copied and read-only, so a single group can
+        // be reused safely. Allocate a union only when both groups contain keys.
+        if (exact == null || exact.Count == 0)
+            return generic is { Count: > 0 } ? generic : Array.Empty<object>();
+        if (generic == null || generic.Count == 0)
+            return exact;
+        var keys = new HashSet<object>(exact);
+        keys.UnionWith(generic);
         return keys;
     }
 }
