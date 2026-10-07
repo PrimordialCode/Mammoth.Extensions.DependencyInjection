@@ -2,6 +2,8 @@
 
 ## vNext
 
+## 0.8.0
+
 ### Breaking Changes
 
 - Require `ValidateOnBuild = true` when transient-disposable diagnostics are enabled. Unsupported combinations throw `ArgumentException` during provider creation; native validation rejects constructor cycles and other invalid closed type registrations at startup, including unused registrations. Factory and open-generic validation retain native limits [#89](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/89).
