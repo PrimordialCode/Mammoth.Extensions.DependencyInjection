@@ -35,6 +35,7 @@ public class AnyKeyEnumerationRegressionTests
         });
         using var provider = ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
         {
+            ValidateOnBuild = diagnostics,
             DetectIncorrectUsageOfTransientDisposables = diagnostics
         });
         using var scope = provider.CreateScope();

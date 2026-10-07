@@ -95,6 +95,7 @@ public class MetadataMutationRegressionTests
         services.Add(new ServiceDescriptor(typeof(Consumer), key, typeof(Consumer), lifetime));
         using var provider = ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
         {
+            ValidateOnBuild = true,
             DetectIncorrectUsageOfTransientDisposables = true,
             AllowSingletonToResolveTransientDisposables = true
         });

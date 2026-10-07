@@ -111,7 +111,7 @@ public class OptionalEnumDefaultRegressionTests
 
     private static ServiceProvider Build(IServiceCollection services, bool diagnostics) => diagnostics
         ? ServiceProviderFactory.CreateServiceProvider(services,
-            new ExtendedServiceProviderOptions { DetectIncorrectUsageOfTransientDisposables = true })
+            new ExtendedServiceProviderOptions { ValidateOnBuild = true, DetectIncorrectUsageOfTransientDisposables = true })
         : services.BuildServiceProvider();
 
     private static IValues Resolve(IServiceProvider provider, bool keyed) =>

@@ -108,6 +108,7 @@ public class OpenGenericSnapshotIntegrationTests
     {
         var factory = new ServiceProviderFactory(new ExtendedServiceProviderOptions
         {
+            ValidateOnBuild = diagnostics,
             DetectIncorrectUsageOfTransientDisposables = diagnostics
         });
         var builder = factory.CreateBuilder(services);

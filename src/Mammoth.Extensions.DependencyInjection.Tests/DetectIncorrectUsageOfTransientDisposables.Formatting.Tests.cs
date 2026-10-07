@@ -73,6 +73,7 @@ public class TransientDisposableDiagnosticFormattingTests
 			(sp, _) => new Consumer(ResolveLeaf(sp, key)));
 		return ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
 		{
+			ValidateOnBuild = true,
 			DetectIncorrectUsageOfTransientDisposables = true,
 			AllowSingletonToResolveTransientDisposables = false
 		});

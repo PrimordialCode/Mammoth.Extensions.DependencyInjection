@@ -19,7 +19,7 @@ public class KeyedOpenGenericProviderTests
         services.Add(new ServiceDescriptor(typeof(IRepository<>), "db", typeof(Repository<>), lifetime));
         services.Add(new ServiceDescriptor(typeof(IRepository<>), "other", typeof(Repository<>), lifetime));
         using var provider = ServiceProviderFactory.CreateServiceProvider(services,
-            diagnostics ? new ExtendedServiceProviderOptions { DetectIncorrectUsageOfTransientDisposables = true } : null);
+            diagnostics ? new ExtendedServiceProviderOptions { ValidateOnBuild = true, DetectIncorrectUsageOfTransientDisposables = true } : null);
         using var scope = provider.CreateScope();
         var sp = scope.ServiceProvider;
         var first = sp.GetRequiredKeyedService<IRepository<string>>("db");
@@ -70,6 +70,7 @@ public class KeyedOpenGenericProviderTests
         services.AddKeyedTransient(typeof(IRepository<>), "db", typeof(DisposableRepository<>));
         var options = new ExtendedServiceProviderOptions
         {
+            ValidateOnBuild = true,
             DetectIncorrectUsageOfTransientDisposables = true,
             ThrowOnOpenGenericTransientDisposable = true
         };

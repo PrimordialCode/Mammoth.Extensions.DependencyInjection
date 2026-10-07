@@ -765,7 +765,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 				new ExtendedServiceProviderOptions
 				{
 					DetectIncorrectUsageOfTransientDisposables = true,
-					ValidateOnBuild = false,
+					ValidateOnBuild = true,
 					ValidateScopes = true
 				});
 
@@ -783,7 +783,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 				new ExtendedServiceProviderOptions
 				{
 					DetectIncorrectUsageOfTransientDisposables = true,
-					ValidateOnBuild = false,
+					ValidateOnBuild = true,
 					ValidateScopes = true
 				});
 
@@ -801,7 +801,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 				new ExtendedServiceProviderOptions
 				{
 					DetectIncorrectUsageOfTransientDisposables = true,
-					ValidateOnBuild = false,
+					ValidateOnBuild = true,
 					ValidateScopes = true
 				});
 
@@ -819,7 +819,7 @@ namespace Mammoth.Extensions.DependencyInjection.Tests
 				new ExtendedServiceProviderOptions
 				{
 					DetectIncorrectUsageOfTransientDisposables = true,
-					ValidateOnBuild = false,
+					ValidateOnBuild = true,
 					ValidateScopes = true
 				});
 

@@ -14,7 +14,9 @@ public class KeyedDecoratorActivationEdgeTests
     {
         var key = new EqualKey(42);
         var tracker = new Tracker();
-        var services = Services(ServiceLifetime.Scoped, wildcard ? KeyedService.AnyKey : new EqualKey(42), tracker);
+        var registeredKey = wildcard ? KeyedService.AnyKey : new EqualKey(42);
+        var services = Services(ServiceLifetime.Scoped, registeredKey, tracker);
+        var expectedKey = diagnostic && !wildcard ? registeredKey : key;
         services.Decorate<IWork, KeyBeforeInnerWrapper>();
         services.Decorate<IWork, KeyBeforeInnerWrapper>();
         using var provider = Build(services, diagnostic);
@@ -26,9 +28,9 @@ public class KeyedDecoratorActivationEdgeTests
             outer = (KeyBeforeInnerWrapper)scope.ServiceProvider.GetRequiredKeyedService<IWork>(key);
             middle = (KeyBeforeInnerWrapper)outer.Inner;
             inner = (Work)middle.Inner;
-            Assert.AreSame(key, outer.Key);
-            Assert.AreSame(key, middle.Key);
-            Assert.AreSame(key, inner.Key);
+            Assert.AreSame(expectedKey, outer.Key);
+            Assert.AreSame(expectedKey, middle.Key);
+            Assert.AreSame(expectedKey, inner.Key);
             Assert.AreSame(outer, scope.ServiceProvider.GetRequiredKeyedService<IWork>(new EqualKey(42)));
             Assert.HasCount(1, tracker.Created);
         }
@@ -56,7 +58,9 @@ public class KeyedDecoratorActivationEdgeTests
     {
         var key = new EqualKey(42);
         var tracker = new Tracker();
-        var services = Services(lifetime, wildcard ? KeyedService.AnyKey : new EqualKey(42), tracker);
+        var registeredKey = wildcard ? KeyedService.AnyKey : new EqualKey(42);
+        var services = Services(lifetime, registeredKey, tracker);
+        var expectedKey = diagnostic && !wildcard ? registeredKey : key;
         services.Decorate<IWork, ThrowingWrapper>();
         var provider = Build(services, diagnostic);
         var scope = provider.CreateScope();
@@ -66,9 +70,9 @@ public class KeyedDecoratorActivationEdgeTests
             {
                 var error = Assert.ThrowsExactly<ArgumentException>(() => scope.ServiceProvider.GetRequiredKeyedService<IWork>(key));
                 Assert.AreSame(tracker.Failure, error);
-                Assert.AreSame(key, tracker.DecoratorKey);
+                Assert.AreSame(expectedKey, tracker.DecoratorKey);
                 Assert.IsInstanceOfType<Work>(tracker.CapturedInner);
-                Assert.AreSame(key, ((Work)tracker.CapturedInner!).Key);
+                Assert.AreSame(expectedKey, ((Work)tracker.CapturedInner!).Key);
             }
             Assert.HasCount(lifetime == ServiceLifetime.Transient ? 2 : 1, tracker.Created);
             foreach (var inner in tracker.Created) Assert.AreEqual(0, inner.DisposeCount);
@@ -88,7 +92,7 @@ public class KeyedDecoratorActivationEdgeTests
         return services;
     }
     private static ServiceProvider Build(IServiceCollection services, bool diagnostic) => ServiceProviderFactory.CreateServiceProvider(services,
-        new ExtendedServiceProviderOptions { DetectIncorrectUsageOfTransientDisposables = diagnostic });
+        new ExtendedServiceProviderOptions { ValidateOnBuild = diagnostic, DetectIncorrectUsageOfTransientDisposables = diagnostic });
     public interface IWork : IDisposable { }
     public sealed class Work : IWork
     {

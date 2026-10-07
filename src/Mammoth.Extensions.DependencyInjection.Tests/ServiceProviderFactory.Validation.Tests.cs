@@ -5,6 +5,69 @@ namespace Mammoth.Extensions.DependencyInjection.Tests;
 [TestClass]
 public class ServiceProviderFactoryValidationTests
 {
+    [TestMethod]
+    [DataRow(false, false)]
+    [DataRow(false, true)]
+    [DataRow(true, false)]
+    [DataRow(true, true)]
+    public void DiagnosticsRequireBuildValidationBeforeTouchingRegistrations(bool explicitlyDisabled, bool factoryEntryPoint)
+    {
+        IServiceCollection services = new ServiceCollection();
+        var activations = 0;
+        services.AddSingleton<First>(_ => { activations++; return new First(); });
+        services.AddTransient<CycleA>();
+        services.AddTransient<CycleB>();
+        var original = services.ToArray();
+        var options = new ExtendedServiceProviderOptions { DetectIncorrectUsageOfTransientDisposables = true };
+        if (explicitlyDisabled) options.ValidateOnBuild = false;
+
+        var error = Assert.ThrowsExactly<ArgumentException>(() =>
+        {
+            if (factoryEntryPoint)
+            {
+                IServiceProviderFactory<IServiceCollection> factory = new ServiceProviderFactory(options);
+                factory.CreateServiceProvider(factory.CreateBuilder(services));
+            }
+            else ServiceProviderFactory.CreateServiceProvider(services, options);
+        });
+
+        Assert.AreEqual("options", error.ParamName);
+        StringAssert.Contains(error.Message, "ValidateOnBuild");
+        Assert.AreEqual(0, activations);
+        Assert.IsFalse(options.ValidateOnBuild, "Do not silently change caller options.");
+        CollectionAssert.AreEqual(original, services.ToArray());
+        options.ValidateOnBuild = true;
+        var cycle = Assert.ThrowsExactly<AggregateException>(() => ServiceProviderFactory.CreateServiceProvider(services, options));
+        StringAssert.Contains(cycle.ToString(), "circular dependency");
+        Assert.AreEqual(0, activations);
+        CollectionAssert.AreEqual(original, services.ToArray());
+    }
+
+    public static IEnumerable<object[]> ConstructorCycles()
+    {
+        foreach (var mode in new[] { "native", "disabled", "enabled" })
+        foreach (var lifetime in new[] { ServiceLifetime.Transient, ServiceLifetime.Scoped, ServiceLifetime.Singleton })
+        foreach (var keyed in new[] { false, true })
+        foreach (var self in new[] { false, true })
+            yield return [mode, lifetime, keyed, self];
+    }
+
+    [TestMethod]
+    [DynamicData(nameof(ConstructorCycles))]
+    public void NativeBuildValidationRejectsConstructorCycles(string mode, ServiceLifetime lifetime, bool keyed, bool self)
+    {
+        IServiceCollection services = new ServiceCollection();
+        var types = self ? new[] { typeof(SelfCycle) } : new[] { typeof(CycleA), typeof(CycleB) };
+        foreach (var type in types)
+            services.Add(keyed ? ServiceDescriptor.DescribeKeyed(type, "cycle", type, lifetime)
+                : ServiceDescriptor.Describe(type, type, lifetime));
+
+        var error = Assert.ThrowsExactly<AggregateException>(() => Build(services, mode));
+        StringAssert.Contains(error.ToString(), "circular dependency");
+        StringAssert.Contains(error.ToString(), types[0].Name);
+        if (!self) StringAssert.Contains(error.ToString(), nameof(CycleB));
+    }
+
     public static IEnumerable<object[]> InvalidGraphs()
     {
         foreach (var mode in new[] { "native", "disabled", "enabled" })
@@ -98,7 +161,6 @@ public class ServiceProviderFactoryValidationTests
     [TestMethod]
     [DataRow("native", false)]
     [DataRow("disabled", false)]
-    [DataRow("enabled", false)]
     [DataRow("native", true)]
     [DataRow("disabled", true)]
     [DataRow("enabled", true)]
@@ -128,7 +190,6 @@ public class ServiceProviderFactoryValidationTests
     [TestMethod]
     [DataRow("native")]
     [DataRow("disabled")]
-    [DataRow("enabled")]
     public void ScopeValidationAloneDoesNotEnableBuildValidation(string mode)
     {
         IServiceCollection services = new ServiceCollection();
@@ -193,4 +254,7 @@ public class ServiceProviderFactoryValidationTests
     public sealed class CallerOwned : IDisposable { public int Disposals; public void Dispose() => Disposals++; }
     public sealed class MetadataConsumer(ServiceTypes types) { public ServiceTypes Types { get; } = types; }
     public sealed class OpenGeneric<T>(IMissing missing) { public IMissing Missing { get; } = missing; }
+    public sealed class SelfCycle { public SelfCycle([FromKeyedServices] SelfCycle dependency) { } }
+    public sealed class CycleA { public CycleA([FromKeyedServices] CycleB dependency) { } }
+    public sealed class CycleB { public CycleB([FromKeyedServices] CycleA dependency) { } }
 }

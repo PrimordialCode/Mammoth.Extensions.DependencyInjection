@@ -57,6 +57,7 @@ public class NativeHotCacheEnumerationRegressionTests
         services.Add(new ServiceDescriptor(typeof(IRepository<string>), "key", typeof(ClosedKeyRepository), closedKeyed));
         using var provider = ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
         {
+            ValidateOnBuild = diagnostics,
             DetectIncorrectUsageOfTransientDisposables = diagnostics
         });
         foreach (var type in new[] { typeof(IRepository<>), typeof(IRepository<int>), typeof(IRepository<string>) })
@@ -143,6 +144,7 @@ public class NativeHotCacheEnumerationRegressionTests
         services.Decorate<IConsumer, ConsumerDecorator>();
         using var provider = ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
         {
+            ValidateOnBuild = diagnostics,
             DetectIncorrectUsageOfTransientDisposables = diagnostics
         });
         provider.GetRequiredService<ServiceTypes>().Clear();

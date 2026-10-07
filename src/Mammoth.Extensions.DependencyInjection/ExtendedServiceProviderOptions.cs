@@ -13,6 +13,8 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// <para>
 		/// Indicates whether incorrect usage of transient disposables is detected.
 		/// If set to true, the service provider will throw an exception if a transient disposable is resolved from the root scope.
+		/// Requires <see cref="ServiceProviderOptions.ValidateOnBuild"/> to be true; otherwise provider creation throws <see cref="ArgumentException"/>.
+		/// Native DI validates the original registrations before instrumentation, without activating services.
 		/// </para>
 		/// <para>
 		/// WARNING: use this setting only in debug build as it "patches" the service collection and uses

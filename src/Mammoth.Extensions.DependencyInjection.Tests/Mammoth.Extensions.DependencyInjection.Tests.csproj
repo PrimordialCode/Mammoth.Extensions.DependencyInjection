@@ -29,13 +29,4 @@
     <Compile Include="..\..\test-support\NativeResolverCompilation.cs" Link="NativeResolverCompilation.cs" />
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="../Mammoth.Extensions.DependencyInjection.CycleProbe/Mammoth.Extensions.DependencyInjection.CycleProbe.csproj" ReferenceOutputAssembly="false" />
-  </ItemGroup>
-  <Target Name="CopyCycleProbe" AfterTargets="Build">
-    <ItemGroup>
-      <CycleProbeFiles Include="../Mammoth.Extensions.DependencyInjection.CycleProbe/bin/$(Configuration)/$(TargetFramework)/*" />
-    </ItemGroup>
-    <Copy SourceFiles="@(CycleProbeFiles)" DestinationFolder="$(OutDir)CycleProbe" />
-  </Target>
 </Project>

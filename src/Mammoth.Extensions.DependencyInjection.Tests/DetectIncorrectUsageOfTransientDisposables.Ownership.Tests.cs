@@ -225,6 +225,7 @@ public class TransientDisposableOwnershipTests
         Register(services, keyed, sp => sp.GetRequiredService<Resource>());
         var provider = ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
         {
+            ValidateOnBuild = true,
             DetectIncorrectUsageOfTransientDisposables = true,
             DetectIncorrectUsageOfTransientDisposablesExclusionPatterns = ["[+]Resource$"]
         });
@@ -302,6 +303,7 @@ public class TransientDisposableOwnershipTests
     private static ServiceProvider Build(ServiceCollection services, bool allow = false) =>
         ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
         {
+            ValidateOnBuild = true,
             DetectIncorrectUsageOfTransientDisposables = true,
             AllowSingletonToResolveTransientDisposables = allow
         });
