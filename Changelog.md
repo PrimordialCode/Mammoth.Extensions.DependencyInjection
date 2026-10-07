@@ -10,6 +10,8 @@
 
 ### Bug Fixes
 
+- Preserve original constructor exception identity and stack traces in `DependsOn` activation by sharing reflection-wrapper unwrapping with contextual keyed activation, while leaving dependency-resolution exceptions unchanged [#83](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/83).
+
 - Restore typed resolution in `GetAllServices<T>()` for value-type services such as `int`, preserving explicit enumerable registrations, snapshot-backed key merging, AnyKey exclusion and private decorator filtering [#85](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/85).
 
 - Preserve exact public-service diagnostic exclusions through every private decorator layer, including repeated keyed decoration, while retaining unrelated dependency checks and container disposal ownership [#91](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/91).
