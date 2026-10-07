@@ -175,7 +175,7 @@ internal static class Program
         for (var index = 0; index < builders.Length; index++)
         {
             Type next = index + 1 < length ? builders[index + 1]
-                : valid ? typeof(Leaf) : support ? typeof(ServiceKeys<Marker>) : builders[0];
+                : support ? typeof(ServiceKeys<Marker>) : valid ? typeof(Leaf) : builders[0];
             var constructor = builders[index].DefineConstructor(MethodAttributes.Public, CallingConventions.Standard,
                 [typeof(ThreadRecorder), next]);
             var body = constructor.GetILGenerator();
@@ -188,7 +188,13 @@ internal static class Program
         var lifetime = scenario.EndsWith("scoped", StringComparison.Ordinal) ? ServiceLifetime.Scoped
             : scenario.EndsWith("singleton", StringComparison.Ordinal) ? ServiceLifetime.Singleton : ServiceLifetime.Transient;
         foreach (var type in types) services.Add(ServiceDescriptor.Describe(type, type, lifetime));
-        if (support) services.AddTransient(typeof(object), types[0]);
+        if (support)
+        {
+            services.AddTransient(typeof(object), types[0]);
+            // refs::#86: fallback metadata no longer consumes application object services.
+            // An explicit closed registration retains a real support-service cycle.
+            if (!valid) services.AddTransient<ServiceKeys<Marker>>();
+        }
         services.AddTransient<Leaf>();
         var threads = new ConcurrentDictionary<int, byte>();
         var activations = 0;
@@ -212,14 +218,16 @@ internal static class Program
             try { scope.ServiceProvider.GetRequiredService(types[0]); }
             catch (Exception error) { failure = error; }
         // Native call-site construction also holds locks while walking this graph.
-        // Give controls enough stack on Windows; only the diagnostic check is the
-        // deliberately small-stack stress subject.
-        }, mode == "diagnostics" ? 256 * 1024 : 16 * 1024 * 1024);
+        // Give controls enough stack on Windows; cycle rejection remains the
+        // deliberately small-stack stress subject. Valid scoped graphs hold native locks.
+        }, mode == "diagnostics" && !(valid && support) ? 256 * 1024 : 16 * 1024 * 1024);
         resolver.Start();
         if (!resolver.Join(TimeSpan.FromSeconds(10))) throw new TimeoutException("Deep cycle did not return.");
         if (valid && failure == null)
         {
             if (activations != length) throw new InvalidOperationException("An acyclic graph activated unexpected dependencies.");
+            if (support && scope.ServiceProvider.GetRequiredService<ServiceKeys<Marker>>().Count != 0)
+                throw new InvalidOperationException("Fallback metadata consumed application object services.");
             Console.WriteLine("PASS " + mode + " " + scenario);
             return 0;
         }
