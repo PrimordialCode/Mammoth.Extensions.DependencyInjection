@@ -2,6 +2,8 @@
 
 ## vNext
 
+- Use a reverse descriptor scan for collection lifetime queries, eliminating intermediate arrays while preserving last matching registration, assignable service types and keyed value equality [#92](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/92).
+
 - Cache constructor and parameter metadata with weak type keys and remove temporary selection/map-search allocations from DependsOn activation. Preserve resolution-time constructor availability, named overrides, keyed lookup and optional defaults [#84](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/84).
 
 ## 0.8.0

@@ -83,8 +83,7 @@ namespace Mammoth.Extensions.DependencyInjection
 				throw new ArgumentNullException(nameof(serviceType));
 			}
 
-			var descriptors = services.GetServiceDescriptors(serviceType, isKeyedService: false);
-			return descriptors.Length > 0 && descriptors[descriptors.Length - 1].Lifetime == ServiceLifetime.Transient;
+			return FindLastServiceDescriptor(services, serviceType, isKeyedService: false)?.Lifetime == ServiceLifetime.Transient;
 		}
 
 		/// <summary>
@@ -111,8 +110,7 @@ namespace Mammoth.Extensions.DependencyInjection
 				throw new ArgumentNullException(nameof(serviceType));
 			}
 
-			var descriptors = services.GetServiceDescriptors(serviceType, isKeyedService: false);
-			return descriptors.Length > 0 && descriptors[descriptors.Length - 1].Lifetime == ServiceLifetime.Scoped;
+			return FindLastServiceDescriptor(services, serviceType, isKeyedService: false)?.Lifetime == ServiceLifetime.Scoped;
 		}
 
 		/// <summary>
@@ -139,8 +137,7 @@ namespace Mammoth.Extensions.DependencyInjection
 				throw new ArgumentNullException(nameof(serviceType));
 			}
 
-			var descriptors = services.GetServiceDescriptors(serviceType, isKeyedService: false);
-			return descriptors.Length > 0 && descriptors[descriptors.Length - 1].Lifetime == ServiceLifetime.Singleton;
+			return FindLastServiceDescriptor(services, serviceType, isKeyedService: false)?.Lifetime == ServiceLifetime.Singleton;
 		}
 
 		/// <summary>
@@ -173,10 +170,7 @@ namespace Mammoth.Extensions.DependencyInjection
 				throw new ArgumentNullException(nameof(serviceKey));
 			}
 
-			var descriptors = services.GetServiceDescriptors(serviceType, isKeyedService: true)
-				.Where(d => Equals(d.ServiceKey, serviceKey))
-				.ToArray();
-			return descriptors.Length > 0 && descriptors[descriptors.Length - 1].Lifetime == ServiceLifetime.Singleton;
+			return FindLastServiceDescriptor(services, serviceType, isKeyedService: true, serviceKey: serviceKey)?.Lifetime == ServiceLifetime.Singleton;
 		}
 
 		/// <summary>
@@ -209,10 +203,7 @@ namespace Mammoth.Extensions.DependencyInjection
 				throw new ArgumentNullException(nameof(serviceKey));
 			}
 
-			var descriptors = services.GetServiceDescriptors(serviceType, isKeyedService: true)
-				.Where(d => Equals(d.ServiceKey, serviceKey))
-				.ToArray();
-			return descriptors.Length > 0 && descriptors[descriptors.Length - 1].Lifetime == ServiceLifetime.Scoped;
+			return FindLastServiceDescriptor(services, serviceType, isKeyedService: true, serviceKey: serviceKey)?.Lifetime == ServiceLifetime.Scoped;
 		}
 
 		/// <summary>
@@ -245,10 +236,7 @@ namespace Mammoth.Extensions.DependencyInjection
 				throw new ArgumentNullException(nameof(serviceKey));
 			}
 
-			var descriptors = services.GetServiceDescriptors(serviceType, isKeyedService: true)
-				.Where(d => Equals(d.ServiceKey, serviceKey))
-				.ToArray();
-			return descriptors.Length > 0 && descriptors[descriptors.Length - 1].Lifetime == ServiceLifetime.Transient;
+			return FindLastServiceDescriptor(services, serviceType, isKeyedService: true, serviceKey: serviceKey)?.Lifetime == ServiceLifetime.Transient;
 		}
 
 		/// <summary>
@@ -261,6 +249,21 @@ namespace Mammoth.Extensions.DependencyInjection
 		public static bool IsKeyedTransientServiceRegistered<TServiceType>(this IServiceCollection services, object serviceKey)
 		{
 			return services.IsKeyedTransientServiceRegistered(typeof(TServiceType), serviceKey);
+		}
+
+		private static ServiceDescriptor? FindLastServiceDescriptor(IServiceCollection source, Type serviceType, bool isKeyedService, object? serviceKey = null)
+		{
+			// Preserve the null-collection exception previously raised by LINQ's Where.
+			if (source is null) throw new ArgumentNullException(nameof(source));
+			for (var i = source.Count - 1; i >= 0; i--)
+			{
+				var descriptor = source[i];
+				if (descriptor.IsKeyedService == isKeyedService
+					&& serviceType.IsAssignableFrom(descriptor.ServiceType)
+					&& (!isKeyedService || Equals(descriptor.ServiceKey, serviceKey)))
+					return descriptor;
+			}
+			return null;
 		}
 	}
 }
