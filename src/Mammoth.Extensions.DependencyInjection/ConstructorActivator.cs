@@ -15,15 +15,7 @@ internal static class ConstructorActivator
             p.GetCustomAttribute<FromKeyedServicesAttribute>()?.LookupMode == ServiceKeyLookupMode.InheritKey)))
             return inner == null ? ActivatorUtilities.CreateInstance(provider, target)
                 : ActivatorUtilities.CreateInstance(provider, target, inner);
-        try
-        {
-            return CreateInstance(provider, target, [], serviceKey, inner);
-        }
-        catch (TargetInvocationException error) when (error.InnerException != null)
-        {
-            ExceptionDispatchInfo.Capture(error.InnerException).Throw();
-            throw;
-        }
+        return CreateInstance(provider, target, [], serviceKey, inner);
     }
 
     internal static object CreateDependsOn(IServiceProvider provider, Type target, Dependency[] map, object? serviceKey = null)
@@ -67,8 +59,18 @@ internal static class ConstructorActivator
             throw new InvalidOperationException($"No satisfiable public constructor on {target}.");
         if (ambiguous)
             throw new InvalidOperationException($"Multiple equally long satisfiable constructors on {target}.");
-        return selected.Invoke(selected.GetParameters().Select((parameter, index) =>
-            index == selectedInnerIndex ? inner : Resolve(parameter)).ToArray());
+        // Resolve dependencies outside the catch: only unwrap the reflection invocation.
+        var arguments = selected.GetParameters().Select((parameter, index) =>
+            index == selectedInnerIndex ? inner : Resolve(parameter)).ToArray();
+        try
+        {
+            return selected.Invoke(arguments);
+        }
+        catch (TargetInvocationException error) when (error.InnerException != null)
+        {
+            ExceptionDispatchInfo.Capture(error.InnerException).Throw();
+            throw;
+        }
 
         bool CanSupply(ParameterInfo parameter)
         {
