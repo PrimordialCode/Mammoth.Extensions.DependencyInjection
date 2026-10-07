@@ -42,7 +42,8 @@ namespace Mammoth.Extensions.DependencyInjection
 		/// Sometimes it's necessary to exclude some services from the detection of incorrect usage of transient disposables.
 		/// </para>
 		/// <para>
-		/// We can specify some patterns to exclude services from the detection. All the services (ServiceType) that matches any of the patterns will be excluded from the check.
+		/// Patterns match the full name of the registered public service type, including its private decorator layers.
+		/// Dependencies registered under other service types are still checked unless separately excluded.
 		/// </para>
 		/// <para>
 		/// Some AspNetCore services are registered as transient disposables, but they are managed by the framework.
