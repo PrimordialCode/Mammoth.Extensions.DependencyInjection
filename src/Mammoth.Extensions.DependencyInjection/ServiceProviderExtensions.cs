@@ -62,7 +62,17 @@ public static partial class ServiceProviderExtensions
 	/// </remarks>
 	public static IEnumerable<TServiceType> GetAllServices<TServiceType>(this IServiceProvider serviceProvider)
 	{
-		return serviceProvider.GetAllServices(typeof(TServiceType)).Cast<TServiceType>();
+		var serviceType = typeof(TServiceType);
+		var snapshot = serviceProvider.GetService<ServiceProviderRegistrationSnapshot>();
+		var serviceList = new List<TServiceType>();
+		if (snapshot == null || !ServiceCollectionExtensions.IsDecorationSlot(serviceType))
+			serviceList.AddRange(serviceProvider.GetServices<TServiceType>());
+		var keys = snapshot?.GetKeys(serviceType) ??
+			(serviceProvider.GetService(typeof(ServiceKeys<TServiceType>)) as IEnumerable<object> ?? []);
+		foreach (var serviceKey in keys)
+			if (!ReferenceEquals(serviceKey, KeyedService.AnyKey))
+				serviceList.AddRange(serviceProvider.GetKeyedServices<TServiceType>(serviceKey));
+		return serviceList;
 	}
 
 	private static InvalidOperationException BuildExceptionBecauseProviderWasNotBuiltUsingTheFactory(Exception? ex = null)
