@@ -2,6 +2,8 @@
 
 ## vNext
 
+- Cache constructor and parameter metadata with weak type keys and remove temporary selection/map-search allocations from DependsOn activation. Preserve resolution-time constructor availability, named overrides, keyed lookup and optional defaults [#84](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/84).
+
 ## 0.8.0
 
 ### Breaking Changes
