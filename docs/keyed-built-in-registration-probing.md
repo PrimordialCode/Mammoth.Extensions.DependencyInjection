@@ -63,6 +63,16 @@ Before reading the descriptor array, the code verifies that the field exists and
 
 This explanation concerns the new private-DI registration fallback. Constructor/parameter reflection used by the existing activator is a separate mechanism.
 
+## Original type activation in decorators
+
+[Issue #111](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/111) reuses the native-compatible activator for original implementation-type descriptors hidden by decoration. It ignores `ActivatorUtilitiesConstructorAttribute`, accepts satisfiable constructor parameter permutations/subsets, and rejects unrelated parameter-type sets before activating dependencies. New decorators and nonempty DependsOn factories keep their existing construction policies.
+
+This activator uses the same keyed built-in availability helper described above. It also validates open-generic constraints for every examined constructor candidate, including candidates that would not ultimately be selected. Native DI performs that validation while constructing argument call sites; its public availability probes report a registration without testing the implementation's generic constraints. Resolving the dependency to check constraints would activate factories too early.
+
+Mammoth providers supply their existing registration snapshot. For a recognized native probe, the guarded `ReadNativeDescriptors` helper reads the same copied descriptor array through the existing cached field lookup, then builds an internal snapshot cached separately in a `ConditionalWeakTable`. This additional snapshot retains descriptor identities, lifetimes and implementation metadata needed for constraint validation. The keyed-built-in identity cache still stores only the four built-in types. Both caches are provider-specific and weakly keyed; neither reads the subsequently mutable caller collection or activates a service. Exact closed registrations, including AnyKey, take precedence over open-generic bindings.
+
+Custom probes continue to supply their public availability contract. Missing or incompatible metadata on the recognized native probe fails clearly with the existing recommendation to use Mammoth's provider factory. This reuse adds no new private member lookup; it broadens the descriptor fallback's use to native-compatible generic constraint validation.
+
 ## Verification of the compatibility choice
 
 The initial implementation in [PR #115](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/pull/115), commit `3c6942bfea31dfb1dcd2e3446cb05808a3835810`, was verified as follows. Revalidate these contracts when changing the fallback or upgrading the DI dependency.

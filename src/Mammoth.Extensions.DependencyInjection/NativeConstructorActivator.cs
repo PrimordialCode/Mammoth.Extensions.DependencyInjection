@@ -4,7 +4,7 @@ using System.Runtime.ExceptionServices;
 
 namespace Mammoth.Extensions.DependencyInjection;
 
-// Diagnostics replaces ordinary implementation-type descriptors with tracking factories.
+// Diagnostics and decoration replace implementation-type descriptors with factories.
 // Keep native DI's constructor rules separate from ActivatorUtilities / DependsOn rules.
 internal static class NativeConstructorActivator
 {
@@ -107,15 +107,14 @@ internal static class NativeConstructorActivator
         bool IsRegistered(Type type, object? key)
         {
             if (type.IsConstructedGenericType)
-                provider.GetRequiredService<ServiceProviderRegistrationSnapshot>().ValidateGenericConstraints(type, key);
+                ConstructorActivator.GetRegistrationSnapshot(provider, keyedProbe)?.ValidateGenericConstraints(type, key);
             if (key == null) return probe.IsService(type);
             // Native's public keyed probe reports built-ins for every key, although
             // their implicit call sites are unkeyed. Explicit keyed registrations work.
             if (type == typeof(IServiceProvider) || type == typeof(IServiceScopeFactory)
                 || type == typeof(IServiceProviderIsService) || type == typeof(IServiceProviderIsKeyedService))
             {
-                var snapshot = provider.GetRequiredService<ServiceProviderRegistrationSnapshot>();
-                return snapshot.GetLifetime(type, key) != null || snapshot.GetLifetime(type, KeyedService.AnyKey) != null;
+                return ConstructorActivator.IsKeyedBuiltInRegistered(provider, keyedProbe, type, key);
             }
             // The DI 10 public probe does not check AnyKey open-generic fallback.
             return keyedProbe.IsKeyedService(type, key)

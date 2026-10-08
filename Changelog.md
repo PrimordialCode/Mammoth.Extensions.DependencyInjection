@@ -10,6 +10,8 @@
 
 ### Bug Fixes
 
+- Preserve native constructor selection for decorated original type registrations, including ignored preferred-constructor attributes, parameter-type-set ambiguity, contextual keys, generic constraints and native-provider metadata probing, while retaining factory/map activation policies, layer lifetimes and disposal ownership [#111](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/111).
+
 - Preserve registered factory null results in mapped and contextual keyed constructor dependencies, including named key maps and decoration. Apply optional defaults only to missing registrations while retaining missing-required failures and original factory exceptions [#110](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/110).
 
 - Keep keyed decorator inner binding separate from ServiceKey and FromKeyedServices parameters, preserving explicit, inherited and null-key dependency lookup independently of parameter order, repeated layers, native lifetimes and disposal ownership [#109](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/109).
