@@ -14,6 +14,8 @@ internal static class ConstructorActivator
 
     // Native DI's keyed probe reports implicit built-ins under every key. Its copied
     // descriptors distinguish explicit registrations without activating dependencies.
+    // See docs/keyed-built-in-registration-probing.md for the compatibility rationale,
+    // reflection guards and alternatives.
     private static readonly Type? NativeProbeType = typeof(ServiceProvider).Assembly.GetType(
         "Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory");
     private static readonly FieldInfo? NativeDescriptors = NativeProbeType?.GetField("_descriptors", BindingFlags.Instance | BindingFlags.NonPublic);
