@@ -93,7 +93,7 @@ internal static class ConstructorActivator
             var dependency = FindDependency(map, parameter.Name);
             if (dependency != null)
                 return dependency.T == Dependency.DependencyType.KeyedServices
-                    ? keyedProbe.IsKeyedService(parameter.ParameterType, dependency.Value)
+                    ? IsKeyedRegistered(parameter.ParameterType, dependency.Value)
                     : AcceptsValue(parameter.ParameterType, dependency.Value);
             if (parameter.IsServiceKey)
             {
@@ -108,8 +108,17 @@ internal static class ConstructorActivator
         {
             var key = EffectiveKey(parameter.FromKey, serviceKey);
             return key != null
-                ? keyedProbe.IsKeyedService(parameter.ParameterType, key)
+                ? IsKeyedRegistered(parameter.ParameterType, key)
                 : ordinaryProbe.IsService(parameter.ParameterType);
+        }
+
+        bool IsKeyedRegistered(Type type, object? key)
+        {
+            // DI 10's probe misses AnyKey open-generic fallback for a concrete key.
+            // Probe the wildcard without activating a dependency; resolution still uses
+            // the requested key, retaining native precedence, caching and constraint errors.
+            return keyedProbe.IsKeyedService(type, key)
+                || (key != null && type.IsConstructedGenericType && keyedProbe.IsKeyedService(type, KeyedService.AnyKey));
         }
 
         object? Resolve(ParameterMetadata parameter)
