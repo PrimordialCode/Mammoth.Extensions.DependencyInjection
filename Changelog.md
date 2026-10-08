@@ -10,6 +10,8 @@
 
 ### Bug Fixes
 
+- Check explicit registrations for keyed built-in constructor dependencies instead of treating native DI's implicit unkeyed services as available under every key. Preserve native-provider support, optional defaults, named and inherited keys, and explicit or AnyKey registrations without activating rejected dependencies [#108](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/108).
+
 - Recognize native AnyKey open-generic fallback during DependsOn and contextual keyed constructor selection, including named key maps and inherited-key decoration, while preserving concrete-key resolution, registration precedence, optional defaults and generic-constraint errors without activating rejected dependencies [#107](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/107).
 
 - Normalize optional DateTime metadata on .NET Framework in mapped activation and keyed decoration, preserving named/registered overrides and unused constructor selection while sharing native-compatible defaults with diagnostic activation [#106](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/106).
