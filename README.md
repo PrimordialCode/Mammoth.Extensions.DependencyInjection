@@ -430,3 +430,7 @@ Copy the **whole `mammoth-di` folder**, including `references`, from this reposi
 These project discovery conventions were checked on October 1, 2026. Claude Code's documented project directory differs from Codex's; a standard `SKILL.md` does not imply identical search paths in every agent/client. Other agents can read the folder explicitly if they support Agent Skills or local instructions. Copying instructions does not install Mammoth or change package references. Keep the skill aligned with the library version your application actually uses.
 
 The repository includes no global agent configuration changes or automatic system-wide installer.
+
+## Architecture
+
+[Keyed built-in registration probing](docs/keyed-built-in-registration-probing.md) explains why constructor selection uses Mammoth's immutable registration snapshot and a guarded native DI reflection fallback, how this preserves native-provider support without activating dependencies, and the alternatives and compatibility limits.
