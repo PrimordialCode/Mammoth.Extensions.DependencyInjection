@@ -91,7 +91,7 @@ internal static class NativeConstructorActivator
                         ? () => provider.GetService(parameter.ParameterType)
                         : () => ((IKeyedServiceProvider)provider).GetKeyedService(parameter.ParameterType, dependencyKey);
                 }
-                else if (TryGetDefaultValue(parameter, out var value))
+                else if (ParameterDefaultValue.TryGetDefaultValue(parameter, out var value))
                     result[index] = () => value;
                 else
                 {
@@ -120,28 +120,5 @@ internal static class NativeConstructorActivator
             return keyedProbe.IsKeyedService(type, key)
                 || (type.IsConstructedGenericType && keyedProbe.IsKeyedService(type, KeyedService.AnyKey));
         }
-    }
-
-    private static bool TryGetDefaultValue(ParameterInfo parameter, out object? value)
-    {
-        value = null;
-        bool hasDefault;
-        try { hasDefault = parameter.HasDefaultValue; }
-        catch (FormatException) when (parameter.ParameterType == typeof(DateTime))
-        {
-            // .NET Framework reflection cannot read a default(DateTime) constant.
-            value = default(DateTime);
-            return true;
-        }
-        if (!hasDefault) return false;
-        value = parameter.DefaultValue;
-        var underlying = Nullable.GetUnderlyingType(parameter.ParameterType);
-        if (value == null && parameter.ParameterType.IsValueType && underlying == null)
-            // Array elements are zero-initialized even for structs with a public
-            // parameterless constructor; optional defaults must not run user code.
-            value = Array.CreateInstance(parameter.ParameterType, 1).GetValue(0);
-        if (value != null && underlying?.IsEnum == true)
-            value = Enum.ToObject(underlying, value);
-        return true;
     }
 }

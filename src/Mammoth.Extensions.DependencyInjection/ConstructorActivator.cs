@@ -184,14 +184,11 @@ internal static class ConstructorActivator
             ParameterType = parameter.ParameterType;
             IsServiceKey = parameter.IsDefined(typeof(ServiceKeyAttribute), false);
             FromKey = parameter.GetCustomAttribute<FromKeyedServicesAttribute>();
-            HasDefaultValue = parameter.HasDefaultValue;
-            if (HasDefaultValue)
-            {
-                var value = parameter.DefaultValue;
-                // Reflection boxes nullable-enum constants as their numeric underlying type.
-                var underlying = Nullable.GetUnderlyingType(ParameterType);
-                DefaultValue = value != null && underlying?.IsEnum == true ? Enum.ToObject(underlying, value) : value;
-            }
+            // Metadata covers unused constructors and overridden parameters too. Normalize
+            // DateTime's framework-specific reflection failure before caching the default;
+            // map/service availability and precedence remain resolution-specific.
+            HasDefaultValue = ParameterDefaultValue.TryGetDefaultValue(parameter, out var value);
+            DefaultValue = value;
         }
     }
 

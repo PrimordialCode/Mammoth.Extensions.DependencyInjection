@@ -2,6 +2,8 @@
 
 ## vNext
 
+- Normalize optional DateTime metadata on .NET Framework in mapped activation and keyed decoration, preserving named/registered overrides and unused constructor selection while sharing native-compatible defaults with diagnostic activation [#106](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/106).
+
 - Reuse immutable snapshot keys for empty, exact-only and generic-definition-only GetAllServices discovery, avoiding per-call union sets while preserving eager typed aggregation, key deduplication and native service lifetimes [#93](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/93).
 
 - Use a reverse descriptor scan for collection lifetime queries, eliminating intermediate arrays while preserving last matching registration, assignable service types and keyed value equality [#92](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/92).
