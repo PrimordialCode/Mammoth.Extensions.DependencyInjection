@@ -80,8 +80,10 @@ public static partial class ServiceCollectionExtensions
         if (!keyed && descriptor.ImplementationFactory != null)
             return descriptor.ImplementationFactory(provider);
         var implementation = keyed ? descriptor.KeyedImplementationType! : descriptor.ImplementationType!;
-        return keyed ? ConstructorActivator.CreateKeyed(provider, implementation, requestedKey)
-            : ActivatorUtilities.CreateInstance(provider, implementation);
+        // Reactivate an original type descriptor with native DI constructor rules.
+        // Factory descriptors above retain their own activation policy (including maps
+        // and preceding decorators). An unkeyed original must not see the private slot key.
+        return NativeConstructorActivator.CreateInstance(provider, implementation, keyed ? requestedKey : null);
     }
 
     internal static bool IsDecorationSlot(Type type) =>

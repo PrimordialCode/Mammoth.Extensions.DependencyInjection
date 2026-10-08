@@ -25,7 +25,7 @@ internal static class ConstructorActivator
         || type == typeof(IServiceScopeFactory) || type == typeof(IServiceProviderIsService)
         || type == typeof(IServiceProviderIsKeyedService);
 
-    private static bool IsKeyedBuiltInRegistered(IServiceProvider provider, IServiceProviderIsKeyedService probe, Type type, object key)
+    internal static bool IsKeyedBuiltInRegistered(IServiceProvider provider, IServiceProviderIsKeyedService probe, Type type, object key)
     {
         // Mammoth's immutable snapshot is the preferred source, including instrumented
         // providers. Custom probes retain their own availability contract.
@@ -36,9 +36,7 @@ internal static class ConstructorActivator
         {
             // Guard native internals: changed or unavailable metadata must fail clearly
             // rather than guess availability or invoke a dependency factory.
-            if (NativeDescriptors?.FieldType != typeof(ServiceDescriptor[])
-                || NativeDescriptors.GetValue(nativeProbe) is not ServiceDescriptor[] descriptors)
-                throw new NotSupportedException("Native keyed built-in constructor selection requires registration metadata. Use Mammoth's ServiceProviderFactory with this provider version.");
+            var descriptors = ReadNativeDescriptors(nativeProbe);
             var identities = new HashSet<ServiceIdentifier>();
             foreach (var descriptor in descriptors)
                 if (descriptor.IsKeyedService && descriptor.ServiceKey != null && IsBuiltIn(descriptor.ServiceType))
@@ -47,6 +45,28 @@ internal static class ConstructorActivator
         });
         return registrations.Contains(new ServiceIdentifier(key, type))
             || registrations.Contains(new ServiceIdentifier(KeyedService.AnyKey, type));
+    }
+
+    private static readonly ConditionalWeakTable<IServiceProviderIsKeyedService, ServiceProviderRegistrationSnapshot> NativeSnapshots = new();
+
+    internal static ServiceProviderRegistrationSnapshot? GetRegistrationSnapshot(IServiceProvider provider, IServiceProviderIsKeyedService probe)
+    {
+        if (provider.GetService<ServiceProviderRegistrationSnapshot>() is { } snapshot) return snapshot;
+        if (probe.GetType() != NativeProbeType) return null;
+        // Public probes cannot validate open-generic constraints on unselected candidates.
+        // Reuse the guarded copied-descriptor fallback for original type activation, so
+        // native providers need no Mammoth setup and no factory runs during selection.
+        // See docs/keyed-built-in-registration-probing.md for both metadata use cases.
+        return NativeSnapshots.GetValue(probe, static nativeProbe => new ServiceProviderRegistrationSnapshot(
+            ReadNativeDescriptors(nativeProbe), [], [], []));
+    }
+
+    private static ServiceDescriptor[] ReadNativeDescriptors(IServiceProviderIsKeyedService nativeProbe)
+    {
+        if (NativeDescriptors?.FieldType != typeof(ServiceDescriptor[])
+            || NativeDescriptors.GetValue(nativeProbe) is not ServiceDescriptor[] descriptors)
+            throw new NotSupportedException("Native constructor selection requires registration metadata. Use Mammoth's ServiceProviderFactory with this provider version.");
+        return descriptors;
     }
 
     internal static object CreateKeyed(IServiceProvider provider, Type target, object? serviceKey, object? inner = null)
