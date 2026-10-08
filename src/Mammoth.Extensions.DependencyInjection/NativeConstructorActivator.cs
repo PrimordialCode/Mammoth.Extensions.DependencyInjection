@@ -91,6 +91,7 @@ internal static class NativeConstructorActivator
                         ? () => provider.GetService(parameter.ParameterType)
                         : () => ((IKeyedServiceProvider)provider).GetKeyedService(parameter.ParameterType, dependencyKey);
                 }
+                // Keep diagnostic defaults consistent with mapped/contextual keyed activation.
                 else if (ParameterDefaultValue.TryGetDefaultValue(parameter, out var value))
                     result[index] = () => value;
                 else
