@@ -88,7 +88,7 @@ public class DecoratedNativeConstructorRegressionTests
         services.AddKeyedSingleton("blue", inherited);
         services.AddKeyedSingleton("fixed", explicitKey);
         services.AddKeyedTransient<IChoice, Contextual>(wildcard ? KeyedService.AnyKey : "blue");
-        using var native = services.BuildServiceProvider();
+        using var native = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = kind == "diagnostics" });
         var key = new string("blue".ToCharArray());
         var nativeResult = (Contextual)native.GetRequiredKeyedService<IChoice>(key);
         services.Decorate<IChoice, Forwarder>();
@@ -96,7 +96,9 @@ public class DecoratedNativeConstructorRegressionTests
         using var provider = Build(services, kind);
         var result = (Contextual)Original(provider.GetRequiredKeyedService<IChoice>(key));
         Assert.AreEqual(nativeResult.Selected, result.Selected);
-        Assert.AreSame(key, result.Key);
+        // Build validation can cache the registration's equal key before the first
+        // request. Compare key identity under the same native validation setting.
+        Assert.AreSame(nativeResult.Key, result.Key);
         Assert.AreSame(ordinary, result.Ordinary);
         Assert.AreSame(inherited, result.Inherited);
         Assert.AreSame(explicitKey, result.Explicit);
