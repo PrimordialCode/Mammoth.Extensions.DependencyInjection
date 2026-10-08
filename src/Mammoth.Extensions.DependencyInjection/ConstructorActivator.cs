@@ -12,6 +12,41 @@ internal static class ConstructorActivator
     // provider availability, dependency maps and requested keys remain resolution-specific.
     private static readonly ConditionalWeakTable<Type, TypeMetadata> Metadata = new();
 
+    // Native DI's keyed probe reports implicit built-ins under every key. Its copied
+    // descriptors distinguish explicit registrations without activating dependencies.
+    private static readonly Type? NativeProbeType = typeof(ServiceProvider).Assembly.GetType(
+        "Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory");
+    private static readonly FieldInfo? NativeDescriptors = NativeProbeType?.GetField("_descriptors", BindingFlags.Instance | BindingFlags.NonPublic);
+    private static readonly ConditionalWeakTable<IServiceProviderIsKeyedService, HashSet<ServiceIdentifier>> KeyedBuiltIns = new();
+
+    private static bool IsBuiltIn(Type type) => type == typeof(IServiceProvider)
+        || type == typeof(IServiceScopeFactory) || type == typeof(IServiceProviderIsService)
+        || type == typeof(IServiceProviderIsKeyedService);
+
+    private static bool IsKeyedBuiltInRegistered(IServiceProvider provider, IServiceProviderIsKeyedService probe, Type type, object key)
+    {
+        // Mammoth's immutable snapshot is the preferred source, including instrumented
+        // providers. Custom probes retain their own availability contract.
+        if (provider.GetService<ServiceProviderRegistrationSnapshot>() is { } snapshot)
+            return snapshot.GetLifetime(type, key) != null || snapshot.GetLifetime(type, KeyedService.AnyKey) != null;
+        if (probe.GetType() != NativeProbeType) return probe.IsKeyedService(type, key);
+        var registrations = KeyedBuiltIns.GetValue(probe, static nativeProbe =>
+        {
+            // Guard native internals: changed or unavailable metadata must fail clearly
+            // rather than guess availability or invoke a dependency factory.
+            if (NativeDescriptors?.FieldType != typeof(ServiceDescriptor[])
+                || NativeDescriptors.GetValue(nativeProbe) is not ServiceDescriptor[] descriptors)
+                throw new NotSupportedException("Native keyed built-in constructor selection requires registration metadata. Use Mammoth's ServiceProviderFactory with this provider version.");
+            var identities = new HashSet<ServiceIdentifier>();
+            foreach (var descriptor in descriptors)
+                if (descriptor.IsKeyedService && descriptor.ServiceKey != null && IsBuiltIn(descriptor.ServiceType))
+                    identities.Add(ServiceIdentifier.FromDescriptor(descriptor));
+            return identities;
+        });
+        return registrations.Contains(new ServiceIdentifier(key, type))
+            || registrations.Contains(new ServiceIdentifier(KeyedService.AnyKey, type));
+    }
+
     internal static object CreateKeyed(IServiceProvider provider, Type target, object? serviceKey, object? inner = null)
     {
         // Keep ActivatorUtilities behavior for constructors without contextual parameters.
@@ -114,6 +149,8 @@ internal static class ConstructorActivator
 
         bool IsKeyedRegistered(Type type, object? key)
         {
+            if (key != null && IsBuiltIn(type))
+                return IsKeyedBuiltInRegistered(provider, keyedProbe, type, key);
             // DI 10's probe misses AnyKey open-generic fallback for a concrete key.
             // Probe the wildcard without activating a dependency; resolution still uses
             // the requested key, retaining native precedence, caching and constraint errors.

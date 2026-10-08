@@ -42,6 +42,80 @@ public class KeyedBuiltInActivationRegressionTests
     public void RejectedAndAmbiguousConstructorsNeverActivateDependencies(string type, string provider)
         => Dispatch(type, new ActivationCheck(provider));
 
+    [TestMethod]
+    [DynamicData(nameof(ProviderCases))]
+    public void KeyedDecorationPreservesMissingDefaultsAndExplicitRegistrations(string type, string provider)
+        => Dispatch(type, new DecorationCheck(provider));
+
+    [TestMethod]
+    [DataRow("provider")]
+    [DataRow("scope")]
+    [DataRow("ordinary-probe")]
+    [DataRow("keyed-probe")]
+    public void CustomProvidersRetainTheirProbeContract(string type)
+        => Dispatch(type, new CustomProviderCheck());
+
+    private sealed class DecorationCheck(string kind) : ICheck
+    {
+        public void Run<T>() where T : class
+        {
+            foreach (var registration in new[] { "missing", "exact", "wildcard" })
+            {
+                var services = Services<T>(registration);
+                services.AddKeyedTransient<ILayer, Layer>("blue");
+                services.Decorate<ILayer, Wrapper<T>>();
+                using var provider = Build(services, kind);
+                using var scope = provider.CreateScope();
+                var result = (Wrapper<T>)scope.ServiceProvider.GetRequiredKeyedService<ILayer>("blue");
+                Assert.AreEqual("blue", result.Key);
+                Assert.AreEqual("configured", result.Label);
+                Assert.AreEqual(registration != "missing", result.Dependency != null);
+            }
+        }
+    }
+
+    private sealed class CustomProviderCheck : ICheck
+    {
+        public void Run<T>() where T : class
+        {
+            using var native = Services<T>("missing").BuildServiceProvider();
+            foreach (var available in new[] { false, true })
+            {
+                var provider = new CustomProvider(native, typeof(T), available);
+                var result = (AttributeConsumer<T>)ConstructorActivator.CreateDependsOn(provider,
+                    typeof(AttributeConsumer<T>), [Dependency.OnValue("label", "configured")]);
+                Assert.AreEqual(available ? "long" : "short", result.Choice);
+                Assert.AreEqual(available ? 1 : 0, provider.Resolutions);
+            }
+        }
+    }
+
+    private sealed class CustomProvider(IServiceProvider native, Type builtIn, bool available) : IKeyedServiceProvider, IServiceProviderIsKeyedService
+    {
+        public int Resolutions { get; private set; }
+        public bool IsService(Type type) => native.GetRequiredService<IServiceProviderIsService>().IsService(type);
+        public object? GetService(Type type) => type == typeof(IServiceProviderIsKeyedService) ? this : native.GetService(type);
+        public bool IsKeyedService(Type type, object? key) => available && type == builtIn && Equals(key, "blue");
+        public object? GetKeyedService(Type type, object? key)
+        {
+            if (!IsKeyedService(type, key)) return null;
+            Resolutions++;
+            return new BuiltIns();
+        }
+        public object GetRequiredKeyedService(Type type, object? key) => GetKeyedService(type, key)
+            ?? throw new AssertFailedException("Unavailable dependency must not be resolved.");
+    }
+
+    public interface ILayer;
+    public sealed class Layer : ILayer;
+    public sealed class Wrapper<T>(ILayer inner, string label, [ServiceKey] object key, [FromKeyedServices] T? dependency = null) : ILayer where T : class
+    {
+        public ILayer Inner { get; } = inner;
+        public string Label { get; } = label;
+        public object Key { get; } = key;
+        public T? Dependency { get; } = dependency;
+    }
+
     private interface ICheck { void Run<T>() where T : class; }
     private static void Dispatch(string type, ICheck check)
     {
@@ -135,10 +209,13 @@ public class KeyedBuiltInActivationRegressionTests
             Dependency[] map = [Dependency.OnValue("label", "configured")];
             services.AddTransient<Rejected<T>>(map);
             services.AddTransient<Ambiguous<T>>(map);
+            services.AddTransient<AttributeConsumer<T>>(map);
             using var provider = Build(services, kind);
             Assert.AreEqual("configured", provider.GetRequiredService<Rejected<T>>().Label);
             Assert.ThrowsExactly<InvalidOperationException>(() => provider.GetRequiredService<Ambiguous<T>>());
             Assert.AreEqual(0, calls, "Availability checks must not resolve even explicitly registered dependencies.");
+            Assert.AreEqual("long", provider.GetRequiredService<AttributeConsumer<T>>().Choice);
+            Assert.AreEqual(1, calls, "Resolve the keyed factory only after selecting its constructor.");
         }
     }
 
@@ -200,11 +277,11 @@ public class KeyedBuiltInActivationRegressionTests
         public InheritedConsumer(string label, [ServiceKey] object key, [FromKeyedServices] T dependency) { Choice = "long"; Label = label; Dependency = dependency; }
     }
     public sealed class OptionalConsumer<T>(string label, [FromKeyedServices("blue")] T? dependency = null) where T : class
-    { public T? Dependency { get; } = dependency; }
+    { public string Label { get; } = label; public T? Dependency { get; } = dependency; }
     public sealed class OptionalInherited<T>(string label, [ServiceKey] object key, [FromKeyedServices] T? dependency = null) where T : class
-    { public T? Dependency { get; } = dependency; }
+    { public string Label { get; } = label; public object Key { get; } = key; public T? Dependency { get; } = dependency; }
     public sealed class UnkeyedConsumer<T>(string label, [FromKeyedServices(null)] T dependency) where T : class
-    { public T Dependency { get; } = dependency; }
+    { public string Label { get; } = label; public T Dependency { get; } = dependency; }
     public sealed class Part;
     public sealed class Missing;
     public sealed class Rejected<T> where T : class
