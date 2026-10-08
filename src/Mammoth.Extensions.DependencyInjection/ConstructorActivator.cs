@@ -163,18 +163,21 @@ internal static class ConstructorActivator
 
         object? Resolve(ParameterMetadata parameter)
         {
+            // Selection already checked registration availability. Preserve a factory's
+            // null result, as native constructor activation does; optional defaults apply
+            // only to missing registrations, and factory exceptions still propagate.
             var dependency = FindDependency(map, parameter.Name);
             if (dependency != null)
                 return dependency.T == Dependency.DependencyType.KeyedServices
-                    ? keyed.GetRequiredKeyedService(parameter.ParameterType, dependency.Value)
+                    ? keyed.GetKeyedService(parameter.ParameterType, dependency.Value)
                     : dependency.Value;
             if (parameter.IsServiceKey) return serviceKey;
             if (!IsRegistered(parameter) && parameter.HasDefaultValue)
                 return parameter.DefaultValue;
             var key = EffectiveKey(parameter.FromKey, serviceKey);
             return key != null
-                ? keyed.GetRequiredKeyedService(parameter.ParameterType, key)
-                : provider.GetRequiredService(parameter.ParameterType);
+                ? keyed.GetKeyedService(parameter.ParameterType, key)
+                : provider.GetService(parameter.ParameterType);
         }
     }
 
