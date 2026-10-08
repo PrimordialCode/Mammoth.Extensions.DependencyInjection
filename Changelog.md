@@ -2,6 +2,8 @@
 
 ## vNext
 
+- Recognize native AnyKey open-generic fallback during DependsOn and contextual keyed constructor selection, including named key maps and inherited-key decoration, while preserving concrete-key resolution, registration precedence, optional defaults and generic-constraint errors without activating rejected dependencies [#107](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/107).
+
 - Normalize optional DateTime metadata on .NET Framework in mapped activation and keyed decoration, preserving named/registered overrides and unused constructor selection while sharing native-compatible defaults with diagnostic activation [#106](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/106).
 
 - Reuse immutable snapshot keys for empty, exact-only and generic-definition-only GetAllServices discovery, avoiding per-call union sets while preserving eager typed aggregation, key deduplication and native service lifetimes [#93](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/93).
