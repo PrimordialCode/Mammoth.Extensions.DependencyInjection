@@ -79,12 +79,13 @@ internal static class ConstructorActivator
         {
             if (metadata.PreferredCount == 1 && !candidate.IsPreferred) continue;
             var parameters = candidate.Parameters;
-            // Only decorators supply an inner service. ServiceKey belongs to the key context,
-            // even when an object-typed key parameter appears before the inner parameter.
+            // Only decorators supply an inner service. Attributed parameters retain their
+            // key injection or dependency lookup rather than consuming that inner instance.
             var innerIndex = -1;
             if (inner != null)
                 for (var i = 0; i < parameters.Length; i++)
-                    if (!parameters[i].IsServiceKey && AcceptsValue(parameters[i].ParameterType, inner))
+                    if (!parameters[i].IsServiceKey && parameters[i].FromKey == null
+                        && AcceptsValue(parameters[i].ParameterType, inner))
                     {
                         innerIndex = i;
                         break;
