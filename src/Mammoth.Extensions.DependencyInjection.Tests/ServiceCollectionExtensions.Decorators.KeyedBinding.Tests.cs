@@ -90,7 +90,7 @@ public class KeyedDecoratorBindingRegressionTests
         var tracker = new Tracker();
         var services = Services(ServiceLifetime.Scoped, "factory", "object", new Work("other", new Tracker()), tracker);
         var unkeyedCalls = 0;
-        services.AddTransient<IWork>(_ => { unkeyedCalls++; return new Work("unkeyed", tracker); });
+        services.Insert(services.Count - 1, ServiceDescriptor.Describe(typeof(IWork), _ => { unkeyedCalls++; return new Work("unkeyed", tracker); }, ServiceLifetime.Transient));
         services.Decorate<IWork, MissingDependency>();
         using var provider = Build(services, kind);
         using (var scope = provider.CreateScope())
@@ -109,7 +109,7 @@ public class KeyedDecoratorBindingRegressionTests
         var tracker = new Tracker();
         var services = Services(ServiceLifetime.Scoped, "factory", "interface", new Work("other", new Tracker()), tracker);
         var otherCalls = 0;
-        services.AddKeyedTransient<IWork>("other", (_, _) => { otherCalls++; return new Work("other", tracker); });
+        services.Insert(services.Count - 1, ServiceDescriptor.DescribeKeyed(typeof(IWork), "other", (_, _) => { otherCalls++; return new Work("other", tracker); }, ServiceLifetime.Transient));
         services.Decorate<IWork, NoOrdinaryInner>();
         using var provider = Build(services, kind);
         using (var scope = provider.CreateScope())
