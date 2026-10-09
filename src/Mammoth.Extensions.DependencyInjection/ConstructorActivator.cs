@@ -47,12 +47,14 @@ internal static class ConstructorActivator
             || registrations.Contains(new ServiceIdentifier(KeyedService.AnyKey, type));
     }
 
-    private static readonly ConditionalWeakTable<IServiceProviderIsKeyedService, ServiceProviderRegistrationSnapshot> NativeSnapshots = new();
+    private static readonly ConditionalWeakTable<IServiceProviderIsService, ServiceProviderRegistrationSnapshot> NativeSnapshots = new();
 
-    internal static ServiceProviderRegistrationSnapshot? GetRegistrationSnapshot(IServiceProvider provider, IServiceProviderIsKeyedService probe)
+    internal static ServiceProviderRegistrationSnapshot? GetRegistrationSnapshot(IServiceProvider provider, IServiceProviderIsService probe)
     {
         if (provider.GetService<ServiceProviderRegistrationSnapshot>() is { } snapshot) return snapshot;
         if (probe.GetType() != NativeProbeType) return null;
+        // The native ordinary and keyed probes expose the same descriptor owner.
+        // Ordinary constraint checks must not require a keyed probe registration.
         // Public probes cannot validate open-generic constraints on unselected candidates.
         // Reuse the guarded copied-descriptor fallback for original type activation, so
         // native providers need no Mammoth setup and no factory runs during selection.
@@ -61,7 +63,7 @@ internal static class ConstructorActivator
             ReadNativeDescriptors(nativeProbe), [], [], []));
     }
 
-    private static ServiceDescriptor[] ReadNativeDescriptors(IServiceProviderIsKeyedService nativeProbe)
+    private static ServiceDescriptor[] ReadNativeDescriptors(IServiceProviderIsService nativeProbe)
     {
         if (NativeDescriptors?.FieldType != typeof(ServiceDescriptor[])
             || NativeDescriptors.GetValue(nativeProbe) is not ServiceDescriptor[] descriptors)

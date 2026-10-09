@@ -11,7 +11,9 @@ internal static class NativeConstructorActivator
     internal static object CreateInstance(IServiceProvider provider, Type implementationType, object? serviceKey = null)
     {
         var probe = provider.GetRequiredService<IServiceProviderIsService>();
-        var keyedProbe = provider.GetRequiredService<IServiceProviderIsKeyedService>();
+        // Ordinary original activation needs only the ordinary probe. Acquire the
+        // keyed probe when a non-null dependency key actually requires planning it.
+        IServiceProviderIsKeyedService? keyedProbe = null;
         var constructors = implementationType.GetConstructors();
         // Use the same arity ordering as native DI, including its tie ordering.
         Array.Sort(constructors, (left, right) => right.GetParameters().Length.CompareTo(left.GetParameters().Length));
@@ -106,9 +108,15 @@ internal static class NativeConstructorActivator
 
         bool IsRegistered(Type type, object? key)
         {
+            if (key == null)
+            {
+                if (type.IsConstructedGenericType)
+                    ConstructorActivator.GetRegistrationSnapshot(provider, probe)?.ValidateGenericConstraints(type, key);
+                return probe.IsService(type);
+            }
+            keyedProbe ??= provider.GetRequiredService<IServiceProviderIsKeyedService>();
             if (type.IsConstructedGenericType)
                 ConstructorActivator.GetRegistrationSnapshot(provider, keyedProbe)?.ValidateGenericConstraints(type, key);
-            if (key == null) return probe.IsService(type);
             // Native's public keyed probe reports built-ins for every key, although
             // their implicit call sites are unkeyed. Explicit keyed registrations work.
             if (type == typeof(IServiceProvider) || type == typeof(IServiceScopeFactory)
