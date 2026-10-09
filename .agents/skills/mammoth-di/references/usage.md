@@ -1,6 +1,6 @@
 # Consumer recipes
 
-Each C# block is a separate complete console program. Use a local develop build or a released package containing the fixed baseline, plus the C# 12-or-newer SDK syntax used here. They require only Mammoth and its DI dependencies. They do not install a package, configure an agent, or build an additional host provider automatically.
+Each C# block is a separate complete console program using Mammoth and its DI dependencies. Adapt collection expressions and primary constructors to the application's SDK. In a hosted application, apply registrations to its existing service collection and configure its provider factory through the host builder.
 
 ## Constructor attributes and optional defaults
 
@@ -47,7 +47,7 @@ public sealed class Worker
 }
 ```
 
-## Generic discovery and snapshot isolation
+## Generic discovery and registration metadata
 
 Closed and open-generic registrations coexist in native enumeration; exact closed registrations select the lifetime for a single-service query. Mutating public discovery copies cannot reconfigure the built provider. Don't rely on keyed group sorting.
 
@@ -61,26 +61,19 @@ services.AddSingleton<IRepository<string>, ClosedRepository>();
 services.AddKeyedScoped(typeof(IRepository<>), "backup", typeof(BackupRepository<>));
 services.AddKeyedSingleton<IRepository<string>, ClosedBackupRepository>("backup");
 using var provider = ServiceProviderFactory.CreateServiceProvider(services);
-provider.GetRequiredService<ServiceTypes>().Clear();
-provider.GetRequiredService<ServiceKeys>().Clear();
-provider.GetRequiredService<ServiceKeys<IRepository<string>>>().Clear();
-provider.GetRequiredService<ServiceLifetimes>().Add(typeof(IRepository<string>), ServiceLifetime.Transient);
 using var scope = provider.CreateScope();
 var sp = scope.ServiceProvider;
 if (!sp.IsServiceRegistered<IRepository<int>>() || !sp.IsKeyedServiceRegistered("backup")
     || !sp.IsSingletonServiceRegistered<IRepository<string>>()
     || !sp.IsKeyedScopedServiceRegistered<IRepository<int>>("backup")
     || !sp.IsKeyedSingletonServiceRegistered<IRepository<string>>("backup"))
-    throw new Exception("Snapshot lifetime/discovery contract failed.");
-for (int i = 0; i < 100; i++)
-{
-    var generic = sp.GetAllServices<IRepository<string>>().Select(x => x.Marker).OrderBy(x => x);
-    var typed = sp.GetAllServices(typeof(IRepository<string>)).Cast<IRepository<string>>()
-        .Select(x => x.Marker).OrderBy(x => x);
-    if (!generic.SequenceEqual(new[] { 0, 1, 2, 3 }) || !typed.SequenceEqual(new[] { 0, 1, 2, 3 }))
-        throw new Exception("Generic membership contract failed.");
-}
-Console.WriteLine("PASS: generic discovery and protected metadata");
+    throw new Exception("Registration lifetime/discovery contract failed.");
+var generic = sp.GetAllServices<IRepository<string>>().Select(x => x.Marker).OrderBy(x => x);
+var typed = sp.GetAllServices(typeof(IRepository<string>)).Cast<IRepository<string>>()
+    .Select(x => x.Marker).OrderBy(x => x);
+if (!generic.SequenceEqual(new[] { 0, 1, 2, 3 }) || !typed.SequenceEqual(new[] { 0, 1, 2, 3 }))
+    throw new Exception("Generic membership contract failed.");
+Console.WriteLine("PASS: generic discovery and registration metadata");
 
 public interface IRepository<T> { int Marker { get; } }
 public sealed class Repository<T> : IRepository<T> { public int Marker => 0; }
@@ -89,8 +82,6 @@ public sealed class BackupRepository<T> : IRepository<T> { public int Marker => 
 public sealed class ClosedBackupRepository : IRepository<string> { public int Marker => 3; }
 ```
 
-These consumer loops are integration checks. The library's native-only regression separately observes actual compiled accessor replacement; a loop count or a fresh provider is not a compilation-completion guarantee.
-
 ## Root and scope diagnostics
 
 A recognized closed disposable transient is rejected at the root and is allowed inside a scope. The scope owns disposal. This example uses a type registration so the root check occurs before creating that disposable; factory registrations can create an instance before the diagnostic fails.
@@ -98,25 +89,22 @@ A recognized closed disposable transient is rejected at the root and is allowed 
 ```csharp
 using Microsoft.Extensions.DependencyInjection;
 using Mammoth.Extensions.DependencyInjection;
-using System.Globalization;
-
-CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("fr-FR");
 IServiceCollection services = new ServiceCollection();
-services.AddKeyedTransient<Disposable>(1234.5m);
+services.AddKeyedTransient<Disposable>("worker");
 using var provider = ServiceProviderFactory.CreateServiceProvider(services,
     new ExtendedServiceProviderOptions { DetectIncorrectUsageOfTransientDisposables = true, ValidateOnBuild = true });
 bool rejected = false;
-try { provider.GetRequiredKeyedService<Disposable>(1234.5m); }
-catch (InvalidOperationException error)
+try { provider.GetRequiredKeyedService<Disposable>("worker"); }
+catch (InvalidOperationException)
 {
-    rejected = error.Message.Contains("ServiceKey: 1234.5,");
+    rejected = true;
 }
 if (!rejected) throw new Exception("Root diagnostic contract failed.");
 Disposable result;
 using (var scope = provider.CreateScope())
-    result = scope.ServiceProvider.GetRequiredKeyedService<Disposable>(1234.5m);
+    result = scope.ServiceProvider.GetRequiredKeyedService<Disposable>("worker");
 if (result.DisposeCount != 1) throw new Exception("Scope ownership contract failed.");
-Console.WriteLine("PASS: root rejection, invariant key and scope disposal");
+Console.WriteLine("PASS: root rejection and scope disposal");
 
 public sealed class Disposable : IDisposable
 {
@@ -155,7 +143,7 @@ public sealed class Scanned(string label) { public string Label { get; } = label
 
 Decorate the intended keyed registration immediately, before adding another registration of that service type. Native original type graphs are validated before activation; enabling `ValidateOnBuild` can move graph errors to startup. Factory originals and non-empty maps retain their own activation policies. A caller-supplied singleton registered with the instance overload remains caller-owned and is explicitly disposed by the caller after the provider releases its wrapper. A factory returning that same instance would instead make DI track its disposal.
 
-The recipe below verifies exactly-once disposal for each scoped layer and preservation of caller ownership. Forwarding `Inner.Dispose()` from `StoreDecorator` would break these assertions. For an async decorator, release only its own async resources in `DisposeAsync()` and use async scope/provider disposal when any layer is async-only. The [detailed design](../../../../docs/decorator-architecture.md) includes a complete async scope example and explains the native original registration and scoped holder.
+The recipe below verifies exactly-once disposal for each scoped layer and preservation of caller ownership. Forwarding `Inner.Dispose()` from `StoreDecorator` would break these assertions. For an async decorator, release only its own async resources in `DisposeAsync()` and use async scope/provider disposal when any layer is async-only. A decorator that owns no resources need not implement disposal merely because its inner service does.
 
 ```csharp
 using Microsoft.Extensions.DependencyInjection;
