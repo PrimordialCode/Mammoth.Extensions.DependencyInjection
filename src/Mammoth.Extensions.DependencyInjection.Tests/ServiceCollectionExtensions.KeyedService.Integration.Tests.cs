@@ -15,6 +15,8 @@ public class DependsOnMergedFeatureIntegrationTests
     public void NamedGenericDependenciesIgnorePublicMutationAndKeepClosedPrecedence(bool diagnostics, bool keyed)
     {
         var services = new ServiceCollection();
+        // With no effective key, ServiceKey resolves the ordinary object registration.
+        services.AddSingleton<object>(new object());
         services.AddTransient(typeof(IRepository<>), typeof(UnkeyedRepository<>));
         services.AddKeyedScoped(typeof(IRepository<>), "blue", typeof(BlueRepository<>));
         services.AddKeyedSingleton(typeof(IRepository<>), "red", typeof(RedRepository<>));
@@ -42,7 +44,7 @@ public class DependsOnMergedFeatureIntegrationTests
         Assert.IsInstanceOfType<BlueRepository<int>>(result.Left);
         Assert.IsInstanceOfType<RedRepository<int>>(result.Right);
         Assert.IsInstanceOfType<ClosedRepository>(result.Closed);
-        Assert.AreEqual(keyed ? "outer" : null, result.Key);
+        Assert.AreEqual(keyed ? "outer" : provider.GetRequiredService<object>(), result.Key);
         Assert.AreEqual(7, result.Count);
         Assert.AreEqual(0, rejectedCreations);
     }
