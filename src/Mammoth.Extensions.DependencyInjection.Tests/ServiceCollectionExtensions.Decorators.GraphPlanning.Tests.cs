@@ -139,6 +139,76 @@ public class DecoratedGraphPlanningRegressionTests
         }
     }
 
+    [TestMethod]
+    [DataRow("native", false)]
+    [DataRow("native", true)]
+    [DataRow("snapshot", false)]
+    [DataRow("snapshot", true)]
+    [DataRow("diagnostics", false)]
+    [DataRow("diagnostics", true)]
+    public void EarlierInvalidEnumerableRegistrationIsNotHiddenByLastValidBinding(string kind, bool keyed)
+    {
+        var nativeCounts = new Counts();
+        var counts = new Counts();
+        using var native = Configure(nativeCounts).BuildServiceProvider();
+        var services = Configure(counts);
+        services.Decorate<IWork, Forwarder>();
+        services.Decorate<IWork, Forwarder>();
+        using var provider = Build(services, kind);
+        using var scope = provider.CreateScope();
+        StringAssert.Contains(Assert.ThrowsExactly<InvalidOperationException>(() => Resolve(native, keyed)).Message, nameof(MissingOther));
+        StringAssert.Contains(Assert.ThrowsExactly<InvalidOperationException>(() => Resolve(scope.ServiceProvider, keyed)).Message, nameof(MissingOther));
+        Assert.AreEqual(0, nativeCounts.Parts + nativeCounts.Broken + nativeCounts.Roots);
+        Assert.AreEqual(0, counts.Parts + counts.Broken + counts.Roots + counts.Wrappers);
+
+        IServiceCollection Configure(Counts tracker)
+        {
+            var collection = Services(tracker);
+            collection.AddTransient(typeof(IBroken<>), typeof(Broken<>));
+            collection.AddTransient(typeof(IBroken<>), typeof(Healthy<>));
+            if (keyed) collection.AddKeyedTransient<IWork, SelectedEnumerable>("blue");
+            else collection.AddTransient<IWork, SelectedEnumerable>();
+            return collection;
+        }
+    }
+
+    [TestMethod]
+    [DataRow("native", false)]
+    [DataRow("native", true)]
+    [DataRow("snapshot", false)]
+    [DataRow("snapshot", true)]
+    [DataRow("diagnostics", false)]
+    [DataRow("diagnostics", true)]
+    public void SuccessfulGraphCheckDoesNotLeakAcrossProvidersSharingTheOriginalDescriptor(string kind, bool keyed)
+    {
+        var original = keyed ? ServiceDescriptor.KeyedTransient<IWork, Selected>("blue")
+            : ServiceDescriptor.Transient<IWork, Selected>();
+        var validCounts = new Counts();
+        var invalidCounts = new Counts();
+        using var valid = Build(Configure(validCounts, complete: true), kind);
+        using var invalid = Build(Configure(invalidCounts, complete: false), kind);
+        using var validScope = valid.CreateScope();
+        using var invalidScope = invalid.CreateScope();
+        Assert.AreEqual("selected", Resolve(validScope.ServiceProvider, keyed).Value);
+        StringAssert.Contains(Assert.ThrowsExactly<InvalidOperationException>(() => Resolve(invalidScope.ServiceProvider, keyed)).Message, nameof(MissingOther));
+        Assert.AreEqual(0, invalidCounts.Parts + invalidCounts.Broken + invalidCounts.Roots + invalidCounts.Wrappers);
+
+        IServiceCollection Configure(Counts tracker, bool complete)
+        {
+            var collection = Services(tracker);
+            if (complete) collection.AddSingleton<MissingOther>();
+            collection.AddTransient(typeof(IBroken<>), typeof(Broken<>));
+            collection.Add(original);
+            collection.Decorate<IWork, Forwarder>();
+            return collection;
+        }
+    }
+
+    public sealed class Healthy<T> : IBroken<T>
+    {
+        public Healthy(Counts counts) => counts.Broken++;
+    }
+
     private static IServiceCollection Services(Counts counts)
     {
         IServiceCollection services = new ServiceCollection();
