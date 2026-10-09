@@ -189,6 +189,8 @@ This extension supports Singleton, Scoped, Transient and Keyed registrations. Ma
 
 Non-empty maps choose a constructor at resolution time. A single `[ActivatorUtilitiesConstructor]` constructor must be satisfiable; otherwise the unique longest satisfiable public constructor wins. Equal-length ambiguity fails. Named overrides take precedence over explicit-key `[FromKeyedServices(key)]`, `[ServiceKey]` and ordinary injection; optional defaults apply only to unregistered dependencies, including null and non-null nullable-enum defaults. Rejected constructors do not create dependencies. Empty maps use native DI behavior. Custom providers need ordinary/keyed service probes and keyed resolution. Use explicit keys on the mapped attribute path rather than assuming newer native attribute lookup modes are supported.
 
+`[ServiceKey]` injects only a non-null service key. For unkeyed or null-key registrations, the parameter uses its ordinary registered service or optional default. Named overrides still take precedence.
+
 Constructor failures retain the original exception instance and stack trace; dependency-resolution failures pass through unchanged, including application-thrown `TargetInvocationException` instances.
 
 For example, use a key attribute and an optional default without registering the optional value:

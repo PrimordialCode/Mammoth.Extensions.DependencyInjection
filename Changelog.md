@@ -10,6 +10,8 @@
 
 ### Bug Fixes
 
+- Honor ServiceKey injection only for non-null keyed contexts in DependsOn activation. Preserve ordinary registered services, null factory results and optional defaults for unkeyed/null-key parameters, while retaining named override priority and non-null key type validation [#112](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/112).
+
 - Preserve native constructor selection for decorated original type registrations, including ignored preferred-constructor attributes, parameter-type-set ambiguity, contextual keys, generic constraints and native-provider metadata probing, while retaining factory/map activation policies, layer lifetimes and disposal ownership [#111](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/111).
 
 - Preserve registered factory null results in mapped and contextual keyed constructor dependencies, including named key maps and decoration. Apply optional defaults only to missing registrations while retaining missing-required failures and original factory exceptions [#110](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/110).
