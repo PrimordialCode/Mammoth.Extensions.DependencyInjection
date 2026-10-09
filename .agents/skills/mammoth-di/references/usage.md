@@ -151,7 +151,11 @@ public sealed class Scanned(string label) { public string Label { get; } = label
 
 ## Keyed decorators and caller-owned instances
 
-Decorate the intended keyed registration immediately, before adding another registration of that service type. Native original type graphs are validated before activation; enabling `ValidateOnBuild` can move graph errors to startup. Factory originals and non-empty maps retain their own activation policies. Each wrapper releases only its own resources. A caller-owned singleton is explicitly disposed by the caller after the provider releases its wrapper.
+> **Decorators must not dispose their injected inner service.** This includes both `Dispose()` and `DisposeAsync()`. DI owns container-created originals and every decorator independently. A decorator releases only resources it creates and owns itself; it never forwards disposal to `Inner`.
+
+Decorate the intended keyed registration immediately, before adding another registration of that service type. Native original type graphs are validated before activation; enabling `ValidateOnBuild` can move graph errors to startup. Factory originals and non-empty maps retain their own activation policies. A caller-supplied singleton registered with the instance overload remains caller-owned and is explicitly disposed by the caller after the provider releases its wrapper. A factory returning that same instance would instead make DI track its disposal.
+
+The recipe below verifies exactly-once disposal for each scoped layer and preservation of caller ownership. Forwarding `Inner.Dispose()` from `StoreDecorator` would break these assertions. For an async decorator, release only its own async resources in `DisposeAsync()` and use async scope/provider disposal when any layer is async-only. The [detailed design](../../../../docs/original-decoration-graph-planning.md) includes a complete async scope example and explains the native original registration and scoped holder.
 
 ```csharp
 using Microsoft.Extensions.DependencyInjection;
@@ -195,6 +199,6 @@ public sealed class StoreDecorator(IStore inner) : IStore
 {
     public IStore Inner { get; } = inner;
     public int DisposeCount { get; private set; }
-    public void Dispose() => DisposeCount++; // do not dispose Inner
+    public void Dispose() => DisposeCount++; // Own cleanup only; never dispose Inner.
 }
 ```
