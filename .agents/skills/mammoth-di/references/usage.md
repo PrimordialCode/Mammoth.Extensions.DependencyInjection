@@ -155,7 +155,7 @@ public sealed class Scanned(string label) { public string Label { get; } = label
 
 Decorate the intended keyed registration immediately, before adding another registration of that service type. Native original type graphs are validated before activation; enabling `ValidateOnBuild` can move graph errors to startup. Factory originals and non-empty maps retain their own activation policies. A caller-supplied singleton registered with the instance overload remains caller-owned and is explicitly disposed by the caller after the provider releases its wrapper. A factory returning that same instance would instead make DI track its disposal.
 
-The recipe below verifies exactly-once disposal for each scoped layer and preservation of caller ownership. Forwarding `Inner.Dispose()` from `StoreDecorator` would break these assertions. For an async decorator, release only its own async resources in `DisposeAsync()` and use async scope/provider disposal when any layer is async-only. The [detailed design](../../../../docs/original-decoration-graph-planning.md) includes a complete async scope example and explains the native original registration and scoped holder.
+The recipe below verifies exactly-once disposal for each scoped layer and preservation of caller ownership. Forwarding `Inner.Dispose()` from `StoreDecorator` would break these assertions. For an async decorator, release only its own async resources in `DisposeAsync()` and use async scope/provider disposal when any layer is async-only. The [detailed design](../../../../docs/decorator-architecture.md) includes a complete async scope example and explains the native original registration and scoped holder.
 
 ```csharp
 using Microsoft.Extensions.DependencyInjection;

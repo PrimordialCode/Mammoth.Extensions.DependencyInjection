@@ -37,7 +37,7 @@ Use `Decorate<TService, TDecorator>()` to wrap an existing service with a decora
 
 > **Decorators must not dispose their injected inner service.** Never forward `Dispose()` or `DisposeAsync()` to the inner service. DI disposes every container-created original and decorator independently; instances supplied through an instance registration remain caller-owned. A decorator releases only resources it creates and owns itself.
 
-See [decorator disposal and ownership](#decorator-disposal-and-ownership) for a safe implementation, and [the detailed design](docs/original-decoration-graph-planning.md) for native activation, scoped holders, factory layers, and the reasons for this registration strategy.
+See [decorator disposal and ownership](#decorator-disposal-and-ownership) for a safe implementation, and [the detailed design](docs/decorator-architecture.md) for native activation, scoped holders, factory layers, and the reasons for this registration strategy.
 
 Both interface-based and class-based services can be decorated. The following examples demonstrate how to decorate services.
 
@@ -103,7 +103,7 @@ services.Decorate<ConcreteService, ConcreteServiceDecorator>();
 
 Decorators preserve Singleton, Scoped and Transient lifetimes and native keys for type, instance and factory registrations. `Decorate<TService, TDecorator>()` wraps only the **last exact service-type registration**, retaining its position. Repeated calls add outer layers; this API does not register open-generic decorators.
 
-Original implementation-type registrations retain native constructor graph planning: invalid nested, generic, enumerable or cyclic graphs fail before dependency factories run. `ValidateOnBuild` can reject them at startup, including inherited-key dependencies validated under `AnyKey`. Factory registrations and non-empty dependency maps remain opaque to native graph inspection. See [the registration design](docs/original-decoration-graph-planning.md).
+Original implementation-type registrations retain native constructor graph planning: invalid nested, generic, enumerable or cyclic graphs fail before dependency factories run. `ValidateOnBuild` can reject them at startup, including inherited-key dependencies validated under `AnyKey`. Factory registrations and non-empty dependency maps remain opaque to native graph inspection. See [the registration design](docs/decorator-architecture.md).
 
 Each occurrence in the collection is a separate registration, even when the same `ServiceDescriptor` instance is added more than once. Only the last occurrence is decorated:
 
@@ -152,7 +152,7 @@ public sealed class BufferedServiceDecorator(IBufferedService inner)
 }
 ```
 
-Dispose the owning scope/provider to release container-owned layers. Use async scope/provider disposal for async-only resources. For `AddSingleton<IService>(existingInstance)` or its keyed instance overload, the caller remains responsible for `existingInstance`; a factory returning an object gives DI ownership of its result. See the [complete keyed ownership example](.agents/skills/mammoth-di/references/usage.md#keyed-decorators-and-caller-owned-instances) and the [design's runnable scoped example](docs/original-decoration-graph-planning.md#the-ownership-rule).
+Dispose the owning scope/provider to release container-owned layers. Use async scope/provider disposal for async-only resources. For `AddSingleton<IService>(existingInstance)` or its keyed instance overload, the caller remains responsible for `existingInstance`; a factory returning an object gives DI ownership of its result. See the [complete keyed ownership example](.agents/skills/mammoth-di/references/usage.md#keyed-decorators-and-caller-owned-instances) and the [design's runnable scoped example](docs/decorator-architecture.md#the-ownership-rule).
 
 ### DependsOn (requires Keyed Services support)
 
