@@ -1,4 +1,4 @@
-# Decoration: native activation, caching, and disposal ownership
+# Decorator architecture and design decisions
 
 This document explains [PR #124](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/pull/124), which fixes [issue #121](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/121). The design restores native Microsoft DI constructor planning for decorated original **implementation-type registrations**, while retaining independent disposal ownership and registration isolation. These changes belong to the release after 0.8.0; they are not guarantees of the published 0.8.0 package.
 
