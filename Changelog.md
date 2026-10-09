@@ -10,6 +10,8 @@
 
 ### Bug Fixes
 
+- Preserve native metadata order when FromKeyedServices and ServiceKey share a constructor parameter. Keep named DependsOn overrides first, respect effective null/inherited keys, and apply the same binding in selection and resolution without additional service lookups [#122](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/122).
+
 - Restore original type activation through decorators when a provider exposes ordinary availability probing and keyed resolution without a keyed availability probe. Require keyed probing only for non-null dependency lookup keys, while preserving native constructor rules, generic constraint checks, layer lifetimes and disposal ownership [#120](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/120).
 
 - Honor ServiceKey injection only for non-null keyed contexts in DependsOn activation. Preserve ordinary registered services, null factory results and optional defaults for unkeyed/null-key parameters, while retaining named override priority and non-null key type validation [#112](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/112).
