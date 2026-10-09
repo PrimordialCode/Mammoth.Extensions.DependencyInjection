@@ -40,7 +40,8 @@ public class DecoratorDiagnosticExclusionTests
             Assert.IsFalse(provider.IsServiceRegistered(layer.ServiceType));
             Assert.HasCount(0, provider.GetAllServices(layer.ServiceType).ToArray());
             Assert.IsFalse(provider.GetRequiredService<ServiceTypes>().Contains(layer.ServiceType));
-            Assert.IsFalse(provider.GetRequiredService<ServiceKeys>().Contains(layer.ServiceKey!));
+            Assert.AreEqual(layer.ServiceKey != null && Equals(layer.ServiceKey, key),
+                provider.GetRequiredService<ServiceKeys>().Contains(layer.ServiceKey!));
         }
         var discovered = provider.GetAllServices(serviceType).ToArray();
         Assert.HasCount(1, discovered);

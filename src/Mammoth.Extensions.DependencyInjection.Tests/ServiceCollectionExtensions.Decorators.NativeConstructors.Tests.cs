@@ -31,6 +31,18 @@ public class DecoratedNativeConstructorRegressionTests
         Add(services, type, lifetime, keyed);
         services.Decorate<IChoice, Forwarder>();
         services.Decorate<IChoice, Forwarder>();
+        if (kind == "diagnostics" && (type == typeof(DifferentParameters) || type == typeof(EqualLengthDifferentParameters)))
+        {
+            var nativeError = Assert.ThrowsExactly<AggregateException>(() => nativeServices.BuildServiceProvider(
+                new ServiceProviderOptions { ValidateOnBuild = true }));
+            var error = Assert.ThrowsExactly<AggregateException>(() => Build(services, kind));
+            StringAssert.Contains(nativeError.ToString(), "ambiguous");
+            StringAssert.Contains(error.ToString(), "ambiguous");
+            Assert.AreEqual(0, nativeCounts.Dependencies);
+            Assert.AreEqual(0, counts.Dependencies);
+            Assert.AreEqual(0, counts.Constructors);
+            return;
+        }
         using var native = nativeServices.BuildServiceProvider();
         using var provider = Build(services, kind);
         Assert.AreEqual(0, counts.Dependencies);
@@ -125,6 +137,17 @@ public class DecoratedNativeConstructorRegressionTests
         var services = Configure(counts);
         using var native = nativeServices.BuildServiceProvider();
         services.Decorate<IChoice, Forwarder>();
+        if (kind == "diagnostics" && scenario == "generic-invalid")
+        {
+            Assert.ThrowsExactly<AggregateException>(() => nativeServices.BuildServiceProvider(
+                new ServiceProviderOptions { ValidateOnBuild = true }));
+            var error = Assert.ThrowsExactly<AggregateException>(() => Build(services, kind));
+            Assert.IsInstanceOfType<ArgumentException>(error.InnerExceptions[0].InnerException);
+            Assert.AreEqual(0, nativeCounts.Dependencies);
+            Assert.AreEqual(0, counts.Dependencies);
+            Assert.AreEqual(0, counts.Constructors);
+            return;
+        }
         using var provider = Build(services, kind);
         // Mutating the caller collection must not replace a built provider's metadata.
         services.AddKeyedTransient<IOpen<int>, Open<int>>("bad");

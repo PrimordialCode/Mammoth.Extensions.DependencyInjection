@@ -55,6 +55,38 @@ public static partial class ServiceCollectionExtensions
         var keyed = original.IsKeyedService;
         var instance = keyed ? original.KeyedImplementationInstance : original.ImplementationInstance;
         if (instance != null) return (_, _) => instance;
+        var implementation = keyed ? original.KeyedImplementationType : original.ImplementationType;
+        if (implementation != null)
+        {
+            // Keep type originals visible to native graph planning, including rejected
+            // constructors, while isolating caching without changing the service key.
+            var nativeType = new DecorationServiceType();
+            var nativeLifetime = original.Lifetime == ServiceLifetime.Scoped ? ServiceLifetime.Transient : original.Lifetime;
+            services.Add(keyed
+                ? ServiceDescriptor.DescribeKeyed(nativeType, original.ServiceKey, implementation, nativeLifetime)
+                : ServiceDescriptor.Describe(nativeType, implementation, nativeLifetime));
+            object ResolveNative(IServiceProvider provider, object? requestedKey)
+            {
+                DetectIncorrectUsageOfTransientDisposables.CheckNativeDecoration(provider, original, requestedKey);
+                return keyed ? provider.GetRequiredKeyedService(nativeType, requestedKey)
+                    : provider.GetRequiredService(nativeType);
+            }
+            if (original.Lifetime != ServiceLifetime.Scoped) return ResolveNative;
+            // Native IL emits scoped cache types as ldtoken, losing delegated identity.
+            // Cache a non-disposable holder under a runtime marker instead. Native DI
+            // owns the transient original exactly once in the holder's owning scope.
+            var cacheType = typeof(DecorationSlot<TService>);
+            while (services.Any(d => d.ServiceType == cacheType))
+                cacheType = typeof(DecorationSlot<>).MakeGenericType(cacheType);
+            services.Add(keyed
+                ? ServiceDescriptor.DescribeKeyed(cacheType, original.ServiceKey,
+                    (provider, key) => new ScopedDecoration(ResolveNative(provider, key)), ServiceLifetime.Scoped)
+                : ServiceDescriptor.Describe(cacheType,
+                    provider => new ScopedDecoration(ResolveNative(provider, null)), ServiceLifetime.Scoped));
+            return (provider, key) => ((ScopedDecoration)(keyed
+                ? provider.GetRequiredKeyedService(cacheType, key)
+                : provider.GetRequiredService(cacheType))).Instance;
+        }
         var identity = new object();
         var slotType = typeof(DecorationSlot<TService>);
         if (keyed)
@@ -79,15 +111,13 @@ public static partial class ServiceCollectionExtensions
             return descriptor.KeyedImplementationFactory(provider, requestedKey);
         if (!keyed && descriptor.ImplementationFactory != null)
             return descriptor.ImplementationFactory(provider);
-        var implementation = keyed ? descriptor.KeyedImplementationType! : descriptor.ImplementationType!;
-        // Reactivate an original type descriptor with native DI constructor rules.
-        // Factory descriptors above retain their own activation policy (including maps
-        // and preceding decorators). An unkeyed original must not see the private slot key.
-        return NativeConstructorActivator.CreateInstance(provider, implementation, keyed ? requestedKey : null);
+        throw new InvalidOperationException("Expected an original implementation factory.");
     }
 
     internal static bool IsDecorationSlot(Type type) =>
-        type.IsGenericType && type.GetGenericTypeDefinition() == typeof(DecorationSlot<>);
+        type is DecorationServiceType ||
+        (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(DecorationSlot<>));
 
+    private sealed class ScopedDecoration(object instance) { internal object Instance { get; } = instance; }
     private sealed class DecorationSlot<TService>;
 }

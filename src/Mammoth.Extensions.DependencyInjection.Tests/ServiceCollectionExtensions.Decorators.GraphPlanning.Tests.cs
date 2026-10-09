@@ -30,11 +30,15 @@ public class DecoratedGraphPlanningRegressionTests
             var services = Configure(counts);
             using var native = nativeServices.BuildServiceProvider();
             for (var index = 0; index < layers; index++) services.Decorate<IWork, Forwarder>();
-            // Startup validation correctly catches an invalid closed dependency;
-            // open generic graphs are discovered only at runtime on every provider.
-            if (closed && !valid && kind == "diagnostics")
+            // Native type originals remain visible to ValidateOnBuild, which
+            // also closes their open-generic dependencies while planning the root.
+            if (!valid && kind == "diagnostics")
             {
-                Assert.ThrowsExactly<AggregateException>(() => Build(services, kind));
+                var nativeError = Assert.ThrowsExactly<AggregateException>(() => nativeServices.BuildServiceProvider(
+                    new ServiceProviderOptions { ValidateOnBuild = true }));
+                var error = Assert.ThrowsExactly<AggregateException>(() => Build(services, kind));
+                StringAssert.Contains(nativeError.ToString(), nameof(MissingOther));
+                StringAssert.Contains(error.ToString(), nameof(MissingOther));
                 Assert.AreEqual(0, counts.Parts + counts.Broken + counts.Roots + counts.Wrappers);
                 continue;
             }
@@ -154,6 +158,14 @@ public class DecoratedGraphPlanningRegressionTests
         var services = Configure(counts);
         services.Decorate<IWork, Forwarder>();
         services.Decorate<IWork, Forwarder>();
+        if (kind == "diagnostics")
+        {
+            Assert.ThrowsExactly<AggregateException>(() => Configure(nativeCounts).BuildServiceProvider(
+                new ServiceProviderOptions { ValidateOnBuild = true }));
+            StringAssert.Contains(Assert.ThrowsExactly<AggregateException>(() => Build(services, kind)).ToString(), nameof(MissingOther));
+            Assert.AreEqual(0, counts.Parts + counts.Broken + counts.Roots + counts.Wrappers);
+            return;
+        }
         using var provider = Build(services, kind);
         using var scope = provider.CreateScope();
         StringAssert.Contains(Assert.ThrowsExactly<InvalidOperationException>(() => Resolve(native, keyed)).Message, nameof(MissingOther));
@@ -186,6 +198,14 @@ public class DecoratedGraphPlanningRegressionTests
         var validCounts = new Counts();
         var invalidCounts = new Counts();
         using var valid = Build(Configure(validCounts, complete: true), kind);
+        if (kind == "diagnostics")
+        {
+            StringAssert.Contains(Assert.ThrowsExactly<AggregateException>(() => Build(Configure(invalidCounts, complete: false), kind)).ToString(), nameof(MissingOther));
+            Assert.AreEqual(0, invalidCounts.Parts + invalidCounts.Broken + invalidCounts.Roots + invalidCounts.Wrappers);
+            using var validOnlyScope = valid.CreateScope();
+            Assert.AreEqual("selected", Resolve(validOnlyScope.ServiceProvider, keyed).Value);
+            return;
+        }
         using var invalid = Build(Configure(invalidCounts, complete: false), kind);
         using var validScope = valid.CreateScope();
         using var invalidScope = invalid.CreateScope();

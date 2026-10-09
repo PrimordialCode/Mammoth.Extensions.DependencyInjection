@@ -86,6 +86,18 @@ public class OrdinaryDecorationProbeRegressionTests
             using var native = nativeServices.BuildServiceProvider();
             services.Decorate<IWork, Wrapper>();
             WrapFactories(services, counts, exposeKeyedProbe: false, ordinaryOnlyProbe: false);
+            if (kind == "diagnostics" && (type == typeof(InvalidGeneric) || type == typeof(Ambiguous)))
+            {
+                Assert.ThrowsExactly<AggregateException>(() => nativeServices.BuildServiceProvider(
+                    new ServiceProviderOptions { ValidateOnBuild = true }));
+                var error = Assert.ThrowsExactly<AggregateException>(() => Build(services, kind));
+                if (type == typeof(Ambiguous)) StringAssert.Contains(error.ToString(), "ambiguous");
+                else Assert.IsInstanceOfType<ArgumentException>(error.InnerExceptions[0].InnerException);
+                Assert.AreEqual(0, counts.Parts);
+                Assert.AreEqual(0, nativeCounts.Parts);
+                Assert.AreEqual(0, counts.KeyProbeRequests);
+                continue;
+            }
             using var provider = Build(services, kind);
             using var scope = provider.CreateScope();
             if (type == typeof(InvalidGeneric))
@@ -131,7 +143,7 @@ public class OrdinaryDecorationProbeRegressionTests
     [DataRow("snapshot", true)]
     [DataRow("diagnostics", false)]
     [DataRow("diagnostics", true)]
-    public void ActualKeyedDependenciesStillRequireTheirAvailabilityProbe(string kind, bool exposeKeyedProbe)
+    public void NativeOriginalKeyedDependenciesNeedNoFactoryAvailabilityProbe(string kind, bool exposeKeyedProbe)
     {
         foreach (var type in new[] { typeof(Explicit), typeof(Inherited) })
         {
@@ -145,15 +157,8 @@ public class OrdinaryDecorationProbeRegressionTests
             WrapFactories(services, counts, exposeKeyedProbe, ordinaryOnlyProbe: false);
             using var provider = Build(services, kind);
             using var scope = provider.CreateScope();
-            if (exposeKeyedProbe)
-                Assert.AreEqual(type == typeof(Explicit) ? "explicit" : "inherited", Resolve(scope.ServiceProvider, "blue").Selected);
-            else
-            {
-                var error = Assert.ThrowsExactly<InvalidOperationException>(() => Resolve(scope.ServiceProvider, "blue"));
-                StringAssert.Contains(error.Message, nameof(IServiceProviderIsKeyedService));
-                Assert.AreEqual(0, counts.Parts);
-            }
-            Assert.IsGreaterThan(0, counts.KeyProbeRequests);
+            Assert.AreEqual(type == typeof(Explicit) ? "explicit" : "inherited", Resolve(scope.ServiceProvider, "blue").Selected);
+            Assert.AreEqual(0, counts.KeyProbeRequests, "Native type activation uses the provider's own call sites.");
         }
     }
 

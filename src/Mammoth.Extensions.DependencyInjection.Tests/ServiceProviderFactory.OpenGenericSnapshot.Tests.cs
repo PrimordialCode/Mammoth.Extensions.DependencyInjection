@@ -52,7 +52,7 @@ public class OpenGenericSnapshotIntegrationTests
         services.Decorate<IRepository<string>, RepositoryDecorator>();
         services.Decorate<IRepository<string>, RepositoryDecorator>();
         var layers = services.Where(d => d.ServiceType != typeof(IRepository<>) && d.ServiceType != typeof(IRepository<string>)).ToArray();
-        Assert.HasCount(2, layers);
+        Assert.HasCount(3, layers); // Native original, scoped holder and preceding decorator.
         using var provider = Build(services, diagnostics);
         Tamper(provider);
         foreach (var layer in layers)
@@ -61,8 +61,9 @@ public class OpenGenericSnapshotIntegrationTests
             provider.GetRequiredService<ServiceKeys>().Add(layer.ServiceKey!);
             provider.GetRequiredService<ServiceKeys<IRepository<string>>>().Add(layer.ServiceKey!);
             Assert.IsFalse(provider.IsServiceRegistered(layer.ServiceType));
-            Assert.IsFalse(provider.IsKeyedServiceRegistered(layer.ServiceKey!));
-            Assert.IsTrue(provider.IsKeyedScopedServiceRegistered(layer.ServiceType, layer.ServiceKey!));
+            Assert.AreEqual(layer.ServiceKey != null && Equals(layer.ServiceKey, "decorated"),
+                provider.IsKeyedServiceRegistered(layer.ServiceKey!));
+            Assert.AreEqual(layer.Lifetime == ServiceLifetime.Scoped, provider.IsKeyedScopedServiceRegistered(layer.ServiceType, layer.ServiceKey!));
         }
         using var scope = provider.CreateScope();
         var outer = (RepositoryDecorator)scope.ServiceProvider.GetRequiredKeyedService<IRepository<string>>("decorated");

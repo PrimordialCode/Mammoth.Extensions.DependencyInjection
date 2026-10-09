@@ -64,8 +64,10 @@ namespace Mammoth.Extensions.DependencyInjection
 				throw new ArgumentNullException(nameof(serviceType));
 			}
 
+			if (IsDecorationSlot(serviceType)) return [];
 			return services.Where(serviceDescriptor =>
-				(isKeyedService == null || serviceDescriptor.IsKeyedService == isKeyedService)
+				!IsDecorationSlot(serviceDescriptor.ServiceType)
+				&& (isKeyedService == null || serviceDescriptor.IsKeyedService == isKeyedService)
 				&& serviceType.IsAssignableFrom(serviceDescriptor.ServiceType))
 				.ToArray();
 		}
@@ -255,10 +257,11 @@ namespace Mammoth.Extensions.DependencyInjection
 		{
 			// Preserve the null-collection exception previously raised by LINQ's Where.
 			if (source is null) throw new ArgumentNullException(nameof(source));
+			if (IsDecorationSlot(serviceType)) return null;
 			for (var i = source.Count - 1; i >= 0; i--)
 			{
 				var descriptor = source[i];
-				if (descriptor.IsKeyedService == isKeyedService
+				if (!IsDecorationSlot(descriptor.ServiceType) && descriptor.IsKeyedService == isKeyedService
 					&& serviceType.IsAssignableFrom(descriptor.ServiceType)
 					&& (!isKeyedService || Equals(descriptor.ServiceKey, serviceKey)))
 					return descriptor;

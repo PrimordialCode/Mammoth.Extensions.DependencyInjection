@@ -107,7 +107,7 @@ public class GenericLifetimeSnapshotIntegrationTests
         if (decorated)
         {
             services.Decorate<Consumer<string>, ConsumerDecorator>();
-            privateLayer = services.Single(d => d.ServiceType != typeof(Consumer<>)
+            privateLayer = services.First(d => d.ServiceType != typeof(Consumer<>)
                 && d.ServiceType != typeof(Consumer<string>) && d.ServiceType != typeof(DisposableDependency));
         }
         using var provider = ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
@@ -125,9 +125,9 @@ public class GenericLifetimeSnapshotIntegrationTests
         if (privateLayer != null)
         {
             metadata.Add(privateLayer.ServiceType, unkeyedLifetime, privateLayer.ServiceKey);
-            AssertLifetime(provider, privateLayer.ServiceType, privateLayer.ServiceKey, keyedLifetime);
+            AssertLifetime(provider, privateLayer.ServiceType, privateLayer.ServiceKey, privateLayer.Lifetime);
             Assert.IsFalse(provider.IsServiceRegistered(privateLayer.ServiceType));
-            Assert.IsFalse(provider.IsKeyedServiceRegistered(privateLayer.ServiceKey!));
+            Assert.IsTrue(provider.IsKeyedServiceRegistered(privateLayer.ServiceKey!)); // The native original retains the public key.
         }
         AssertLifetime(provider, typeof(Consumer<string>), "blue", keyedLifetime);
         if (keyedSingleton)
