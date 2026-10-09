@@ -170,7 +170,7 @@ public class KeyedActivationRegressionTests
     [TestMethod]
     [DataRow(false)]
     [DataRow(true)]
-    public void NullLookupModesPreserveUnkeyedDependsOnCompatibility(bool diagnostic)
+    public void NullLookupModesUseNativeUnkeyedServiceKeyResolution(bool diagnostic)
     {
         var services = Services();
         services.AddKeyedTransient<Work>(null);
@@ -179,7 +179,7 @@ public class KeyedActivationRegressionTests
         using var provider = Build(services, diagnostic);
         using var scope = provider.CreateScope();
         var work = scope.ServiceProvider.GetRequiredService<Work>();
-        Assert.IsNull(work.Key, "Unkeyed DependsOn retains its existing null ServiceKey injection contract.");
+        Assert.AreEqual("ordinary-key", work.Key, "Null-key DependsOn uses ordinary registration resolution, as native DI does.");
         Assert.AreEqual("ordinary", work.Inherited.Name);
         Assert.AreEqual("ordinary", work.Ordinary.Name);
     }
