@@ -158,14 +158,20 @@ internal static class ConstructorActivator
             // Native DI injects ServiceKey only in a non-null keyed context.
             // Unkeyed/null-key parameters use normal services or defaults; named
             // overrides above retain priority in both selection and resolution.
-            if (serviceKey != null && parameter.IsServiceKey)
+            if (InjectsServiceKey(parameter))
             {
-                if (parameter.ParameterType != typeof(object) && parameter.ParameterType != serviceKey.GetType())
+                if (parameter.ParameterType != typeof(object) && parameter.ParameterType != serviceKey!.GetType())
                     throw new InvalidOperationException("The ServiceKey parameter type must match the service key type or be object.");
                 return AcceptsValue(parameter.ParameterType, serviceKey);
             }
             return IsRegistered(parameter) || parameter.HasDefaultValue;
         }
+
+        // Native DI stops at the first attribute with an effective non-null key.
+        // A preceding null-key lookup does not suppress later ServiceKey injection.
+        // Named overrides are handled before this decision in both callers.
+        bool InjectsServiceKey(ParameterMetadata parameter) => serviceKey != null && parameter.IsServiceKey
+            && (!parameter.FromKeyPrecedesServiceKey || EffectiveKey(parameter.FromKey, serviceKey) == null);
 
         bool IsRegistered(ParameterMetadata parameter)
         {
@@ -196,7 +202,7 @@ internal static class ConstructorActivator
                 return dependency.T == Dependency.DependencyType.KeyedServices
                     ? keyed.GetKeyedService(parameter.ParameterType, dependency.Value)
                     : dependency.Value;
-            if (serviceKey != null && parameter.IsServiceKey) return serviceKey;
+            if (InjectsServiceKey(parameter)) return serviceKey;
             if (!IsRegistered(parameter) && parameter.HasDefaultValue)
                 return parameter.DefaultValue;
             var key = EffectiveKey(parameter.FromKey, serviceKey);
@@ -252,6 +258,7 @@ internal static class ConstructorActivator
         internal Type ParameterType { get; }
         internal bool IsServiceKey { get; }
         internal FromKeyedServicesAttribute? FromKey { get; }
+        internal bool FromKeyPrecedesServiceKey { get; }
         internal bool HasDefaultValue { get; }
         internal object? DefaultValue { get; }
 
@@ -259,8 +266,16 @@ internal static class ConstructorActivator
         {
             Name = parameter.Name;
             ParameterType = parameter.ParameterType;
-            IsServiceKey = parameter.IsDefined(typeof(ServiceKeyAttribute), false);
-            FromKey = parameter.GetCustomAttribute<FromKeyedServicesAttribute>();
+            // Cache metadata order without caching the request-specific effective key.
+            foreach (var attribute in parameter.GetCustomAttributes(true))
+            {
+                if (attribute is ServiceKeyAttribute) IsServiceKey = true;
+                else if (attribute is FromKeyedServicesAttribute fromKey)
+                {
+                    FromKey = fromKey;
+                    FromKeyPrecedesServiceKey = !IsServiceKey;
+                }
+            }
             // Metadata covers unused constructors and overridden parameters too. Normalize
             // DateTime's framework-specific reflection failure before caching the default;
             // map/service availability and precedence remain resolution-specific.
