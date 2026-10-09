@@ -21,7 +21,7 @@ public class DecoratorMetadataSnapshotTests
         services.Decorate<Work, WorkDecorator>();
         services.Decorate<Work, WorkDecorator>();
         var privateLayers = services.Where(d => d.ServiceType != typeof(Work)).ToArray();
-        Assert.HasCount(2, privateLayers);
+        Assert.HasCount(3, privateLayers); // Native original, scoped holder and preceding decorator.
         using var provider = ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
         {
             ValidateOnBuild = diagnostics,
@@ -42,9 +42,17 @@ public class DecoratorMetadataSnapshotTests
             typedKeys.Add(layer.ServiceKey!);
             lifetimes.Add(layer.ServiceType, ServiceLifetime.Singleton, layer.ServiceKey);
             Assert.IsFalse(provider.IsServiceRegistered(layer.ServiceType));
-            Assert.IsFalse(provider.IsKeyedServiceRegistered(layer.ServiceKey!));
-            Assert.IsTrue(provider.IsKeyedScopedServiceRegistered(layer.ServiceType, layer.ServiceKey!));
-            Assert.IsFalse(provider.IsKeyedSingletonServiceRegistered(layer.ServiceType, layer.ServiceKey!));
+            if (layer.ServiceKey == null)
+            {
+                Assert.AreEqual(layer.Lifetime == ServiceLifetime.Scoped, provider.IsScopedServiceRegistered(layer.ServiceType));
+                Assert.IsFalse(provider.IsSingletonServiceRegistered(layer.ServiceType));
+            }
+            else
+            {
+                Assert.AreEqual(Equals(layer.ServiceKey, key), provider.IsKeyedServiceRegistered(layer.ServiceKey));
+                Assert.AreEqual(layer.Lifetime == ServiceLifetime.Scoped, provider.IsKeyedScopedServiceRegistered(layer.ServiceType, layer.ServiceKey));
+                Assert.IsFalse(provider.IsKeyedSingletonServiceRegistered(layer.ServiceType, layer.ServiceKey));
+            }
         }
         Assert.IsTrue(provider.IsServiceRegistered<Work>());
         if (keyed)
@@ -78,7 +86,7 @@ public class DecoratorMetadataSnapshotTests
         var lifetime = singleton ? ServiceLifetime.Singleton : ServiceLifetime.Scoped;
         services.Add(new ServiceDescriptor(typeof(Consumer), key, typeof(Consumer), lifetime));
         services.Decorate<Consumer, ConsumerDecorator>();
-        var privateLayer = services.Single(d => d.ServiceType != typeof(Consumer) && d.ServiceType != typeof(DisposableDependency));
+        var privateLayer = services.First(d => d.ServiceType != typeof(Consumer) && d.ServiceType != typeof(DisposableDependency));
         using var provider = ServiceProviderFactory.CreateServiceProvider(services, new ExtendedServiceProviderOptions
         {
             ValidateOnBuild = true,

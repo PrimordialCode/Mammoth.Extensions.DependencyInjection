@@ -80,6 +80,9 @@ namespace Mammoth.Extensions.DependencyInjection
 					options.DetectIncorrectUsageOfTransientDisposablesExclusionPatterns
 					);
 				sc = DetectIncorrectUsageOfTransientDisposables.PatchForResolutionContextTracking(patchedSc);
+				sc.AddSingleton(new DetectIncorrectUsageOfTransientDisposables.NativeDecorationOptions(
+					options.AllowSingletonToResolveTransientDisposables,
+					options.DetectIncorrectUsageOfTransientDisposablesExclusionPatterns));
 				var sp = sc.BuildServiceProvider(options);
 				if (openGenerics.Count > 0 && !options.ThrowOnOpenGenericTransientDisposable)
 				{

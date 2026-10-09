@@ -151,7 +151,7 @@ public sealed class Scanned(string label) { public string Label { get; } = label
 
 ## Keyed decorators and caller-owned instances
 
-Decorate the intended keyed registration immediately, before adding another registration of that service type. Each wrapper releases only its own resources. A caller-owned singleton is explicitly disposed by the caller after the provider releases its wrapper.
+Decorate the intended keyed registration immediately, before adding another registration of that service type. Native original type graphs are validated before activation; enabling `ValidateOnBuild` can move graph errors to startup. Factory originals and non-empty maps retain their own activation policies. Each wrapper releases only its own resources. A caller-owned singleton is explicitly disposed by the caller after the provider releases its wrapper.
 
 ```csharp
 using Microsoft.Extensions.DependencyInjection;

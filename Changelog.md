@@ -10,6 +10,8 @@
 
 ### Bug Fixes
 
+- Restore native constructor graph validation for decorated implementation-type originals, rejecting invalid nested/generic/enumerable/cyclic graphs before dependency factories execute. Preserve original keys, independent registration caches and exactly-once disposal; keep scoped caching correct after native compilation [#121](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/121).
+
 - Preserve native metadata order when FromKeyedServices and ServiceKey share a constructor parameter. Keep named DependsOn overrides first, respect effective null/inherited keys, and apply the same binding in selection and resolution without additional service lookups [#122](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/122).
 
 - Restore original type activation through decorators when a provider exposes ordinary availability probing and keyed resolution without a keyed availability probe. Require keyed probing only for non-null dependency lookup keys, while preserving native constructor rules, generic constraint checks, layer lifetimes and disposal ownership [#120](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/120).

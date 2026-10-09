@@ -27,6 +27,9 @@ internal sealed class NativeResolverCompilation
     internal static NativeResolverCompilation Observe<T>(ServiceProvider provider, object? key) =>
         new(provider, typeof(IEnumerable<T>), key);
 
+    internal static NativeResolverCompilation ObserveService(ServiceProvider provider, Type type, object? key) =>
+        new(provider, type, key);
+
     internal void WaitForReplacement()
     {
         var timer = Stopwatch.StartNew();

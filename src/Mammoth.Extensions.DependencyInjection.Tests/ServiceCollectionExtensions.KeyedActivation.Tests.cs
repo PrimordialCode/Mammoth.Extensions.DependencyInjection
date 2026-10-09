@@ -26,7 +26,7 @@ public class KeyedActivationRegressionTests
         using (var scope = native.CreateScope())
             Check(scope.ServiceProvider.GetRequiredKeyedService<IWork>("blue"), "blue", 0);
         for (var i = 0; i < layers; i++) services.Decorate<IWork, Wrapper>();
-        if (diagnostic && wildcard && layers == 0)
+        if (diagnostic && wildcard)
         {
             // Native build validation inspects inherited dependencies under AnyKey.
             var native = Assert.ThrowsExactly<AggregateException>(() => services.BuildServiceProvider(
@@ -277,6 +277,10 @@ public class KeyedActivationRegressionTests
     {
         var services = Services();
         ((IServiceCollection)services).Add(ServiceDescriptor.DescribeKeyed(typeof(IAsyncWork), KeyedService.AnyKey, typeof(AsyncWork), lifetime));
+        // Supply a wildcard dependency for native startup validation. Concrete
+        // requests still select the exact blue/red dependencies in Services().
+        services.AddKeyedSingleton(KeyedService.AnyKey, new Part("fallback"));
+        using (var native = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = diagnostic })) { }
         services.Decorate<IAsyncWork, AsyncWrapper>(); services.Decorate<IAsyncWork, AsyncWrapper>();
         var provider = Build(services, diagnostic);
         var scope = provider.CreateAsyncScope();

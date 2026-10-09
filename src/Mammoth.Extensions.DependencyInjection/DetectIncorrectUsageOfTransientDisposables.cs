@@ -23,6 +23,13 @@ namespace Mammoth.Extensions.DependencyInjection
 			for (int i = 0; i < services.Count; i++)
 			{
 				var descriptor = services[i];
+				// The public decorator factory already tracks this layer's context.
+				// Preserve native planning rather than hiding the original in another factory.
+				if (descriptor.ServiceType is DecorationServiceType)
+				{
+					collection.Add(descriptor);
+					continue;
+				}
 
 				if (!descriptor.IsKeyedService)
 				{
@@ -161,6 +168,12 @@ namespace Mammoth.Extensions.DependencyInjection
 
 			foreach (var descriptor in containerBuilder)
 			{
+				// Native originals are checked by their decorator before resolution.
+				if (descriptor.ServiceType is DecorationServiceType)
+				{
+					collection.Add(descriptor);
+					continue;
+				}
 				// If the public service type matches an exclusion pattern, skip patching.
 				if (descriptor.Lifetime == ServiceLifetime.Transient && exclusionPatterns?.Any() == true)
 				{
@@ -222,6 +235,23 @@ namespace Mammoth.Extensions.DependencyInjection
 			}
 
 			return (collection, openGenericDisposables);
+		}
+
+		internal sealed class NativeDecorationOptions(bool allowSingleton, IEnumerable<string>? exclusions)
+		{
+			internal readonly bool AllowSingleton = allowSingleton;
+			internal readonly string[] Exclusions = exclusions?.ToArray() ?? [];
+		}
+
+		internal static void CheckNativeDecoration(IServiceProvider provider, ServiceDescriptor original, object? key)
+		{
+			var implementation = original.IsKeyedService ? original.KeyedImplementationType : original.ImplementationType;
+			if (original.Lifetime != ServiceLifetime.Transient || !IsDisposableType(implementation)) return;
+			var options = provider.GetService<NativeDecorationOptions>();
+			if (options == null || !provider.GetRequiredService<IServiceProvider>().GetIsRootScope() || IsResolvedBySingleton(options.AllowSingleton)) return;
+			var name = original.ServiceType.FullName;
+			if (name != null && options.Exclusions.Any(pattern => Regex.IsMatch(name, pattern))) return;
+			ThrowTransientDisposableException(key, original.ServiceType, implementation, isFactory: false);
 		}
 
 		private static ServiceDescriptor CreatePatchedFactoryDescriptor(
