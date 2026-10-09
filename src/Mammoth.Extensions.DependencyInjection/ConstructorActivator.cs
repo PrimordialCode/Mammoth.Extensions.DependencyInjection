@@ -153,9 +153,12 @@ internal static class ConstructorActivator
                 return dependency.T == Dependency.DependencyType.KeyedServices
                     ? IsKeyedRegistered(parameter.ParameterType, dependency.Value)
                     : AcceptsValue(parameter.ParameterType, dependency.Value);
-            if (parameter.IsServiceKey)
+            // Native DI injects ServiceKey only in a non-null keyed context.
+            // Unkeyed/null-key parameters use normal services or defaults; named
+            // overrides above retain priority in both selection and resolution.
+            if (serviceKey != null && parameter.IsServiceKey)
             {
-                if (serviceKey != null && parameter.ParameterType != typeof(object) && parameter.ParameterType != serviceKey.GetType())
+                if (parameter.ParameterType != typeof(object) && parameter.ParameterType != serviceKey.GetType())
                     throw new InvalidOperationException("The ServiceKey parameter type must match the service key type or be object.");
                 return AcceptsValue(parameter.ParameterType, serviceKey);
             }
@@ -191,7 +194,7 @@ internal static class ConstructorActivator
                 return dependency.T == Dependency.DependencyType.KeyedServices
                     ? keyed.GetKeyedService(parameter.ParameterType, dependency.Value)
                     : dependency.Value;
-            if (parameter.IsServiceKey) return serviceKey;
+            if (serviceKey != null && parameter.IsServiceKey) return serviceKey;
             if (!IsRegistered(parameter) && parameter.HasDefaultValue)
                 return parameter.DefaultValue;
             var key = EffectiveKey(parameter.FromKey, serviceKey);
