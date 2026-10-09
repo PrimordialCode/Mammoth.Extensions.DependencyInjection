@@ -73,6 +73,10 @@ Mammoth providers supply their existing registration snapshot. For a recognized 
 
 Custom probes continue to supply their public availability contract. Missing or incompatible metadata on the recognized native probe fails clearly with the existing recommendation to use Mammoth's provider factory. This reuse adds no new private member lookup; it broadens the descriptor fallback's use to native-compatible generic constraint validation.
 
+[Issue #120](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/120) restores ordinary decoration for providers that expose `IServiceProviderIsService` and keyed resolution but omit `IServiceProviderIsKeyedService`. The original-type activator now requires the keyed availability probe only when planning a dependency with a non-null lookup key. Ordinary dependencies, null-key lookups and contextual `ServiceKey` injection do not require that probe. Decoration still uses keyed resolution for its private slots, and nonempty DependsOn maps retain their existing provider requirements.
+
+Ordinary generic-constraint checks use the ordinary probe as the metadata owner. Native DI exposes the same `CallSiteFactory` through both probe interfaces, so the same exact-type guard, descriptor field and weak cache preserve the #111 constraint checks without requesting the hidden keyed probe. Mammoth snapshots remain preferred, and custom probes keep their public availability contract. This changes no reflection lookup or metadata-shape guard.
+
 ## Verification of the compatibility choice
 
 The initial implementation in [PR #115](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/pull/115), commit `3c6942bfea31dfb1dcd2e3446cb05808a3835810`, was verified as follows. Revalidate these contracts when changing the fallback or upgrading the DI dependency.
