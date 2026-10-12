@@ -1,6 +1,8 @@
 # Mammoth.Extensions.DependencyInjection
 
-## vNext
+## Unreleased
+
+## 0.8.1
 
 - Reuse immutable snapshot keys for empty, exact-only and generic-definition-only GetAllServices discovery, avoiding per-call union sets while preserving eager typed aggregation, key deduplication and native service lifetimes [#93](https://github.com/PrimordialCode/Mammoth.Extensions.DependencyInjection/issues/93).
 

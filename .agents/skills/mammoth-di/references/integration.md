@@ -1,6 +1,6 @@
 # Application integration examples
 
-Each C# block is a separate complete console program. Enable implicit usings and adapt collection expressions and primary constructors to the application's SDK. The host example also requires `Microsoft.Extensions.Hosting` in the application.
+Each C# block is a separate complete program. Enable implicit usings and adapt collection expressions and primary constructors to the application's SDK. Generic-host examples require `Microsoft.Extensions.Hosting`; the ASP.NET Core example uses `Microsoft.NET.Sdk.Web`.
 
 ## Named mapping and scoped reuse
 
@@ -77,6 +77,8 @@ public sealed class Worker(
 
 Configure Mammoth's factory on the application's host builder and add registrations to its existing service collection. Resolve scoped services through a scope from the built host. For an application that already has a builder, apply the factory and registration calls to that builder.
 
+### IHostBuilder
+
 ```csharp
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -93,6 +95,54 @@ if (!scope.ServiceProvider.IsScopedServiceRegistered<Worker>()
     || !ReferenceEquals(worker, scope.ServiceProvider.GetRequiredService<Worker>()))
     throw new Exception("The host must provide Mammoth metadata and scoped reuse.");
 Console.WriteLine("PASS: host integration and registration queries");
+
+public sealed class Worker { }
+```
+
+### Worker applications with HostApplicationBuilder
+
+For a builder created by `Host.CreateApplicationBuilder`, configure the container directly and register services through `builder.Services`.
+
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Mammoth.Extensions.DependencyInjection;
+
+var builder = Host.CreateApplicationBuilder();
+builder.ConfigureContainer(new ServiceProviderFactory(
+    new ExtendedServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true }));
+builder.Services.AddScoped<Worker>();
+using var host = builder.Build();
+using var scope = host.Services.CreateScope();
+var worker = scope.ServiceProvider.GetRequiredService<Worker>();
+if (!scope.ServiceProvider.IsScopedServiceRegistered<Worker>()
+    || !ReferenceEquals(worker, scope.ServiceProvider.GetRequiredService<Worker>()))
+    throw new Exception("The host must provide Mammoth metadata and scoped reuse.");
+Console.WriteLine("PASS: HostApplicationBuilder integration and scoped reuse");
+
+public sealed class Worker { }
+```
+
+### ASP.NET Core with WebApplicationBuilder
+
+Configure the factory through `builder.Host` and register services through `builder.Services`. This example verifies configuration without starting a server. In an existing web application, keep its endpoints and normal `app.Run()` or `app.RunAsync()` call; request scopes resolve scoped services automatically.
+
+```csharp
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Mammoth.Extensions.DependencyInjection;
+
+var builder = WebApplication.CreateBuilder();
+builder.Host.UseServiceProviderFactory(new ServiceProviderFactory(
+    new ExtendedServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true }));
+builder.Services.AddScoped<Worker>();
+await using var app = builder.Build();
+using var scope = app.Services.CreateScope();
+var worker = scope.ServiceProvider.GetRequiredService<Worker>();
+if (!scope.ServiceProvider.IsScopedServiceRegistered<Worker>()
+    || !ReferenceEquals(worker, scope.ServiceProvider.GetRequiredService<Worker>()))
+    throw new Exception("The host must provide Mammoth metadata and scoped reuse.");
+Console.WriteLine("PASS: ASP.NET Core integration and scoped reuse");
 
 public sealed class Worker { }
 ```
